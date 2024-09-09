@@ -25,7 +25,7 @@ struct INAData {
   float busVoltage;
   float current;
   float power;
-  bool isDirty; // Add this flag
+  bool isDirty;  // Add this flag
 };
 
 struct DualChannelData {
@@ -36,6 +36,50 @@ struct DualChannelData {
 float old_chA_v = 0, old_chA_a = 0, old_chA_w = 0;
 float old_chB_v = 0, old_chB_a = 0, old_chB_w = 0;
 
+//ADC init
+#include "hardware/adc.h"
+#include "hardware/timer.h"
+#define dial_adc A2
+bool dial_enable = true;
+volatile uint16_t dialValue = 0;           // Variable to store ADC value
+
+void dial_init() {
+  pinMode(dial_adc, INPUT);
+  // Configure ADC to 10-bit resolution
+  analogReadResolution(10);  // Set the ADC resolution to 10 bits
+  // analogReadAveraging(1);    // Disable averaging for maximum speed
+
+  struct repeating_timer timer;
+
+
+  // Timer interval (in microseconds) for triggering ADC reads
+  // Example: 100 us = 10 kHz sampling rate (adjust as needed)
+  add_repeating_timer_us(-100, onDialTimer, NULL, &timer);  // Adjust the interval based on your requirements
+}
+
+// Timer callback function
+bool onDialTimer(struct repeating_timer *t) {
+  // Read the ADC value
+  dialValue = analogRead(dial_adc);
+
+  // Increment the call count
+  // dialTimerCallCount++;
+
+  // Only print every 100th call to reduce Serial buffer congestion
+  // if (dialTimerCallCount % 100 == 0) {
+  //   Serial.print("Timer called ");
+  //   Serial.print(dialTimerCallCount);
+  //   Serial.print(" times. ADC Value: ");
+  //   Serial.println(dialValue);
+  // }
+
+  return true;  // To keep the timer running
+}
+
+int read_dial() {
+  return analogRead(dial_adc);
+}
+
 // Add these global variables near the top of your file, with other global declarations
 uint8_t chA_x = 1;
 uint8_t chA_y = 82;
@@ -45,26 +89,22 @@ uint8_t chB_y = 0;
 DualChannelData readCurrentSensors() {
   static DualChannelData prevINAData;
   DualChannelData INAData;
-  
+
   // Read channel 0
   INAData.channel0.busVoltage = INA.getBusVoltage(0);
   INAData.channel0.current = INA.getCurrent_mA(0);
   INAData.channel0.power = INA.getPower_mW(0);
-  
+
   // Read channel 1
   INAData.channel1.busVoltage = INA.getBusVoltage(1);
   INAData.channel1.current = INA.getCurrent_mA(1);
   INAData.channel1.power = INA.getPower_mW(1);
-  
+
   // Check if values have changed
-  INAData.channel0.isDirty = (INAData.channel0.busVoltage != prevINAData.channel0.busVoltage) ||
-                             (INAData.channel0.current != prevINAData.channel0.current) ||
-                             (INAData.channel0.power != prevINAData.channel0.power);
-  
-  INAData.channel1.isDirty = (INAData.channel1.busVoltage != prevINAData.channel1.busVoltage) ||
-                             (INAData.channel1.current != prevINAData.channel1.current) ||
-                             (INAData.channel1.power != prevINAData.channel1.power);
-  
+  INAData.channel0.isDirty = (INAData.channel0.busVoltage != prevINAData.channel0.busVoltage) || (INAData.channel0.current != prevINAData.channel0.current) || (INAData.channel0.power != prevINAData.channel0.power);
+
+  INAData.channel1.isDirty = (INAData.channel1.busVoltage != prevINAData.channel1.busVoltage) || (INAData.channel1.current != prevINAData.channel1.current) || (INAData.channel1.power != prevINAData.channel1.power);
+
   prevINAData = INAData;
   return INAData;
 }
@@ -233,8 +273,6 @@ void setup(void) {
 
   //UI init
   drawUIFramework();
-  // ChannelInfoUpdate_A(0, 0, 0);
-  // ChannelInfoUpdate_B(0, 0, 0);
 
   //Current sensor init
   Wire.begin();
@@ -246,39 +284,49 @@ void setup(void) {
   }
   INA.setShuntR(0, 0.100);
   INA.setShuntR(1, 0.100);
-  Wire.setClock(400000);//400 kHz
-  delay(100);  // fllussssh IO
+  Wire.setClock(400000);  //400 kHz
+  delay(100);             // fllussssh IO
+
+  //Dial
+  dial_init();
 }
 
 
 void loop() {
-    DualChannelData sensorData = readCurrentSensors();
-    
-    if (sensorData.channel0.isDirty) {
-        ChannelInfoUpdate_A(
-            sensorData.channel0.busVoltage, 
-            sensorData.channel0.current, 
-            sensorData.channel0.power,
-            old_chA_v, old_chA_a, old_chA_w
-        );
-        // Update old values for next iteration
-        old_chA_v = sensorData.channel0.busVoltage;
-        old_chA_a = sensorData.channel0.current;
-        old_chA_w = sensorData.channel0.power;
-    }
-    
-    if (sensorData.channel1.isDirty) {
-        ChannelInfoUpdate_B(
-            sensorData.channel1.busVoltage, 
-            sensorData.channel1.current, 
-            sensorData.channel1.power,
-            old_chB_v, old_chB_a, old_chB_w
-        );
-        // Update old values for next iteration
-        old_chB_v = sensorData.channel1.busVoltage;
-        old_chB_a = sensorData.channel1.current;
-        old_chB_w = sensorData.channel1.power;
-    }
-    
-    delay(2);
+  DualChannelData sensorData = readCurrentSensors();
+
+  if (sensorData.channel0.isDirty) {
+    ChannelInfoUpdate_A(
+      sensorData.channel0.busVoltage,
+      sensorData.channel0.current,
+      sensorData.channel0.power,
+      old_chA_v, old_chA_a, old_chA_w);
+    // Update old values for next iteration
+    old_chA_v = sensorData.channel0.busVoltage;
+    old_chA_a = sensorData.channel0.current;
+    old_chA_w = sensorData.channel0.power;
+  }
+
+  if (sensorData.channel1.isDirty) {
+    ChannelInfoUpdate_B(
+      sensorData.channel1.busVoltage,
+      sensorData.channel1.current,
+      sensorData.channel1.power,
+      old_chB_v, old_chB_a, old_chB_w);
+    // Update old values for next iteration
+    old_chB_v = sensorData.channel1.busVoltage;
+    old_chB_a = sensorData.channel1.current;
+    old_chB_w = sensorData.channel1.power;
+  }
+
+  // Use the volatile dialValue directly
+  Serial.print("ADC Value: ");
+  Serial.println(dialValue);
+  delay(200);
 }
+
+//todo
+//1. add dial read
+//2. add rotate
+//3. add serial usb func
+//4. add pwm setting on avaliable IOs
