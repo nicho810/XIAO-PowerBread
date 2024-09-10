@@ -4,6 +4,11 @@
 #include <SPI.h>
 #include <Fonts/FreeSansBold9pt7b.h>
 
+//rtos
+#include <FreeRTOS.h>
+#include <task.h>
+#include <semphr.h>
+
 #define TFT_CS -1  //CS is always connected to ground in this project.
 #define TFT_RST D3
 #define TFT_DC D9
@@ -211,15 +216,89 @@ void drawUIFramework() {
   tft.println("Channel B");
 }
 
+
+
+#define STACK_SIZE 2048
+StaticTask_t xTaskBuffer_UI;
+StackType_t xStack_UI[STACK_SIZE];
+
+#define STACK_SIZE_SERIAL 1024
+StaticTask_t xTaskBuffer_Serial;
+StackType_t xStack_Serial[STACK_SIZE_SERIAL];
+
+SemaphoreHandle_t xSemaphore = NULL;
+StaticSemaphore_t xMutexBuffer;
+
+void updateUITask(void *pvParameters) {
+  (void) pvParameters;
+  while (1) {
+    xSemaphoreTake(xSemaphore, portMAX_DELAY);
+    
+    DualChannelData sensorData = readCurrentSensors();
+
+    if (sensorData.channel0.isDirty) {
+      ChannelInfoUpdate_A(
+        sensorData.channel0.busVoltage,
+        sensorData.channel0.current,
+        sensorData.channel0.power,
+        old_chA_v, old_chA_a, old_chA_w);
+      old_chA_v = sensorData.channel0.busVoltage;
+      old_chA_a = sensorData.channel0.current;
+      old_chA_w = sensorData.channel0.power;
+    }
+
+    if (sensorData.channel1.isDirty) {
+      ChannelInfoUpdate_B(
+        sensorData.channel1.busVoltage,
+        sensorData.channel1.current,
+        sensorData.channel1.power,
+        old_chB_v, old_chB_a, old_chB_w);
+      old_chB_v = sensorData.channel1.busVoltage;
+      old_chB_a = sensorData.channel1.current;
+      old_chB_w = sensorData.channel1.power;
+    }
+
+    xSemaphoreGive(xSemaphore);
+    vTaskDelay(pdMS_TO_TICKS(100)); // Update UI every 100ms
+  }
+}
+
+void serialPrintTask(void *pvParameters) {
+  (void) pvParameters;
+  TickType_t xLastPrintTime = 0;
+  const TickType_t xPrintInterval = pdMS_TO_TICKS(1000);
+
+  while (1) {
+    TickType_t xCurrentTime = xTaskGetTickCount();
+    
+    if ((xCurrentTime - xLastPrintTime) >= xPrintInterval) {
+      xSemaphoreTake(xSemaphore, portMAX_DELAY);
+      
+      DualChannelData sensorData = readCurrentSensors();
+
+      Serial.printf("A: %.2fV %.2fmA %.2fmW | B: %.2fV %.2fmA %.2fmW\n",
+                    sensorData.channel0.busVoltage, sensorData.channel0.current, sensorData.channel0.power,
+                    sensorData.channel1.busVoltage, sensorData.channel1.current, sensorData.channel1.power);
+
+      xSemaphoreGive(xSemaphore);
+      
+      xLastPrintTime = xCurrentTime;
+    }
+    
+    vTaskDelay(pdMS_TO_TICKS(10)); // Short delay to prevent tight looping
+  }
+}
+
 void setup(void) {
+  delay(500);
   // init serial
   Serial.begin(115200);
-  Serial.print(F("Hello! XIAO PowerBread."));
+  Serial.println(F("Hello! XIAO PowerBread."));
 
   // LCD init
-  tft.initR(INITR_GREENTAB);  // Init ST7735S 0.96inch display (160*80), Also need to modify the _colstart = 24 and _rowstart = 0 in Adafruit_ST7735.cpp>initR(uint8_t)
-  tft.setRotation(2);         //Rotate the LCD 180 degree (0-3)
-  tft.setSPISpeed(62500000);  //50MHz
+  tft.initR(INITR_GREENTAB);
+  tft.setRotation(2);
+  tft.setSPISpeed(50000000);
   tft.fillScreen(color_Background);
 
   //UI init
@@ -230,54 +309,50 @@ void setup(void) {
   if (!INA.begin()) {
     Serial.println("could not connect. Fix and Reboot");
   } else {
-    Serial.print("Found: \t");
-    Serial.println(INA.getAddress());
+    Serial.println("INA3221 Found");
   }
   INA.setShuntR(0, 0.100);
   INA.setShuntR(1, 0.100);
-  Wire.setClock(400000);  //400 kHz
-  delay(100);             // fllussssh IO
+  Wire.setClock(400000);
+  delay(100);
 
   //Dial
   dial_init();
-}
 
+  xSemaphore = xSemaphoreCreateMutexStatic(&xMutexBuffer);
+  if (xSemaphore == NULL) {
+    Serial.println("Error creating semaphore");
+    while(1);
+  }
+
+  TaskHandle_t xHandle = xTaskCreateStatic(updateUITask, "UI_Update", STACK_SIZE, NULL, 1, xStack_UI, &xTaskBuffer_UI);
+  if (xHandle == NULL) {
+    Serial.println("Error creating UI task");
+    while(1);
+  }
+
+  TaskHandle_t xSerialHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print", STACK_SIZE_SERIAL, NULL, 1, xStack_Serial, &xTaskBuffer_Serial);
+  if (xSerialHandle == NULL) {
+    Serial.println("Error creating Serial Print task");
+    while(1);
+  }
+
+  Serial.println("Starting scheduler");
+  vTaskStartScheduler();
+
+  // We should never get here as control is now taken by the scheduler
+  Serial.println("Scheduler failed to start");
+  while(1);
+}
 
 void loop() {
-  DualChannelData sensorData = readCurrentSensors();
-
-  if (sensorData.channel0.isDirty) {
-    ChannelInfoUpdate_A(
-      sensorData.channel0.busVoltage,
-      sensorData.channel0.current,
-      sensorData.channel0.power,
-      old_chA_v, old_chA_a, old_chA_w);
-    // Update old values for next iteration
-    old_chA_v = sensorData.channel0.busVoltage;
-    old_chA_a = sensorData.channel0.current;
-    old_chA_w = sensorData.channel0.power;
-  }
-
-  if (sensorData.channel1.isDirty) {
-    ChannelInfoUpdate_B(
-      sensorData.channel1.busVoltage,
-      sensorData.channel1.current,
-      sensorData.channel1.power,
-      old_chB_v, old_chB_a, old_chB_w);
-    // Update old values for next iteration
-    old_chB_v = sensorData.channel1.busVoltage;
-    old_chB_a = sensorData.channel1.current;
-    old_chB_w = sensorData.channel1.power;
-  }
-
-  // Use the volatile dialValue directly
-  Serial.print("ADC Value: ");
-  Serial.println(dialValue);
-  delay(2);
+  // Empty, as tasks will handle the main functionality
 }
 
-//todo
-//1. add dial read
-//2. add rotate
-//3. add serial usb func
-//4. add pwm setting on avaliable IOs
+// Add this function at the end of your file
+extern "C" void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
+{
+  Serial.print("Stack Overflow in task: ");
+  Serial.println(pcTaskName);
+  while(1);
+}
