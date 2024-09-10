@@ -37,50 +37,20 @@ float old_chA_v = 0, old_chA_a = 0, old_chA_w = 0;
 float old_chB_v = 0, old_chB_a = 0, old_chB_w = 0;
 
 //ADC init
-#include "hardware/adc.h"
-#include "hardware/timer.h"
 #define dial_adc A2
 bool dial_enable = true;
 volatile uint16_t dialValue = 0;           // Variable to store ADC value
 
 void dial_init() {
   pinMode(dial_adc, INPUT);
-  // Configure ADC to 10-bit resolution
-  analogReadResolution(10);  // Set the ADC resolution to 10 bits
-  // analogReadAveraging(1);    // Disable averaging for maximum speed
-
-  struct repeating_timer timer;
-
-
-  // Timer interval (in microseconds) for triggering ADC reads
-  // Example: 100 us = 10 kHz sampling rate (adjust as needed)
-  add_repeating_timer_us(-100, onDialTimer, NULL, &timer);  // Adjust the interval based on your requirements
-}
-
-// Timer callback function
-bool onDialTimer(struct repeating_timer *t) {
-  // Read the ADC value
-  dialValue = analogRead(dial_adc);
-
-  // Increment the call count
-  // dialTimerCallCount++;
-
-  // Only print every 100th call to reduce Serial buffer congestion
-  // if (dialTimerCallCount % 100 == 0) {
-  //   Serial.print("Timer called ");
-  //   Serial.print(dialTimerCallCount);
-  //   Serial.print(" times. ADC Value: ");
-  //   Serial.println(dialValue);
-  // }
-
-  return true;  // To keep the timer running
+  analogReadResolution(12);  // Set the ADC resolution to 10 bits
 }
 
 int read_dial() {
   return analogRead(dial_adc);
 }
 
-// Add these global variables near the top of your file, with other global declarations
+// UI global variables
 uint8_t chA_x = 1;
 uint8_t chA_y = 82;
 uint8_t chB_x = 1;
@@ -110,15 +80,6 @@ DualChannelData readCurrentSensors() {
 }
 
 
-
-// void clean_channelInfoArea_A() {
-//   tft.fillRect(5, 14, 58, 60, color_Background);
-// }
-
-// void clean_channelInfoArea_B() {
-//   tft.fillRect(5, 96, 58, 60, color_Background);
-// }
-
 void ChannelInfoUpdate_A(float new_chA_v, float new_chA_a, float new_chA_w, float old_chA_v, float old_chA_a, float old_chA_w, uint16_t color = color_Text) {
   uint8_t chA_1_x = chA_x + 4;
   uint8_t chA_1_y = chA_y + 30;
@@ -135,32 +96,17 @@ void ChannelInfoUpdate_A(float new_chA_v, float new_chA_a, float new_chA_w, floa
 
   // Update voltage if changed
   if (new_chA_v != old_chA_v) {
-    tft.setTextColor(color_Background);
-    tft.setCursor(chA_1_x, chA_1_y);
-    tft.printf("%4.3f", old_chA_v);
-    tft.setTextColor(color);
-    tft.setCursor(chA_1_x, chA_1_y);
-    tft.printf("%4.3f", new_chA_v);
+    updateChangedDigits(chA_1_x, chA_1_y, old_chA_v, new_chA_v, color);
   }
 
   // Update current if changed
   if (new_chA_a != old_chA_a) {
-    tft.setTextColor(color_Background);
-    tft.setCursor(chA_1_x, chA_2_y);
-    printFormattedValue(old_chA_a);
-    tft.setTextColor(color);
-    tft.setCursor(chA_1_x, chA_2_y);
-    printFormattedValue(new_chA_a);
+    updateChangedDigits(chA_1_x, chA_2_y, old_chA_a, new_chA_a, color);
   }
 
   // Update power if changed
   if (new_chA_w != old_chA_w) {
-    tft.setTextColor(color_Background);
-    tft.setCursor(chA_1_x, chA_3_y);
-    printFormattedValue(old_chA_w);
-    tft.setTextColor(color);
-    tft.setCursor(chA_1_x, chA_3_y);
-    printFormattedValue(new_chA_w);
+    updateChangedDigits(chA_1_x, chA_3_y, old_chA_w, new_chA_w, color);
   }
 
   // Print units (these don't need to be erased or updated)
@@ -190,32 +136,17 @@ void ChannelInfoUpdate_B(float new_chB_v, float new_chB_a, float new_chB_w, floa
 
   // Update voltage if changed
   if (new_chB_v != old_chB_v) {
-    tft.setTextColor(color_Background);
-    tft.setCursor(chB_1_x, chB_1_y);
-    tft.printf("%4.3f", old_chB_v);
-    tft.setTextColor(color);
-    tft.setCursor(chB_1_x, chB_1_y);
-    tft.printf("%4.3f", new_chB_v);
+    updateChangedDigits(chB_1_x, chB_1_y, old_chB_v, new_chB_v, color);
   }
 
   // Update current if changed
   if (new_chB_a != old_chB_a) {
-    tft.setTextColor(color_Background);
-    tft.setCursor(chB_1_x, chB_2_y);
-    printFormattedValue(old_chB_a);
-    tft.setTextColor(color);
-    tft.setCursor(chB_1_x, chB_2_y);
-    printFormattedValue(new_chB_a);
+    updateChangedDigits(chB_1_x, chB_2_y, old_chB_a, new_chB_a, color);
   }
 
   // Update power if changed
   if (new_chB_w != old_chB_w) {
-    tft.setTextColor(color_Background);
-    tft.setCursor(chB_1_x, chB_3_y);
-    printFormattedValue(old_chB_w);
-    tft.setTextColor(color);
-    tft.setCursor(chB_1_x, chB_3_y);
-    printFormattedValue(new_chB_w);
+    updateChangedDigits(chB_1_x, chB_3_y, old_chB_w, new_chB_w, color);
   }
 
   // Print units (these don't need to be erased or updated)
@@ -229,18 +160,39 @@ void ChannelInfoUpdate_B(float new_chB_v, float new_chB_a, float new_chB_w, floa
   tft.println("mW");
 }
 
-void printFormattedValue(float value) {
-  if (value > 9999) {
-    tft.print("9999+");
-  } else if (value >= 1000) {
-    tft.printf("%4.0f", value);
-  } else if (value >= 100) {
-    tft.printf("%4.1f", value);
-  } else if (value >= 10) {
-    tft.printf("%4.2f", value);
-  } else {
-    tft.printf("%4.3f", value);
+void updateChangedDigits(int x, int y, float oldValue, float newValue, uint16_t color) {
+  char oldStr[10], newStr[10];
+  char format[10];
+  
+  // Determine the number of decimal places automatically
+  int decimalPlaces = 3;  // Default to 3 decimal places
+  if (oldValue >= 10 || newValue >= 10) {
+    decimalPlaces = 2;
+  } else if (oldValue >= 100 || newValue >= 100) {
+    decimalPlaces = 1;
+  } else if (oldValue >= 1000 || newValue >= 1000) {
+    decimalPlaces = 0;
   }
+  
+  snprintf(format, sizeof(format), "%%5.%df", decimalPlaces);
+  snprintf(oldStr, sizeof(oldStr), format, oldValue);
+  snprintf(newStr, sizeof(newStr), format, newValue);
+
+  tft.setFont(&FreeSansBold9pt7b);
+  tft.setTextSize(0);
+
+  // Get bounds of the entire string
+  int16_t x1, y1;
+  uint16_t w, h;
+  tft.getTextBounds(oldStr, x, y, &x1, &y1, &w, &h);
+
+  // Erase the entire old string
+  tft.fillRect(x1, y1, w, h, color_Background);
+
+  // Draw the new string
+  tft.setTextColor(color);
+  tft.setCursor(x, y);
+  tft.print(newStr);
 }
 
 void drawUIFramework() {
@@ -258,7 +210,6 @@ void drawUIFramework() {
   tft.setCursor(chB_x + 5, chB_y + 2);
   tft.println("Channel B");
 }
-
 
 void setup(void) {
   // init serial
@@ -322,7 +273,7 @@ void loop() {
   // Use the volatile dialValue directly
   Serial.print("ADC Value: ");
   Serial.println(dialValue);
-  delay(200);
+  delay(2);
 }
 
 //todo
