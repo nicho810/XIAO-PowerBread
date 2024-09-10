@@ -4,10 +4,12 @@
 #include <SPI.h>
 #include <Fonts/FreeSansBold9pt7b.h>
 
-//rtos
+//RTOS
 #include <FreeRTOS.h>
 #include <task.h>
 #include <semphr.h>
+
+//LCD
 
 #define TFT_CS -1  //CS is always connected to ground in this project.
 #define TFT_RST D3
@@ -17,29 +19,22 @@
 
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
+float old_chA_v = 0, old_chA_a = 0, old_chA_w = 0;
+float old_chB_v = 0, old_chB_a = 0, old_chB_w = 0;
+
 #define color_Background 0x0000
 #define color_Text 0xFFFF
 #define color_ChannelA 0x055B
 #define color_ChannelB 0xF97C
+uint8_t chA_x = 1;// UI global variables
+uint8_t chA_y = 82;// UI global variables
+uint8_t chB_x = 1;// UI global variables
+uint8_t chB_y = 0;// UI global variables
 
-//Current sensor init
-#include "INA3221.h"
-INA3221 INA(0x40);
+//Current sensor
+#include "INA3221Sensor.h"
+INA3221Sensor inaSensor;
 
-struct INAData {
-  float busVoltage;
-  float current;
-  float power;
-  bool isDirty;  // Add this flag
-};
-
-struct DualChannelData {
-  INAData channel0;
-  INAData channel1;
-};
-
-float old_chA_v = 0, old_chA_a = 0, old_chA_w = 0;
-float old_chB_v = 0, old_chB_a = 0, old_chB_w = 0;
 
 //ADC init
 #define dial_adc A2
@@ -55,34 +50,7 @@ int read_dial() {
   return analogRead(dial_adc);
 }
 
-// UI global variables
-uint8_t chA_x = 1;
-uint8_t chA_y = 82;
-uint8_t chB_x = 1;
-uint8_t chB_y = 0;
 
-DualChannelData readCurrentSensors() {
-  static DualChannelData prevINAData;
-  DualChannelData INAData;
-
-  // Read channel 0
-  INAData.channel0.busVoltage = INA.getBusVoltage(0);
-  INAData.channel0.current = INA.getCurrent_mA(0);
-  INAData.channel0.power = INA.getPower_mW(0);
-
-  // Read channel 1
-  INAData.channel1.busVoltage = INA.getBusVoltage(1);
-  INAData.channel1.current = INA.getCurrent_mA(1);
-  INAData.channel1.power = INA.getPower_mW(1);
-
-  // Check if values have changed
-  INAData.channel0.isDirty = (INAData.channel0.busVoltage != prevINAData.channel0.busVoltage) || (INAData.channel0.current != prevINAData.channel0.current) || (INAData.channel0.power != prevINAData.channel0.power);
-
-  INAData.channel1.isDirty = (INAData.channel1.busVoltage != prevINAData.channel1.busVoltage) || (INAData.channel1.current != prevINAData.channel1.current) || (INAData.channel1.power != prevINAData.channel1.power);
-
-  prevINAData = INAData;
-  return INAData;
-}
 
 
 void ChannelInfoUpdate_A(float new_chA_v, float new_chA_a, float new_chA_w, float old_chA_v, float old_chA_a, float old_chA_w, uint16_t color = color_Text) {
@@ -234,7 +202,7 @@ void updateUITask(void *pvParameters) {
   while (1) {
     xSemaphoreTake(xSemaphore, portMAX_DELAY);
     
-    DualChannelData sensorData = readCurrentSensors();
+    DualChannelData sensorData = inaSensor.readCurrentSensors();
 
     if (sensorData.channel0.isDirty) {
       ChannelInfoUpdate_A(
@@ -274,7 +242,7 @@ void serialPrintTask(void *pvParameters) {
     if ((xCurrentTime - xLastPrintTime) >= xPrintInterval) {
       xSemaphoreTake(xSemaphore, portMAX_DELAY);
       
-      DualChannelData sensorData = readCurrentSensors();
+      DualChannelData sensorData = inaSensor.readCurrentSensors();
 
       Serial.printf("A: %.2fV %.2fmA %.2fmW | B: %.2fV %.2fmA %.2fmW\n",
                     sensorData.channel0.busVoltage, sensorData.channel0.current, sensorData.channel0.power,
@@ -306,13 +274,12 @@ void setup(void) {
 
   //Current sensor init
   Wire.begin();
-  if (!INA.begin()) {
+  if (!inaSensor.begin()) {
     Serial.println("could not connect. Fix and Reboot");
   } else {
     Serial.println("INA3221 Found");
   }
-  INA.setShuntR(0, 0.100);
-  INA.setShuntR(1, 0.100);
+  inaSensor.setShuntResistors(0.100, 0.100);
   Wire.setClock(400000);
   delay(100);
 
