@@ -21,8 +21,6 @@ void ChannelInfoUpdate_A(float new_chA_v, float new_chA_a, float new_chA_w, floa
 
   int offset_defaultFont = -6;
 
-  tft.setFont(&FreeSansBold9pt7b);
-  tft.setTextSize(0);
 
   // Update voltage if changed
   if (new_chA_v != old_chA_v) {
@@ -43,11 +41,11 @@ void ChannelInfoUpdate_A(float new_chA_v, float new_chA_a, float new_chA_w, floa
   tft.setFont();
   tft.setTextColor(color);
   tft.setCursor(chA_v_x, chA_1_y + offset_defaultFont);
-  tft.println("V");
+  tft.print("V");
   tft.setCursor(chA_mA_x, chA_2_y + offset_defaultFont);
-  tft.println("mA");
+  tft.print("mA");
   tft.setCursor(chA_w_x, chA_3_y + offset_defaultFont);
-  tft.println("mW");
+  tft.print("mW");
 }
 
 void ChannelInfoUpdate_B(float new_chB_v, float new_chB_a, float new_chB_w, float old_chB_v, float old_chB_a, float old_chB_w, uint16_t color) {
@@ -61,8 +59,6 @@ void ChannelInfoUpdate_B(float new_chB_v, float new_chB_a, float new_chB_w, floa
 
   int offset_defaultFont = -6;
 
-  tft.setFont(&FreeSansBold9pt7b);
-  tft.setTextSize(0);
 
   // Update voltage if changed
   if (new_chB_v != old_chB_v) {
@@ -83,11 +79,11 @@ void ChannelInfoUpdate_B(float new_chB_v, float new_chB_a, float new_chB_w, floa
   tft.setFont();
   tft.setTextColor(color);
   tft.setCursor(chB_v_x, chB_1_y + offset_defaultFont);
-  tft.println("V");
+  tft.print("V");
   tft.setCursor(chB_mA_x, chB_2_y + offset_defaultFont);
-  tft.println("mA");
+  tft.print("mA");
   tft.setCursor(chB_w_x, chB_3_y + offset_defaultFont);
-  tft.println("mW");
+  tft.print("mW");
 }
 
 void updateChangedDigits(int x, int y, float oldValue, float newValue, uint16_t color) {
@@ -104,12 +100,12 @@ void updateChangedDigits(int x, int y, float oldValue, float newValue, uint16_t 
     decimalPlaces = 0;
   }
   
+  tft.setFont(&FreeSansBold9pt7b);
+  tft.setTextSize(0);
+
   snprintf(format, sizeof(format), "%%5.%df", decimalPlaces);
   snprintf(oldStr, sizeof(oldStr), format, oldValue);
   snprintf(newStr, sizeof(newStr), format, newValue);
-
-  tft.setFont(&FreeSansBold9pt7b);
-  tft.setTextSize(0);
 
   // Get bounds of the entire string
   int16_t x1, y1;
@@ -126,6 +122,8 @@ void updateChangedDigits(int x, int y, float oldValue, float newValue, uint16_t 
 }
 
 void drawUIFramework() {
+  tft.fillScreen(color_Background);
+
   tft.drawRoundRect(chA_x, chA_y, 78, 78, 4, color_ChannelA);
   tft.fillRoundRect(chA_x, chA_y, 65, 12, 4, color_ChannelA);
 
@@ -136,7 +134,19 @@ void drawUIFramework() {
   tft.setTextColor(color_Text);
   tft.setTextSize(0);
   tft.setCursor(chA_x + 5, chA_y + 2);
-  tft.println("Channel A");
+  tft.print("Channel A");
   tft.setCursor(chB_x + 5, chB_y + 2);
-  tft.println("Channel B");
+  tft.print("Channel B");
+
+  tft.setFont(&FreeSansBold9pt7b); // set font first in case
+}
+
+void changeRotation(int rotation, float old_chA_v, float old_chA_a, float old_chA_w, float old_chB_v, float old_chB_a, float old_chB_w){
+  tft.initR(INITR_GREENTAB);
+  tft.setRotation(rotation); //Rotate the LCD 180 degree (0-3)
+  // delay(50);
+  drawUIFramework();
+  ChannelInfoUpdate_A(old_chA_v,  old_chA_a,  old_chA_w,  -1,  -1,  -1);
+  ChannelInfoUpdate_B(old_chB_v,  old_chB_a,  old_chB_w,  -1,  -1,  -1);
+  // delay(50);
 }

@@ -24,6 +24,7 @@ volatile int dialStatus = 0; // 0: reset, 1: up, 2: down, 3: press
 #include "ui_functions.h"
 float old_chA_v = 0, old_chA_a = 0, old_chA_w = 0;
 float old_chB_v = 0, old_chB_a = 0, old_chB_w = 0;
+int tft_Rotation = 2;
 
 //Current sensor
 #include "INA3221Sensor.h"
@@ -57,6 +58,9 @@ StackType_t xStack_Dial[STACK_SIZE_DIAL];
 
 SemaphoreHandle_t xSemaphore = NULL;
 StaticSemaphore_t xMutexBuffer;
+
+// Add this near the top of the file with other global declarations
+TaskHandle_t xUITaskHandle = NULL;
 
 void updateUITask(void *pvParameters) {
   (void) pvParameters;
@@ -115,6 +119,7 @@ void dialReadTask(void *pvParameters) {
   TickType_t xLastReadTime = 0;
   const TickType_t xReadInterval = pdMS_TO_TICKS(50); // Read every 50ms
   uint16_t lastDialValue = 0;
+  int lastDialStatus = 0;
   while (1) {
     TickType_t xCurrentTime = xTaskGetTickCount();
     if ((xCurrentTime - xLastReadTime) >= xReadInterval) {
@@ -133,25 +138,52 @@ void dialReadTask(void *pvParameters) {
           dialStatus = 0; // Reset status for other values
           // Serial.println("Dial reset");
         }
+
+        // Check if the dial was just released after being turned up or down
+        if (dialStatus == 0 && (lastDialStatus == 1 || lastDialStatus == 2)) {
+          if (lastDialStatus == 1) { // Was turned up
+            if (tft_Rotation != 2) {
+              Serial.println("Changing rotation to 2");
+              tft_Rotation = 2;
+              vTaskSuspend(xUITaskHandle); // Suspend UI task
+              changeRotation(tft_Rotation, old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w);
+              vTaskResume(xUITaskHandle);  // Resume UI task
+              Serial.println("New rotation: " + String(tft_Rotation));
+            } else {
+              Serial.println("Rotation already 2, not changing");
+            }
+          } else if (lastDialStatus == 2) { // Was turned down
+            if (tft_Rotation != 0) {
+              Serial.println("Changing rotation to 0");
+              tft_Rotation = 0;
+              vTaskSuspend(xUITaskHandle); // Suspend UI task
+              changeRotation(tft_Rotation, old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w);
+              vTaskResume(xUITaskHandle);  // Resume UI task
+              Serial.println("New rotation: " + String(tft_Rotation));
+            } else {
+              Serial.println("Rotation already 0, not changing");
+            }
+          }
+        }
+
+        lastDialStatus = dialStatus;
         lastDialValue = dialValue;
       }
       xLastReadTime = xCurrentTime;
-      // Serial.println("Dial Task running");
     }
     vTaskDelay(pdMS_TO_TICKS(50)); // Increase delay to 50ms
   }
 }
 
 void setup(void) {
-  delay(500);
   // init serial
   Serial.begin(115200);
   Serial.println(F("Hello! XIAO PowerBread."));
 
   // LCD init
   tft.initR(INITR_GREENTAB); // Init ST7735S 0.96inch display (160*80), Also need to modify the _colstart = 24 and _rowstart = 0 in Adafruit_ST7735.cpp>initR(uint8_t)
-  tft.setRotation(2); //Rotate the LCD 180 degree (0-3)
-  tft.setSPISpeed(50000000);//50MHz
+  tft.setRotation(tft_Rotation); //Rotate the LCD 180 degree (0-3)
+  tft.setSPISpeed(24000000);//50MHz
   tft.fillScreen(color_Background);
 
   //UI init
@@ -168,7 +200,7 @@ void setup(void) {
   Wire.setClock(400000);
   delay(100);
 
-  //Dial
+  //Dial init
   dial_init();
 
   xSemaphore = xSemaphoreCreateMutexStatic(&xMutexBuffer);
@@ -178,7 +210,7 @@ void setup(void) {
   }
 
   // Adjust task priorities
-  TaskHandle_t xHandle = xTaskCreateStatic(updateUITask, "UI_Update", STACK_SIZE, NULL, 3, xStack_UI, &xTaskBuffer_UI);
+  xUITaskHandle = xTaskCreateStatic(updateUITask, "UI_Update", STACK_SIZE, NULL, 3, xStack_UI, &xTaskBuffer_UI);
   TaskHandle_t xSerialHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print", STACK_SIZE_SERIAL, NULL, 1, xStack_Serial, &xTaskBuffer_Serial);
   TaskHandle_t xDialHandle = xTaskCreateStatic(dialReadTask, "Dial_Read", STACK_SIZE_DIAL, NULL, 2, xStack_Dial, &xTaskBuffer_Dial);
 
@@ -207,4 +239,6 @@ extern "C" void vApplicationIdleHook(void)
 {
   // This function will be called when the scheduler is idle
   Serial.println("Idle Hook called");
+  while(1);
 }
+
