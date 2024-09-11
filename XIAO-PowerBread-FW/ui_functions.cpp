@@ -89,7 +89,7 @@ void ChannelInfoUpdate_B(float new_chB_v, float new_chB_a, float new_chB_w, floa
 void updateChangedDigits(int x, int y, float oldValue, float newValue, uint16_t color) {
   char oldStr[10], newStr[10];
   char format[10];
-  
+
   // Determine the number of decimal places automatically
   int decimalPlaces = 3;  // Default to 3 decimal places
   if (oldValue >= 10 || newValue >= 10) {
@@ -99,7 +99,7 @@ void updateChangedDigits(int x, int y, float oldValue, float newValue, uint16_t 
   } else if (oldValue >= 1000 || newValue >= 1000) {
     decimalPlaces = 0;
   }
-  
+
   tft.setFont(&FreeSansBold9pt7b);
   tft.setTextSize(0);
 
@@ -138,31 +138,42 @@ void drawUIFramework() {
   tft.setCursor(chB_x + 5, chB_y + 2);
   tft.print("Channel B");
 
-  tft.setFont(&FreeSansBold9pt7b); // set font first in case
+  tft.setFont(&FreeSansBold9pt7b);  // set font first in case
 }
 
-void changeRotation(int rotation, float old_chA_v, float old_chA_a, float old_chA_w, float old_chB_v, float old_chB_a, float old_chB_w){
+void changeRotation(int rotation, float old_chA_v, float old_chA_a, float old_chA_w, float old_chB_v, float old_chB_a, float old_chB_w) {
   tft.initR(INITR_GREENTAB);
-  tft.setRotation(rotation); //Rotate the LCD 180 degree (0-3)
+  tft.setRotation(rotation);  //Rotate the LCD 180 degree (0-3)
   // delay(50);
   drawUIFramework();
-  ChannelInfoUpdate_A(old_chA_v,  old_chA_a,  old_chA_w,  -1,  -1,  -1);
-  ChannelInfoUpdate_B(old_chB_v,  old_chB_a,  old_chB_w,  -1,  -1,  -1);
+  ChannelInfoUpdate_A(old_chA_v, old_chA_a, old_chA_w, -1, -1, -1);
+  ChannelInfoUpdate_B(old_chB_v, old_chB_a, old_chB_w, -1, -1, -1);
   // delay(50);
 }
 
-void update_chAB_xy_by_Rotation(int rotation){
-  if (rotation == 0 || rotation ==2){
-  chA_x = 1;
-  chA_y = 82;
-  chB_x = 1;
-  chB_y = 0;
+void update_chAB_xy_by_Rotation(int rotation) {
+  if (rotation == 0) {
+    chA_x = 1;
+    chA_y = 0;
+    chB_x = 1;
+    chB_y = 82;
   }
-    if (rotation == 1 || rotation ==3){
-  chA_x = 0;
-  chA_y = 1;
-  chB_x = 82;
-  chB_y = 1;
+  if (rotation == 2) {
+    chA_x = 1;
+    chA_y = 82;
+    chB_x = 1;
+    chB_y = 0;
   }
-
+  if (rotation == 1) {
+    chA_x = 0;
+    chA_y = 1;
+    chB_x = 82;
+    chB_y = 1;
+  }
+  if (rotation == 3) {
+    chA_x = 82;
+    chA_y = 1;
+    chB_x = 0;
+    chB_y = 1;
+  }
 }
