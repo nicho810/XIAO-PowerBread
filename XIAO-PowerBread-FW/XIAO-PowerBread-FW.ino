@@ -19,6 +19,8 @@ Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
 // Add this global variable near the top of the file, with other global declarations
 volatile int dialStatus = 0; // 0: reset, 1: up, 2: down, 3: press
+volatile bool rotationChangeRequested = false;
+volatile int newRotation = 0;
 
 //UIs
 #include "ui_functions.h"
@@ -65,6 +67,13 @@ TaskHandle_t xUITaskHandle = NULL;
 void updateUITask(void *pvParameters) {
   (void) pvParameters;
   while (1) {
+    if (rotationChangeRequested) {
+      rotationChangeRequested = false;
+      update_chAB_xy_by_Rotation(tft_Rotation);
+      changeRotation(tft_Rotation, old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w);
+      Serial.println("New rotation applied: " + String(tft_Rotation));
+    }
+
     xSemaphoreTake(xSemaphore, portMAX_DELAY);
     DualChannelData sensorData = inaSensor.readCurrentSensors();
     if (sensorData.channel0.isDirty) {
@@ -151,13 +160,9 @@ void dialReadTask(void *pvParameters) {
           }
           
           if (newRotation != tft_Rotation) {
-            Serial.println("Changing rotation to " + String(newRotation));
+            Serial.println("Requesting rotation change to " + String(newRotation));
+            rotationChangeRequested = true;
             tft_Rotation = newRotation;
-            update_chAB_xy_by_Rotation(tft_Rotation);
-            vTaskSuspend(xUITaskHandle); // Suspend UI task
-            changeRotation(tft_Rotation, old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w);
-            vTaskResume(xUITaskHandle);  // Resume UI task
-            Serial.println("New rotation: " + String(tft_Rotation));
           } else {
             Serial.println("Rotation unchanged: " + String(tft_Rotation));
           }
