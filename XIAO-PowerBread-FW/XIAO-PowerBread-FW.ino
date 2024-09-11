@@ -24,7 +24,7 @@ volatile int dialStatus = 0; // 0: reset, 1: up, 2: down, 3: press
 #include "ui_functions.h"
 float old_chA_v = 0, old_chA_a = 0, old_chA_w = 0;
 float old_chB_v = 0, old_chB_a = 0, old_chB_w = 0;
-int tft_Rotation = 2;
+int tft_Rotation = 1;
 
 //Current sensor
 #include "INA3221Sensor.h"
@@ -145,6 +145,7 @@ void dialReadTask(void *pvParameters) {
             if (tft_Rotation != 2) {
               Serial.println("Changing rotation to 2");
               tft_Rotation = 2;
+              update_chAB_xy_by_Rotation(tft_Rotation);
               vTaskSuspend(xUITaskHandle); // Suspend UI task
               changeRotation(tft_Rotation, old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w);
               vTaskResume(xUITaskHandle);  // Resume UI task
@@ -156,6 +157,7 @@ void dialReadTask(void *pvParameters) {
             if (tft_Rotation != 0) {
               Serial.println("Changing rotation to 0");
               tft_Rotation = 0;
+              update_chAB_xy_by_Rotation(tft_Rotation);
               vTaskSuspend(xUITaskHandle); // Suspend UI task
               changeRotation(tft_Rotation, old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w);
               vTaskResume(xUITaskHandle);  // Resume UI task
@@ -181,9 +183,11 @@ void setup(void) {
   Serial.println(F("Hello! XIAO PowerBread."));
 
   // LCD init
+  tft.setSPISpeed(24000000);//50MHz
   tft.initR(INITR_GREENTAB); // Init ST7735S 0.96inch display (160*80), Also need to modify the _colstart = 24 and _rowstart = 0 in Adafruit_ST7735.cpp>initR(uint8_t)
   tft.setRotation(tft_Rotation); //Rotate the LCD 180 degree (0-3)
-  tft.setSPISpeed(24000000);//50MHz
+  update_chAB_xy_by_Rotation(tft_Rotation);
+
   tft.fillScreen(color_Background);
 
   //UI init

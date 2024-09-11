@@ -150,3 +150,19 @@ void changeRotation(int rotation, float old_chA_v, float old_chA_a, float old_ch
   ChannelInfoUpdate_B(old_chB_v,  old_chB_a,  old_chB_w,  -1,  -1,  -1);
   // delay(50);
 }
+
+void update_chAB_xy_by_Rotation(int rotation){
+  if (rotation == 0 || rotation ==2){
+  chA_x = 1;
+  chA_y = 82;
+  chB_x = 1;
+  chB_y = 0;
+  }
+    if (rotation == 1 || rotation ==3){
+  chA_x = 0;
+  chA_y = 1;
+  chB_x = 82;
+  chB_y = 1;
+  }
+
+}

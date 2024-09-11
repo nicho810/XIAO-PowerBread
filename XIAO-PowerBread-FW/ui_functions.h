@@ -21,5 +21,6 @@ void ChannelInfoUpdate_B(float new_chB_v, float new_chB_a, float new_chB_w, floa
 void updateChangedDigits(int x, int y, float oldValue, float newValue, uint16_t color);
 void drawUIFramework();
 void changeRotation(int rotation, float old_chA_v, float old_chA_a, float old_chA_w, float old_chB_v, float old_chB_a, float old_chB_w);
+void update_chAB_xy_by_Rotation(int rotation);
 
 #endif // UI_FUNCTIONS_H
