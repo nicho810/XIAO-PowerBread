@@ -79,22 +79,22 @@ void updateUITask(void *pvParameters) {
     if (sensorData.channel0.isDirty) {
       ChannelInfoUpdate_A(
         sensorData.channel0.busVoltage,
-        sensorData.channel0.current,
-        sensorData.channel0.power,
+        sensorData.channel0.busCurrent,
+        sensorData.channel0.busPower,
         old_chA_v, old_chA_a, old_chA_w);
       old_chA_v = sensorData.channel0.busVoltage;
-      old_chA_a = sensorData.channel0.current;
-      old_chA_w = sensorData.channel0.power;
+      old_chA_a = sensorData.channel0.busCurrent;
+      old_chA_w = sensorData.channel0.busPower;
     }
     if (sensorData.channel1.isDirty) {
       ChannelInfoUpdate_B(
         sensorData.channel1.busVoltage,
-        sensorData.channel1.current,
-        sensorData.channel1.power,
+        sensorData.channel1.busCurrent,
+        sensorData.channel1.busPower,
         old_chB_v, old_chB_a, old_chB_w);
       old_chB_v = sensorData.channel1.busVoltage;
-      old_chB_a = sensorData.channel1.current;
-      old_chB_w = sensorData.channel1.power;
+      old_chB_a = sensorData.channel1.busCurrent;
+      old_chB_w = sensorData.channel1.busPower;
     }
     xSemaphoreGive(xSemaphore);
     // Serial.println("UI Task running");
@@ -111,9 +111,9 @@ void serialPrintTask(void *pvParameters) {
     if ((xCurrentTime - xLastPrintTime) >= xPrintInterval) {
       xSemaphoreTake(xSemaphore, portMAX_DELAY);
       DualChannelData sensorData = inaSensor.readCurrentSensors();
-      Serial.printf("A: %.2fV %.2fmA %.2fmW | B: %.2fV %.2fmA %.2fmW | A2(12bit): %d\n",
-                    sensorData.channel0.busVoltage, sensorData.channel0.current, sensorData.channel0.power,
-                    sensorData.channel1.busVoltage, sensorData.channel1.current, sensorData.channel1.power,
+      Serial.printf("A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW | A2(12bit): %d\n",
+                    sensorData.channel0.busVoltage, sensorData.channel0.shuntVoltage * 1000, sensorData.channel0.busCurrent, sensorData.channel0.busPower,
+                    sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000, sensorData.channel1.busCurrent, sensorData.channel1.busPower,
                     dialValue);
       xSemaphoreGive(xSemaphore);
       xLastPrintTime = xCurrentTime;
@@ -194,14 +194,15 @@ void setup(void) {
   drawUIFramework();
 
   //Current sensor init
+  Wire.setClock(400000); // Set I2C to 400KHz
   Wire.begin();
   if (!inaSensor.begin()) {
     Serial.println("could not connect. Fix and Reboot");
   } else {
     Serial.println("INA3221 Found");
   }
-  inaSensor.setShuntResistors(0.100, 0.100);
-  Wire.setClock(400000);
+  inaSensor.disableChannel(2);// Disable unused channel 2
+  inaSensor.setShuntResistors(0.100, 0.100); // 100 mR shunt resistors for channels 0 and 1
   delay(100);
 
   //Dial init
