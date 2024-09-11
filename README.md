@@ -1,14 +1,16 @@
 # XIAO-PowerBread
  
-//todo
-//1. ADD disableChannel(2)
-//4. add pwm setting on avaliable IOs
+### Todo
+
+- add pwm setting on avaliable IOs
+- need to adjust the sample resister to 20mR, which can handle 5A.
+- need to calculate the bus info base on the shuntVoltage and shuntResister.
 
 
 
 
 
-18:21:06.826 -> CHAN	BUS	SHUNT	CURRENT	POWER
+<!-- 18:21:06.826 -> CHAN	BUS	SHUNT	CURRENT	POWER
 18:21:06.826 -> 0	4.568	0.080	0.800	3.661
 18:21:07.789 -> 1	3.328	0.040	0.392	1.305
 18:21:08.793 -> 2	0.000	0.000	0.000	0.000
@@ -26,4 +28,4 @@
 18:23:13.201 -> CHAN	BUS	SHUNT	CURRENT	POWER
 18:23:13.201 -> 0	4.576	0.080	0.800	3.661
 18:23:14.204 -> 1	3.328	0.080	0.784	2.610
-18:23:15.208 -> 2	0.000	0.000	0.000	0.000
+18:23:15.208 -> 2	0.000	0.000	0.000	0.000 -->

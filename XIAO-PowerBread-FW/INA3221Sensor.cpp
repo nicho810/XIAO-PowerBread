@@ -4,11 +4,19 @@ INA3221Sensor::INA3221Sensor(uint8_t address)
   : ina(address) {}
 
 bool INA3221Sensor::begin() {
-  return ina.begin();
+  Wire.setClock(400000); // Set I2C to 400KHz
+  Wire.begin();
+  if (!ina.begin()) {
+    Serial.println("could not connect. Fix and Reboot");
+    return false;
+  } else {
+    Serial.println("INA3221 Found");
+    disableChannel(2); // Disable unused channel 2
+    setShuntResistors(0.100, 0.100); // 100 mR shunt resistors for channels 0 and 1
+    delay(100);
+    return true;
+  }
 }
-
-
-
 
 void INA3221Sensor::disableChannel(int channel) {
   ina.disableChannel(channel);
@@ -17,6 +25,8 @@ void INA3221Sensor::disableChannel(int channel) {
 void INA3221Sensor::setShuntResistors(float shunt0, float shunt1) {
   ina.setShuntR(0, shunt0);
   ina.setShuntR(1, shunt1);
+  prevINAData.channel0.shuntResistor = shunt0;
+  prevINAData.channel1.shuntResistor = shunt1;
 }
 
 DualChannelData INA3221Sensor::readCurrentSensors() {

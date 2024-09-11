@@ -9,6 +9,7 @@ struct INAData {
   float busCurrent;
   float busPower;
   float shuntVoltage;
+  float shuntResistor;
   float loadVoltage;
   float loadCurrent;
   float loadPower;

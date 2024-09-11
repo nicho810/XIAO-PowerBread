@@ -26,7 +26,7 @@ volatile int newRotation = 0;
 #include "ui_functions.h"
 float old_chA_v = 0, old_chA_a = 0, old_chA_w = 0;
 float old_chB_v = 0, old_chB_a = 0, old_chB_w = 0;
-int tft_Rotation = 1;
+int tft_Rotation = 2; // default rotation.
 
 //Current sensor
 #include "INA3221Sensor.h"
@@ -194,16 +194,10 @@ void setup(void) {
   drawUIFramework();
 
   //Current sensor init
-  Wire.setClock(400000); // Set I2C to 400KHz
-  Wire.begin();
   if (!inaSensor.begin()) {
-    Serial.println("could not connect. Fix and Reboot");
-  } else {
-    Serial.println("INA3221 Found");
+    Serial.println("INA3221 initialization failed. Fix and Reboot");
+    while(1); // Halt execution
   }
-  inaSensor.disableChannel(2);// Disable unused channel 2
-  inaSensor.setShuntResistors(0.100, 0.100); // 100 mR shunt resistors for channels 0 and 1
-  delay(100);
 
   //Dial init
   dial_init();
