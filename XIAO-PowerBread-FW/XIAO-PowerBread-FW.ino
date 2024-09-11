@@ -141,30 +141,25 @@ void dialReadTask(void *pvParameters) {
 
         // Check if the dial was just released after being turned up or down
         if (dialStatus == 0 && (lastDialStatus == 1 || lastDialStatus == 2)) {
+          int newRotation = tft_Rotation;
           if (lastDialStatus == 1) { // Was turned up
-            if (tft_Rotation != 2) {
-              Serial.println("Changing rotation to 2");
-              tft_Rotation = 2;
-              update_chAB_xy_by_Rotation(tft_Rotation);
-              vTaskSuspend(xUITaskHandle); // Suspend UI task
-              changeRotation(tft_Rotation, old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w);
-              vTaskResume(xUITaskHandle);  // Resume UI task
-              Serial.println("New rotation: " + String(tft_Rotation));
-            } else {
-              Serial.println("Rotation already 2, not changing");
-            }
+            newRotation++;
+            if (newRotation > 3) newRotation = 0;
           } else if (lastDialStatus == 2) { // Was turned down
-            if (tft_Rotation != 0) {
-              Serial.println("Changing rotation to 0");
-              tft_Rotation = 0;
-              update_chAB_xy_by_Rotation(tft_Rotation);
-              vTaskSuspend(xUITaskHandle); // Suspend UI task
-              changeRotation(tft_Rotation, old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w);
-              vTaskResume(xUITaskHandle);  // Resume UI task
-              Serial.println("New rotation: " + String(tft_Rotation));
-            } else {
-              Serial.println("Rotation already 0, not changing");
-            }
+            newRotation--;
+            if (newRotation < 0) newRotation = 3;
+          }
+          
+          if (newRotation != tft_Rotation) {
+            Serial.println("Changing rotation to " + String(newRotation));
+            tft_Rotation = newRotation;
+            update_chAB_xy_by_Rotation(tft_Rotation);
+            vTaskSuspend(xUITaskHandle); // Suspend UI task
+            changeRotation(tft_Rotation, old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w);
+            vTaskResume(xUITaskHandle);  // Resume UI task
+            Serial.println("New rotation: " + String(tft_Rotation));
+          } else {
+            Serial.println("Rotation unchanged: " + String(tft_Rotation));
           }
         }
 
