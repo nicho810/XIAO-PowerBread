@@ -12,7 +12,7 @@ bool INA3221Sensor::begin() {
   } else {
     Serial.println("INA3221 Found");
     disableChannel(2); // Disable unused channel 2
-    setShuntResistors(0.100, 0.100); // 100 mR shunt resistors for channels 0 and 1
+    setShuntResistors(0.020, 0.020); // 20 mR shunt resistors for channels 0 and 1
     delay(100);
     return true;
   }
@@ -27,10 +27,18 @@ void INA3221Sensor::setShuntResistors(float shunt0, float shunt1) {
   ina.setShuntR(1, shunt1);
   prevINAData.channel0.shuntResistor = shunt0;
   prevINAData.channel1.shuntResistor = shunt1;
+  // Print the shunt resistors
+  // Serial.printf("Shunt Resistors: %f, %f\n", ina.getShuntR(0), ina.getShuntR(1));
+  // Serial.printf("Shunt Resistors: %f, %f\n", prevINAData.channel0.shuntResistor, prevINAData.channel1.shuntResistor);
 }
 
 DualChannelData INA3221Sensor::readCurrentSensors() {
   DualChannelData INAData;
+
+  //passing shuntResister value
+  INAData.channel0.shuntResistor = prevINAData.channel0.shuntResistor;
+  INAData.channel1.shuntResistor = prevINAData.channel1.shuntResistor;
+
 
   // Read channel 0
   INAData.channel0.busVoltage = ina.getBusVoltage(0);
@@ -38,11 +46,19 @@ DualChannelData INA3221Sensor::readCurrentSensors() {
   INAData.channel0.busPower = ina.getPower_mW(0);
   INAData.channel0.shuntVoltage = ina.getShuntVoltage_mV(0);
 
+  INAData.channel0.loadVoltage = INAData.channel0.busVoltage - INAData.channel0.shuntVoltage;
+  INAData.channel0.loadCurrent = INAData.channel0.busCurrent;
+  INAData.channel0.loadPower = INAData.channel0.loadVoltage * INAData.channel0.loadCurrent;
+
   // Read channel 1
   INAData.channel1.busVoltage = ina.getBusVoltage(1);
   INAData.channel1.busCurrent = ina.getCurrent_mA(1);
   INAData.channel1.busPower = ina.getPower_mW(1);
   INAData.channel1.shuntVoltage = ina.getShuntVoltage_mV(1);
+
+  INAData.channel1.loadVoltage = INAData.channel1.busVoltage - INAData.channel1.shuntVoltage;
+  INAData.channel1.loadCurrent = INAData.channel1.busCurrent;
+  INAData.channel1.loadPower = INAData.channel1.loadVoltage * INAData.channel1.loadCurrent;
 
   // Check if values have changed
   INAData.channel0.isDirty = (INAData.channel0.busVoltage != prevINAData.channel0.busVoltage) || 

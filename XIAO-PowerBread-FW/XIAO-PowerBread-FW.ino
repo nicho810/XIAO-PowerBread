@@ -78,27 +78,27 @@ void updateUITask(void *pvParameters) {
     DualChannelData sensorData = inaSensor.readCurrentSensors();
     if (sensorData.channel0.isDirty) {
       ChannelInfoUpdate_A(
-        sensorData.channel0.busVoltage,
-        sensorData.channel0.busCurrent,
-        sensorData.channel0.busPower,
+        sensorData.channel0.loadVoltage,
+        sensorData.channel0.loadCurrent,
+        sensorData.channel0.loadPower,
         old_chA_v, old_chA_a, old_chA_w);
-      old_chA_v = sensorData.channel0.busVoltage;
-      old_chA_a = sensorData.channel0.busCurrent;
-      old_chA_w = sensorData.channel0.busPower;
+      old_chA_v = sensorData.channel0.loadVoltage;
+      old_chA_a = sensorData.channel0.loadCurrent;
+      old_chA_w = sensorData.channel0.loadPower;
     }
     if (sensorData.channel1.isDirty) {
       ChannelInfoUpdate_B(
-        sensorData.channel1.busVoltage,
-        sensorData.channel1.busCurrent,
-        sensorData.channel1.busPower,
+        sensorData.channel1.loadVoltage,
+        sensorData.channel1.loadCurrent,
+        sensorData.channel1.loadPower,
         old_chB_v, old_chB_a, old_chB_w);
-      old_chB_v = sensorData.channel1.busVoltage;
-      old_chB_a = sensorData.channel1.busCurrent;
-      old_chB_w = sensorData.channel1.busPower;
+      old_chB_v = sensorData.channel1.loadVoltage;
+      old_chB_a = sensorData.channel1.loadCurrent;
+      old_chB_w = sensorData.channel1.loadPower;
     }
     xSemaphoreGive(xSemaphore);
     // Serial.println("UI Task running");
-    vTaskDelay(pdMS_TO_TICKS(50)); // Add a small delay
+    vTaskDelay(pdMS_TO_TICKS(100)); // Change delay to 100ms
   }
 }
 
@@ -111,10 +111,18 @@ void serialPrintTask(void *pvParameters) {
     if ((xCurrentTime - xLastPrintTime) >= xPrintInterval) {
       xSemaphoreTake(xSemaphore, portMAX_DELAY);
       DualChannelData sensorData = inaSensor.readCurrentSensors();
-      Serial.printf("A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW | A2(12bit): %d\n",
+      Serial.printf("A: %.2fV %.2fmV %.2fmA %.2fmW | Load A: %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW | Load B: %.2fmA %.2fmW | A2(12bit): %d\n",
                     sensorData.channel0.busVoltage, sensorData.channel0.shuntVoltage * 1000, sensorData.channel0.busCurrent, sensorData.channel0.busPower,
+                    sensorData.channel0.loadCurrent, sensorData.channel0.loadPower, // Added load current and power for channel A
                     sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000, sensorData.channel1.busCurrent, sensorData.channel1.busPower,
+                    sensorData.channel1.loadCurrent, sensorData.channel1.loadPower, // Added load current and power for channel B
                     dialValue);
+      // Serial.printf("Load Current: %.2f mA, Bus Current: %.2f mA, Shunt Voltage: %.2f mV, Shunt Resistor: %.5f Ω\n", 
+      //                sensorData.channel0.loadCurrent, 
+      //                sensorData.channel0.busCurrent, 
+      //                sensorData.channel0.shuntVoltage, 
+      //                sensorData.channel0.shuntResistor);
+      
       xSemaphoreGive(xSemaphore);
       xLastPrintTime = xCurrentTime;
       // Serial.println("Serial Task running");
@@ -136,13 +144,13 @@ void dialReadTask(void *pvParameters) {
       if (dialValue != lastDialValue) {
         if (dialValue >= 300 && dialValue < 800) {
           dialStatus = 3;
-          Serial.println("Dial pressed");
+          // Serial.println("Dial pressed");
         } else if (dialValue >= 800 && dialValue < 1500) {
           dialStatus = 2;
-          Serial.println("Dial turned down");
+          // Serial.println("Dial turned down");
         } else if (dialValue >= 1500 && dialValue < 2000) {
           dialStatus = 1;
-          Serial.println("Dial turned up");
+          // Serial.println("Dial turned up");
         } else {
           dialStatus = 0; // Reset status for other values
           // Serial.println("Dial reset");
@@ -160,11 +168,11 @@ void dialReadTask(void *pvParameters) {
           }
           
           if (newRotation != tft_Rotation) {
-            Serial.println("Requesting rotation change to " + String(newRotation));
+            // Serial.println("Requesting rotation change to " + String(newRotation));
             rotationChangeRequested = true;
             tft_Rotation = newRotation;
           } else {
-            Serial.println("Rotation unchanged: " + String(tft_Rotation));
+            // Serial.println("Rotation unchanged: " + String(tft_Rotation));
           }
         }
 
@@ -192,6 +200,8 @@ void setup(void) {
 
   //UI init
   drawUIFramework();
+  ChannelInfoUpdate_A(0,0,0,0,0,0);
+  ChannelInfoUpdate_B(0,0,0,0,0,0);
 
   //Current sensor init
   if (!inaSensor.begin()) {
