@@ -2,13 +2,20 @@
 
 XIAO PowerBread is an open-source hardware project designed to provide a versatile and efficient power solution for breadboard prototyping. With built-in sensors, real-time monitoring, and the power of the RP2040 microcontroller, XIAO PowerBread simplifies the development of electronics projects.
 
+![XIAO PowerBread](Images/pic_overview.png)
+
+
 ## Key Features
 
-1. **Built-in INA3221 Multi-Channel Current Sensor**: Monitors voltage, current, and power consumption of the connected load electronics, providing detailed power metrics.
-2. **High-Current Output**: Delivers up to 2A of 3.3V output for breadboard circuits, powered by the TI TPS54202 voltage regulator.
-3. **Real-Time Power Monitoring**: Features a built-in LCD display that shows real-time voltage, current, and power information for two channels.
-4. **Breadboard-Friendly Design**: Compact and easy to use, it plugs directly into a breadboard, providing two power outputs (5V and 3.3V).
-5. **Open-Source and RP2040 Powered**: Fully open-source and driven by the RP2040 microcontroller, with plans to add USB-serial functionality and PWM generation in future updates.
+1. **Real-Time Monitoring**: Direct monitoring, no multimeter needed – easily see what’s powering your project in real time.
+2. **High-Current Output**: Power your breadboard with confidence – up to 1.5A of steady 3.3V output!
+3. **Built-in LCD Display**: Instant feedback at a glance – real-time voltage, current, and power displayed in one place.
+4. **Plug-and-Play Design**: Plug in, power up, and go – breadboard-friendly and ready to work.
+5. **Open-Source and RP2040 Powered**: Flexible, open-source, and RP2040-powered – ready to grow with your projects.
+6. **Dual-Channel Volatge and Current Sensor**: Monitor every detail – Dual sensing gives you the full picture.
+7. **Compact Powerhouse**: Small form, big power – optimize your breadboard setup with 3.3V and 5V outputs.
+
+![XIAO PowerBread](Images/pic_directPowerAndMonitoring.png)
 
 ## Hardware Specifications
 
@@ -18,6 +25,9 @@ XIAO PowerBread is an open-source hardware project designed to provide a versati
 - **Microcontroller**: Powered by the RP2040, enabling future extensions such as USB-serial communication and PWM output.
 - **Display**: LCD for displaying real-time power statistics.
 - **PCB Dimensions**: Designed for breadboard integration with minimal space usage.
+
+![XIAO PowerBread](Images/pic_hardwareSpec.png)
+
 
 ## Getting Started
 
