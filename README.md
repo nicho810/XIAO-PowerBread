@@ -30,26 +30,29 @@ XIAO PowerBread is an open-source hardware project designed to provide a versati
 
 ## Getting Started
 
-### Prerequisites
+### Hardware
 
-- **RP2040 Microcontroller**: Ensure you have the necessary software tools for programming the RP2040.
+- **XIAO Board**: Recommend to use XIAO RP2040 or you can try other type of XIAO, it should be good.
+- **XIAO Powerbread Board**: You can make a clone or remix based the this repo. (Maybe on tindie someday if neccerssy.)
 - **Breadboard**: The PowerBread is designed to fit standard breadboards.
-- **Power Supply**: Use USB or external DC power for operation.
+- **Power Supply**: Use regular USB power source.
 
-### Installation
 
-1. **Download the Repository**:
-   Clone or download the XIAO PowerBread repository to access the PCB files, firmware examples, and BOM.
+### Software
 
-   ```bash
-   git clone https://github.com/nicho810/XIAO-PowerBread.git
-   ```
+- **Arduino Code**: If you want to remix or modify, please refer to the arduin source code.
+- **Bin file**: If you planing to use XIAO RP2040, you can directly download the bin file and flash it via UF2.
 
-2. **Assemble the Hardware**:
-   Follow the instructions in the provided documentation to assemble the XIAO PowerBread. All necessary components are listed in the BOM.
+#### Software feature dev plan
+- [x] Read Current sensor data and display on LCD at real-time
+- [x] Use dial wheel switch to roate the UI on LCD to fit different viewing angle.
+- [ ] Auto-switch measuring range from uA -> mA -> A
+- [ ] Line chart mode for each power channel
+- [ ] USB to Serial mode
+- [ ] PWM output on IO0 and IO1
+- [ ] ADC reading on IO0 and IO1
 
-3. **Programming the RP2040**:
-   Use the Arduino IDE or other compatible environments to program the RP2040 with the provided firmware or your own custom code.
+
 
 ### Usage
 
@@ -62,10 +65,6 @@ XIAO PowerBread is an open-source hardware project designed to provide a versati
 3. **Extend Functionality**:
    In future updates, you can use the RP2040 for additional functions like USB-serial communication or PWM generation.
 
-## Example Projects
-
-- **Monitoring Power Consumption**: Use the built-in INA3221 sensor to monitor power usage of different breadboard circuits in real-time.
-- **Custom Control**: Program the RP2040 to manage power output or integrate with other sensors and actuators.
 
 ## Contributing
 
@@ -78,3 +77,4 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 ---
 
 Feel free to edit further based on additional functionality or details.
+
