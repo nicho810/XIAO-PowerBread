@@ -18,11 +18,10 @@ XIAO PowerBread is an open-source hardware project designed to provide a versati
 ![XIAO PowerBread](Images/pic_directPowerAndMonitoring.png)
 
 ## Hardware Specifications
-
-- **Input Voltage**: Supports USB input or external DC power supply.
-- **Output Voltages**: Provides both 5V and 3.3V, with a maximum 3.3V output current of 2A.
+- **Input Voltage**: USB-C input by XIAO.
+- **Output Voltages**: Provides both 5V and 3.3V, with a maximum 3.3V output current of 1.5A.
 - **Current Sensing**: Uses the INA3221 sensor for real-time voltage, current, and power measurement.
-- **Microcontroller**: Powered by the RP2040, enabling future extensions such as USB-serial communication and PWM output.
+- **Microcontroller**: Powered by the RP2040, driving the current sensor and LCD, also enabling future extensions such as USB-serial communication and PWM output.
 - **Display**: LCD for displaying real-time power statistics.
 - **PCB Dimensions**: Designed for breadboard integration with minimal space usage.
 
