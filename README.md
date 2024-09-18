@@ -39,7 +39,14 @@
 ### Software
 
 - **Arduino Code**: Modify or remix the project using the provided Arduino source code.
+  - This code is built on top of freeRTOS from the Arduino Pico SDK. It has 4 tasks:
+    - Task for reading current sensors (INA3221).
+    - Task for reading dial value from A2 pin of XIAO.
+    - Task for updating data to LCD.
+    - Task for handling dial functions, such as changing the rotation of the UI.
+
 - **Bin File**: For XIAO RP2040 users, download the precompiled bin file and flash it via UF2 for quick setup.
+
 
 ### Planned Software Features
 - [x] Real-time current sensor data displayed on the LCD.
