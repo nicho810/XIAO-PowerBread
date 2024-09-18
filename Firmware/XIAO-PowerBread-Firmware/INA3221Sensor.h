@@ -10,9 +10,6 @@ struct INAData {
   float busPower;
   float shuntVoltage;
   float shuntResistor;
-  float loadVoltage;
-  float loadCurrent;
-  float loadPower;
   bool isDirty;
 };
 

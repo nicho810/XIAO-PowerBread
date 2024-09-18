@@ -78,23 +78,23 @@ void updateUITask(void *pvParameters) {
     DualChannelData sensorData = inaSensor.readCurrentSensors();
     if (sensorData.channel0.isDirty) {
       ChannelInfoUpdate_A(
-        sensorData.channel0.loadVoltage,
-        sensorData.channel0.loadCurrent,
-        sensorData.channel0.loadPower,
+        sensorData.channel0.busVoltage,
+        sensorData.channel0.busCurrent,
+        sensorData.channel0.busPower,
         old_chA_v, old_chA_a, old_chA_w);
-      old_chA_v = sensorData.channel0.loadVoltage;
-      old_chA_a = sensorData.channel0.loadCurrent;
-      old_chA_w = sensorData.channel0.loadPower;
+      old_chA_v = sensorData.channel0.busVoltage;
+      old_chA_a = sensorData.channel0.busCurrent;
+      old_chA_w = sensorData.channel0.busPower;
     }
     if (sensorData.channel1.isDirty) {
       ChannelInfoUpdate_B(
-        sensorData.channel1.loadVoltage,
-        sensorData.channel1.loadCurrent,
-        sensorData.channel1.loadPower,
+        sensorData.channel1.busVoltage,
+        sensorData.channel1.busCurrent,
+        sensorData.channel1.busPower,
         old_chB_v, old_chB_a, old_chB_w);
-      old_chB_v = sensorData.channel1.loadVoltage;
-      old_chB_a = sensorData.channel1.loadCurrent;
-      old_chB_w = sensorData.channel1.loadPower;
+      old_chB_v = sensorData.channel1.busVoltage;
+      old_chB_a = sensorData.channel1.busCurrent;
+      old_chB_w = sensorData.channel1.busPower;
     }
     xSemaphoreGive(xSemaphore);
     // Serial.println("UI Task running");
