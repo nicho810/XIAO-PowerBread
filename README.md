@@ -44,7 +44,6 @@
 ### Planned Software Features
 - [x] Real-time current sensor data displayed on the LCD.
 - [x] Dial wheel to adjust the UI for different viewing angles.
-- [ ] Automatic measurement range switching (uA → mA → A).
 - [ ] Line chart mode to visualize power usage for each channel.
 - [ ] USB-Serial mode for data transfer.
 - [ ] PWM output on IO0 and IO1.
@@ -63,5 +62,3 @@ Contributions are welcome to improve the XIAO PowerBread project! Whether you wa
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
-
-

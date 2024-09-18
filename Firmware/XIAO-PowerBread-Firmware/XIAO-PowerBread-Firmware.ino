@@ -111,10 +111,9 @@ void serialPrintTask(void *pvParameters) {
     if ((xCurrentTime - xLastPrintTime) >= xPrintInterval) {
       xSemaphoreTake(xSemaphore, portMAX_DELAY);
       DualChannelData sensorData = inaSensor.readCurrentSensors();
-      Serial.printf("A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW | A2(12bit): %d\n",
+      Serial.printf("A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW\n",
                     sensorData.channel0.busVoltage, sensorData.channel0.shuntVoltage * 1000, sensorData.channel0.busCurrent, sensorData.channel0.busPower,
-                    sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000, sensorData.channel1.busCurrent, sensorData.channel1.busPower,
-                    dialValue);
+                    sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000, sensorData.channel1.busCurrent, sensorData.channel1.busPower);
     
       xSemaphoreGive(xSemaphore);
       xLastPrintTime = xCurrentTime;
