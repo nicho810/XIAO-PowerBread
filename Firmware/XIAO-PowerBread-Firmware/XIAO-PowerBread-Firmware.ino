@@ -253,8 +253,20 @@ extern "C" void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskNa
 // Add this function at the end of your file
 extern "C" void vApplicationIdleHook(void)
 {
-  // This function will be called when the scheduler is idle
-  Serial.println("Idle Hook called");
-  while(1);
+  static TickType_t lastIdleTime = 0;
+  static uint32_t idleCount = 0;
+
+  TickType_t currentTime = xTaskGetTickCount();
+  idleCount++;
+
+  // Print message only once per second
+  if (currentTime - lastIdleTime >= pdMS_TO_TICKS(1000)) {
+    Serial.print("Idle Hook called ");
+    Serial.print(idleCount);
+    Serial.println(" times in the last second");
+    
+    lastIdleTime = currentTime;
+    idleCount = 0;
+  }
 }
 
