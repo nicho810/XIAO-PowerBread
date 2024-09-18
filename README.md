@@ -54,7 +54,7 @@
 - [INA3221_RT Library](https://github.com/RobTillaart/INA3221_RT/tree/master)
 - [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library)
 - [Adafruit ST7735 Library](https://github.com/adafruit/Adafruit-ST7735-Library)
-- [Arduino-Pico Core](https://github.com/earlephilhower/arduino-pico)
+- [Arduino-Pico Core (4.0.x)](https://github.com/earlephilhower/arduino-pico)
 
 ## Contributing
 

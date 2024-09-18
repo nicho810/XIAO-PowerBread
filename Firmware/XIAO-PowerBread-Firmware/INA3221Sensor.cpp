@@ -46,9 +46,9 @@ DualChannelData INA3221Sensor::readCurrentSensors() {
   INAData.channel0.busPower = ina.getPower_mW(0);
   INAData.channel0.shuntVoltage = ina.getShuntVoltage_mV(0);
 
-  INAData.channel0.loadVoltage = INAData.channel0.busVoltage - INAData.channel0.shuntVoltage;
+  INAData.channel0.loadVoltage = INAData.channel0.busVoltage;
   INAData.channel0.loadCurrent = INAData.channel0.busCurrent;
-  INAData.channel0.loadPower = INAData.channel0.loadVoltage * INAData.channel0.loadCurrent;
+  INAData.channel0.loadPower = INAData.channel0.busPower;
 
   // Read channel 1
   INAData.channel1.busVoltage = ina.getBusVoltage(1);
@@ -56,9 +56,9 @@ DualChannelData INA3221Sensor::readCurrentSensors() {
   INAData.channel1.busPower = ina.getPower_mW(1);
   INAData.channel1.shuntVoltage = ina.getShuntVoltage_mV(1);
 
-  INAData.channel1.loadVoltage = INAData.channel1.busVoltage - INAData.channel1.shuntVoltage;
+  INAData.channel1.loadVoltage = INAData.channel1.busVoltage;
   INAData.channel1.loadCurrent = INAData.channel1.busCurrent;
-  INAData.channel1.loadPower = INAData.channel1.loadVoltage * INAData.channel1.loadCurrent;
+  INAData.channel1.loadPower = INAData.channel1.busPower;
 
   // Check if values have changed
   INAData.channel0.isDirty = (INAData.channel0.busVoltage != prevINAData.channel0.busVoltage) || 

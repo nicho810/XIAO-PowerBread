@@ -111,18 +111,11 @@ void serialPrintTask(void *pvParameters) {
     if ((xCurrentTime - xLastPrintTime) >= xPrintInterval) {
       xSemaphoreTake(xSemaphore, portMAX_DELAY);
       DualChannelData sensorData = inaSensor.readCurrentSensors();
-      Serial.printf("A: %.2fV %.2fmV %.2fmA %.2fmW | Load A: %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW | Load B: %.2fmA %.2fmW | A2(12bit): %d\n",
+      Serial.printf("A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW | A2(12bit): %d\n",
                     sensorData.channel0.busVoltage, sensorData.channel0.shuntVoltage * 1000, sensorData.channel0.busCurrent, sensorData.channel0.busPower,
-                    sensorData.channel0.loadCurrent, sensorData.channel0.loadPower, // Added load current and power for channel A
                     sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000, sensorData.channel1.busCurrent, sensorData.channel1.busPower,
-                    sensorData.channel1.loadCurrent, sensorData.channel1.loadPower, // Added load current and power for channel B
                     dialValue);
-      // Serial.printf("Load Current: %.2f mA, Bus Current: %.2f mA, Shunt Voltage: %.2f mV, Shunt Resistor: %.5f Ω\n", 
-      //                sensorData.channel0.loadCurrent, 
-      //                sensorData.channel0.busCurrent, 
-      //                sensorData.channel0.shuntVoltage, 
-      //                sensorData.channel0.shuntResistor);
-      
+    
       xSemaphoreGive(xSemaphore);
       xLastPrintTime = xCurrentTime;
       // Serial.println("Serial Task running");
@@ -200,8 +193,8 @@ void setup(void) {
 
   //UI init
   drawUIFramework();
-  ChannelInfoUpdate_A(0,0,0,0,0,0);
-  ChannelInfoUpdate_B(0,0,0,0,0,0);
+  ChannelInfoUpdate_A(0,0,0,-1,-1,-1);//init data of chA
+  ChannelInfoUpdate_B(0,0,0,-1,-1,-1);//init data of chB
 
   //Current sensor init
   if (!inaSensor.begin()) {
@@ -262,6 +255,6 @@ extern "C" void vApplicationIdleHook(void)
 {
   // This function will be called when the scheduler is idle
   Serial.println("Idle Hook called");
-  // while(1);
+  while(1);
 }
 
