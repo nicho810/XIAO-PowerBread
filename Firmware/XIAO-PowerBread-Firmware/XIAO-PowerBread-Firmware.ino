@@ -46,7 +46,7 @@ int read_dial() {
   return analogRead(dial_adc);
 }
 
-#define STACK_SIZE 4096
+#define STACK_SIZE 8192
 StaticTask_t xTaskBuffer_UI;
 StackType_t xStack_UI[STACK_SIZE];
 
@@ -54,7 +54,7 @@ StackType_t xStack_UI[STACK_SIZE];
 StaticTask_t xTaskBuffer_Serial;
 StackType_t xStack_Serial[STACK_SIZE_SERIAL];
 
-#define STACK_SIZE_DIAL 1024
+#define STACK_SIZE_DIAL 2048
 StaticTask_t xTaskBuffer_Dial;
 StackType_t xStack_Dial[STACK_SIZE_DIAL];
 
@@ -218,10 +218,24 @@ void setup(void) {
     while(1);
   }
 
-  // Adjust task priorities
+  // Task creation with error checking
   xUITaskHandle = xTaskCreateStatic(updateUITask, "UI_Update", STACK_SIZE, NULL, 3, xStack_UI, &xTaskBuffer_UI);
+  if (xUITaskHandle == NULL) {
+    Serial.println("UI Task creation failed");
+    while(1);
+  }
+
   TaskHandle_t xSerialHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print", STACK_SIZE_SERIAL, NULL, 1, xStack_Serial, &xTaskBuffer_Serial);
+  if (xSerialHandle == NULL) {
+    Serial.println("Serial Task creation failed");
+    while(1);
+  }
+
   TaskHandle_t xDialHandle = xTaskCreateStatic(dialReadTask, "Dial_Read", STACK_SIZE_DIAL, NULL, 2, xStack_Dial, &xTaskBuffer_Dial);
+  if (xDialHandle == NULL) {
+    Serial.println("Dial Task creation failed");
+    while(1);
+  }
 
   Serial.println("Starting scheduler");
   vTaskStartScheduler();
@@ -248,6 +262,6 @@ extern "C" void vApplicationIdleHook(void)
 {
   // This function will be called when the scheduler is idle
   Serial.println("Idle Hook called");
-  while(1);
+  // while(1);
 }
 
