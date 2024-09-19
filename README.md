@@ -33,9 +33,11 @@
 ### Hardware
 
 - **XIAO Board**: The XIAO RP2040 is recommended, though other XIAO boards should work as well.
-- **XIAO PowerBread Board**: Clone or remix the design from this repository. (Future hardware may also be available on Tindie if needed.)
+- **XIAO PowerBread Board**: Clone or remix the design from this repository. Also you can get the hardware from [Tindie](https://www.tindie.com/products/35842/).
 - **Breadboard**: Fits standard breadboards for easy prototyping.
 - **Power Supply**: Use a standard USB power source.
+
+<a href="https://www.tindie.com/stores/nicho810d/?ref=offsite_badges&utm_source=sellers_nicho810&utm_medium=badges&utm_campaign=badge_large"><img src="https://d2ss6ovg47m0r5.cloudfront.net/badges/tindie-larges.png" alt="I sell on Tindie" width="200" height="104"></a>
 
 ### Software
 
