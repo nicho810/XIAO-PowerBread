@@ -24,6 +24,7 @@ int tft_Rotation = 2;  // default rotation.
 
 //UIs
 #include "dataMonitor_functions.h"
+#include "dataChart_functions.h"
 float old_chA_v = 0, old_chA_a = 0, old_chA_w = 0;
 float old_chB_v = 0, old_chB_a = 0, old_chB_w = 0;
 

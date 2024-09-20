@@ -21,7 +21,7 @@ void dataMonitor_updateChangedDigits(int x, int y, float oldValue, float newValu
 void dataMonitor_initUI();
 void dataMonitor_changeRotation(int rotation, float old_chA_v, float old_chA_a, float old_chA_w, float old_chB_v, float old_chB_a, float old_chB_w);
 void dataMonitor_update_chAB_xy_by_Rotation(int rotation);
-void dataChart_changeRotation(int rotation);
+
 
 #endif // DATAMONITOR_FUNCTIONS_H
 
