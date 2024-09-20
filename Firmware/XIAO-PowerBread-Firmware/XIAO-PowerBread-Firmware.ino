@@ -17,22 +17,34 @@
 #define TFT_SCLK D8
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
-// Add this global variable near the top of the file, with other global declarations
-volatile int dialStatus = 0; // 0: reset, 1: up, 2: down, 3: press
+// LCD Rotation
 volatile bool rotationChangeRequested = false;
 volatile int newRotation = 0;
+int tft_Rotation = 2; // default rotation.
 
 //UIs
 #include "ui_functions.h"
 float old_chA_v = 0, old_chA_a = 0, old_chA_w = 0;
 float old_chB_v = 0, old_chB_a = 0, old_chB_w = 0;
-int tft_Rotation = 2; // default rotation.
+
+enum function_mode {
+  dataMonitor,
+  dataChart,
+  serialMonitor,
+  pwmOutput,
+  analogInputMonitor
+};
+
+volatile function_mode current_function_mode = dataMonitor;
+volatile bool functionModeChangeRequested = false; //a flag to indicate a mode change is requested
+
 
 //Current sensor
 #include "INA3221Sensor.h"
 INA3221Sensor inaSensor;
 
-//ADC init
+//Dial wheel switch
+volatile int dialStatus = 0; // 0: reset, 1: up, 2: down, 3: press
 #define dial_adc A2
 bool dial_enable = true;
 volatile uint16_t dialValue = 0; // Variable to store ADC value
@@ -64,9 +76,33 @@ StaticSemaphore_t xMutexBuffer;
 // Add this near the top of the file with other global declarations
 TaskHandle_t xUITaskHandle = NULL;
 
+void func_dataMonitor(const DualChannelData& sensorData) {
+  if (sensorData.channel0.isDirty) {
+    ChannelInfoUpdate_A(
+      sensorData.channel0.busVoltage,
+      sensorData.channel0.busCurrent,
+      sensorData.channel0.busPower,
+      old_chA_v, old_chA_a, old_chA_w);
+    old_chA_v = sensorData.channel0.busVoltage;
+    old_chA_a = sensorData.channel0.busCurrent;
+    old_chA_w = sensorData.channel0.busPower;
+  }
+  if (sensorData.channel1.isDirty) {
+    ChannelInfoUpdate_B(
+      sensorData.channel1.busVoltage,
+      sensorData.channel1.busCurrent,
+      sensorData.channel1.busPower,
+      old_chB_v, old_chB_a, old_chB_w);
+    old_chB_v = sensorData.channel1.busVoltage;
+    old_chB_a = sensorData.channel1.busCurrent;
+    old_chB_w = sensorData.channel1.busPower;
+  }
+}
+
 void updateUITask(void *pvParameters) {
   (void) pvParameters;
   while (1) {
+    //Rotation handler
     if (rotationChangeRequested) {
       rotationChangeRequested = false;
       update_chAB_xy_by_Rotation(tft_Rotation);
@@ -74,30 +110,28 @@ void updateUITask(void *pvParameters) {
       Serial.println("New rotation applied: " + String(tft_Rotation));
     }
 
+    //functionModeChangeRequested handler
+    if (functionModeChangeRequested) {
+      functionModeChangeRequested = false;
+      //do something here
+      Serial.println("functionModeChangeRequested triggered.");
+    }
+
     xSemaphoreTake(xSemaphore, portMAX_DELAY);
     DualChannelData sensorData = inaSensor.readCurrentSensors();
-    if (sensorData.channel0.isDirty) {
-      ChannelInfoUpdate_A(
-        sensorData.channel0.busVoltage,
-        sensorData.channel0.busCurrent,
-        sensorData.channel0.busPower,
-        old_chA_v, old_chA_a, old_chA_w);
-      old_chA_v = sensorData.channel0.busVoltage;
-      old_chA_a = sensorData.channel0.busCurrent;
-      old_chA_w = sensorData.channel0.busPower;
+
+    switch (current_function_mode) {
+      case dataMonitor:
+        func_dataMonitor(sensorData);
+        break;
+      case dataChart:
+        //do something here
+        break;
+      // Add more cases for additional function modes
     }
-    if (sensorData.channel1.isDirty) {
-      ChannelInfoUpdate_B(
-        sensorData.channel1.busVoltage,
-        sensorData.channel1.busCurrent,
-        sensorData.channel1.busPower,
-        old_chB_v, old_chB_a, old_chB_w);
-      old_chB_v = sensorData.channel1.busVoltage;
-      old_chB_a = sensorData.channel1.busCurrent;
-      old_chB_w = sensorData.channel1.busPower;
-    }
+
     xSemaphoreGive(xSemaphore);
-    // Serial.println("UI Task running");
+    // Serial.println("UI Task running"); //for debug
     vTaskDelay(pdMS_TO_TICKS(100)); // Change delay to 100ms
   }
 }
