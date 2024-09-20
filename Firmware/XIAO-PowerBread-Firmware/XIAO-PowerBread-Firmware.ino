@@ -20,7 +20,7 @@ Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 // LCD Rotation
 volatile bool rotationChangeRequested = false;
 volatile int newRotation = 0;
-int tft_Rotation = 2; // default rotation.
+int tft_Rotation = 2;  // default rotation.
 
 //UIs
 #include "ui_functions.h"
@@ -36,7 +36,7 @@ enum function_mode {
 };
 
 volatile function_mode current_function_mode = dataMonitor;
-volatile bool functionModeChangeRequested = false; //a flag to indicate a mode change is requested
+volatile bool functionModeChangeRequested = false;  //a flag to indicate a mode change is requested
 
 
 //Current sensor
@@ -44,10 +44,10 @@ volatile bool functionModeChangeRequested = false; //a flag to indicate a mode c
 INA3221Sensor inaSensor;
 
 //Dial wheel switch
-volatile int dialStatus = 0; // 0: reset, 1: up, 2: down, 3: press
+volatile int dialStatus = 0;  // 0: reset, 1: up, 2: down, 3: press
 #define dial_adc A2
 bool dial_enable = true;
-volatile uint16_t dialValue = 0; // Variable to store ADC value
+volatile uint16_t dialValue = 0;  // Variable to store ADC value
 
 void dial_init() {
   pinMode(dial_adc, INPUT);
@@ -76,23 +76,25 @@ StaticSemaphore_t xMutexBuffer;
 // Add this near the top of the file with other global declarations
 TaskHandle_t xUITaskHandle = NULL;
 
-void func_dataMonitor(const DualChannelData& sensorData) {
+void func_dataMonitor(const DualChannelData &sensorData) {
   if (sensorData.channel0.isDirty) {
-    ChannelInfoUpdate_A(
-      sensorData.channel0.busVoltage,
-      sensorData.channel0.busCurrent,
-      sensorData.channel0.busPower,
-      old_chA_v, old_chA_a, old_chA_w);
+    dataMonitor_ChannelInfoUpdate(0,
+                                  sensorData.channel0.busVoltage,
+                                  sensorData.channel0.busCurrent,
+                                  sensorData.channel0.busPower,
+                                  old_chA_v, old_chA_a, old_chA_w,
+                                  color_Text);
     old_chA_v = sensorData.channel0.busVoltage;
     old_chA_a = sensorData.channel0.busCurrent;
     old_chA_w = sensorData.channel0.busPower;
   }
   if (sensorData.channel1.isDirty) {
-    ChannelInfoUpdate_B(
-      sensorData.channel1.busVoltage,
-      sensorData.channel1.busCurrent,
-      sensorData.channel1.busPower,
-      old_chB_v, old_chB_a, old_chB_w);
+    dataMonitor_ChannelInfoUpdate(1,
+                                  sensorData.channel1.busVoltage,
+                                  sensorData.channel1.busCurrent,
+                                  sensorData.channel1.busPower,
+                                  old_chB_v, old_chB_a, old_chB_w,
+                                  color_Text);
     old_chB_v = sensorData.channel1.busVoltage;
     old_chB_a = sensorData.channel1.busCurrent;
     old_chB_w = sensorData.channel1.busPower;
@@ -100,14 +102,14 @@ void func_dataMonitor(const DualChannelData& sensorData) {
 }
 
 uint8_t dataChart_ch = 0;
-void func_dataChart(const DualChannelData& sensorData, uint8_t ch) {
+void func_dataChart(const DualChannelData &sensorData, uint8_t ch) {
   tft.fillScreen(color_Background);
-  tft.setCursor(0, tft.height()/2);
+  tft.setCursor(0, tft.height() / 2);
   tft.print("Data Chart");
 }
 
 void updateUITask(void *pvParameters) {
-  (void) pvParameters;
+  (void)pvParameters;
   while (1) {
     //wait for sensor data
     xSemaphoreTake(xSemaphore, portMAX_DELAY);
@@ -117,8 +119,8 @@ void updateUITask(void *pvParameters) {
     //Rotation handler
     if (rotationChangeRequested) {
       rotationChangeRequested = false;
-      update_chAB_xy_by_Rotation(tft_Rotation);
-      changeRotation_dataMonitor(tft_Rotation, old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w);
+      dataMonitor_update_chAB_xy_by_Rotation(tft_Rotation);
+      dataMonitor_changeRotation(tft_Rotation, old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w);
       Serial.println("New rotation applied: " + String(tft_Rotation));
     }
 
@@ -126,16 +128,16 @@ void updateUITask(void *pvParameters) {
     if (functionModeChangeRequested) {
       functionModeChangeRequested = false;
       //init the UI for different function mode
-      tft.fillScreen(color_Background);//clear the screen
+      tft.fillScreen(color_Background);  //clear the screen
       if (current_function_mode == dataMonitor) {
         //init dataMonitor UI
-        drawUIFramework();
-        ChannelInfoUpdate_A(old_chA_v, old_chA_a, old_chA_w, -1, -1, -1);
-        ChannelInfoUpdate_B(old_chB_v, old_chB_a, old_chB_w, -1, -1, -1);
+        dataMonitor_initUI();
+        dataMonitor_ChannelInfoUpdate(0, old_chA_v, old_chA_a, old_chA_w, -1, -1, -1, color_Text);
+        dataMonitor_ChannelInfoUpdate(1, old_chB_v, old_chB_a, old_chB_w, -1, -1, -1, color_Text);
       } else if (current_function_mode == dataChart) {
         //init dataChart UI
-        tft_Rotation = 1; //force the rotation to 1
-        changeRotation_dataChart(tft_Rotation);
+        tft_Rotation = 1;  //force the rotation to 1
+        dataChart_changeRotation(tft_Rotation);
         Serial.println("New rotation applied: " + String(tft_Rotation));
         func_dataChart(sensorData, dataChart_ch);
       }
@@ -149,17 +151,17 @@ void updateUITask(void *pvParameters) {
       case dataChart:
         func_dataChart(sensorData, dataChart_ch);
         break;
-      // Add more cases for additional function modes
+        // Add more cases for additional function modes
     }
 
     xSemaphoreGive(xSemaphore);
     // Serial.println("UI Task running"); //for debug
-    vTaskDelay(pdMS_TO_TICKS(100)); // Change delay to 100ms
+    vTaskDelay(pdMS_TO_TICKS(100));  // Change delay to 100ms
   }
 }
 
 void serialPrintTask(void *pvParameters) {
-  (void) pvParameters;
+  (void)pvParameters;
   TickType_t xLastPrintTime = 0;
   const TickType_t xPrintInterval = pdMS_TO_TICKS(1000);
   while (1) {
@@ -170,19 +172,19 @@ void serialPrintTask(void *pvParameters) {
       Serial.printf("A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW\n",
                     sensorData.channel0.busVoltage, sensorData.channel0.shuntVoltage * 1000, sensorData.channel0.busCurrent, sensorData.channel0.busPower,
                     sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000, sensorData.channel1.busCurrent, sensorData.channel1.busPower);
-    
+
       xSemaphoreGive(xSemaphore);
       xLastPrintTime = xCurrentTime;
       // Serial.println("Serial Task running");
     }
-    vTaskDelay(pdMS_TO_TICKS(100)); // Increase delay to 100ms
+    vTaskDelay(pdMS_TO_TICKS(100));  // Increase delay to 100ms
   }
 }
 
 void dialReadTask(void *pvParameters) {
-  (void) pvParameters;
+  (void)pvParameters;
   TickType_t xLastReadTime = 0;
-  const TickType_t xReadInterval = pdMS_TO_TICKS(50); // Read every 50ms
+  const TickType_t xReadInterval = pdMS_TO_TICKS(50);  // Read every 50ms
   uint16_t lastDialValue = 0;
   int lastDialStatus = 0;
   while (1) {
@@ -200,45 +202,45 @@ void dialReadTask(void *pvParameters) {
           dialStatus = 1;
           // Serial.println("Dial turned up");
         } else {
-          dialStatus = 0; // Reset status for other values
+          dialStatus = 0;  // Reset status for other values
           // Serial.println("Dial reset");
         }
 
         // Check if the dial was just released after being turned up or down or pressed
         if (dialStatus == 0 && (lastDialStatus == 1 || lastDialStatus == 2 || lastDialStatus == 3)) {
-          if (lastDialStatus == 3) { // Dial was pressed
+          if (lastDialStatus == 3) {  // Dial was pressed
             //change the function mode
             functionModeChangeRequested = true;
             current_function_mode = (current_function_mode == dataMonitor) ? dataChart : dataMonitor;
             Serial.println("Function mode changed to " + String(current_function_mode));
-            
+
             // Add a delay to prevent multiple mode changes
             vTaskDelay(pdMS_TO_TICKS(300));
-          } else if (current_function_mode == dataMonitor) { // Handle rotation changes only in dataMonitor mode
+          } else if (current_function_mode == dataMonitor) {  // Handle rotation changes only in dataMonitor mode
             int newRotation = tft_Rotation;
-            if (lastDialStatus == 1) { // Was turned up
+            if (lastDialStatus == 1) {  // Was turned up
               newRotation++;
               if (newRotation > 3) newRotation = 0;
-            } else if (lastDialStatus == 2) { // Was turned down
+            } else if (lastDialStatus == 2) {  // Was turned down
               newRotation--;
               if (newRotation < 0) newRotation = 3;
             }
-            if (newRotation != tft_Rotation) { //check if the rotation is changed
+            if (newRotation != tft_Rotation) {  //check if the rotation is changed
               rotationChangeRequested = true;
               tft_Rotation = newRotation;
             } else {
               // Serial.println("Rotation unchanged: " + String(tft_Rotation));
             }
-          } else if (current_function_mode == dataChart) {// Handle channel changes only in dataChart mode
+          } else if (current_function_mode == dataChart) {  // Handle channel changes only in dataChart mode
             int newChannel = dataChart_ch;
-            if (lastDialStatus == 1) { // Was turned up
+            if (lastDialStatus == 1) {  // Was turned up
               newChannel++;
               if (newChannel > 1) newChannel = 0;
-            } else if (lastDialStatus == 2) { // Was turned down
+            } else if (lastDialStatus == 2) {  // Was turned down
               newChannel--;
               if (newChannel < 0) newChannel = 1;
             }
-            if (newChannel != dataChart_ch) { //check if the channel is changed 
+            if (newChannel != dataChart_ch) {  //check if the channel is changed
               dataChart_ch = newChannel;
               Serial.println("Change the channel of dataChart to " + String(dataChart_ch));
             }
@@ -250,7 +252,7 @@ void dialReadTask(void *pvParameters) {
       }
       xLastReadTime = xCurrentTime;
     }
-    vTaskDelay(pdMS_TO_TICKS(50)); // Increase delay to 50ms
+    vTaskDelay(pdMS_TO_TICKS(50));  // Increase delay to 50ms
   }
 }
 
@@ -260,22 +262,23 @@ void setup(void) {
   Serial.println(F("Hello! XIAO PowerBread."));
 
   // LCD init
-  tft.setSPISpeed(24000000);//50MHz
-  tft.initR(INITR_GREENTAB); // Init ST7735S 0.96inch display (160*80), Also need to modify the _colstart = 24 and _rowstart = 0 in Adafruit_ST7735.cpp>initR(uint8_t)
-  tft.setRotation(tft_Rotation); //Rotate the LCD 180 degree (0-3)
-  update_chAB_xy_by_Rotation(tft_Rotation);
+  tft.setSPISpeed(24000000);      //50MHz
+  tft.initR(INITR_GREENTAB);      // Init ST7735S 0.96inch display (160*80), Also need to modify the _colstart = 24 and _rowstart = 0 in Adafruit_ST7735.cpp>initR(uint8_t)
+  tft.setRotation(tft_Rotation);  //Rotate the LCD 180 degree (0-3)
+  dataMonitor_update_chAB_xy_by_Rotation(tft_Rotation);
 
   tft.fillScreen(color_Background);
 
   //UI init
-  drawUIFramework();
-  ChannelInfoUpdate_A(0,0,0,-1,-1,-1);//init data of chA
-  ChannelInfoUpdate_B(0,0,0,-1,-1,-1);//init data of chB
+  dataMonitor_initUI();
+  dataMonitor_ChannelInfoUpdate(0, 0, 0, 0, -1, -1, -1, color_Text);  //init data of chA
+  dataMonitor_ChannelInfoUpdate(1, 0, 0, 0, -1, -1, -1, color_Text);  //init data of chB
 
   //Current sensor init
   if (!inaSensor.begin()) {
     Serial.println("INA3221 initialization failed. Fix and Reboot");
-    while(1); // Halt execution
+    while (1)
+      ;  // Halt execution
   }
 
   //Dial init
@@ -284,26 +287,30 @@ void setup(void) {
   xSemaphore = xSemaphoreCreateMutexStatic(&xMutexBuffer);
   if (xSemaphore == NULL) {
     Serial.println("Error creating semaphore");
-    while(1);
+    while (1)
+      ;
   }
 
   // Task creation with error checking
   xUITaskHandle = xTaskCreateStatic(updateUITask, "UI_Update", STACK_SIZE, NULL, 3, xStack_UI, &xTaskBuffer_UI);
   if (xUITaskHandle == NULL) {
     Serial.println("UI Task creation failed");
-    while(1);
+    while (1)
+      ;
   }
 
   TaskHandle_t xSerialHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print", STACK_SIZE_SERIAL, NULL, 1, xStack_Serial, &xTaskBuffer_Serial);
   if (xSerialHandle == NULL) {
     Serial.println("Serial Task creation failed");
-    while(1);
+    while (1)
+      ;
   }
 
   TaskHandle_t xDialHandle = xTaskCreateStatic(dialReadTask, "Dial_Read", STACK_SIZE_DIAL, NULL, 2, xStack_Dial, &xTaskBuffer_Dial);
   if (xDialHandle == NULL) {
     Serial.println("Dial Task creation failed");
-    while(1);
+    while (1)
+      ;
   }
 
   Serial.println("Starting scheduler");
@@ -311,7 +318,8 @@ void setup(void) {
 
   // We should never get here as control is now taken by the scheduler
   Serial.println("Scheduler failed to start");
-  while(1);
+  while (1)
+    ;
 }
 
 void loop() {
@@ -319,16 +327,15 @@ void loop() {
 }
 
 // Add this function at the end of your file
-extern "C" void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
-{
+extern "C" void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
   Serial.print("Stack Overflow in task: ");
   Serial.println(pcTaskName);
-  while(1);
+  while (1)
+    ;
 }
 
 // Add this function at the end of your file
-extern "C" void vApplicationIdleHook(void)
-{
+extern "C" void vApplicationIdleHook(void) {
   static TickType_t lastIdleTime = 0;
   static uint32_t idleCount = 0;
 
@@ -340,9 +347,8 @@ extern "C" void vApplicationIdleHook(void)
     Serial.print("Idle Hook called ");
     Serial.print(idleCount);
     Serial.println(" times in the last second");
-    
+
     lastIdleTime = currentTime;
     idleCount = 0;
   }
 }
-
