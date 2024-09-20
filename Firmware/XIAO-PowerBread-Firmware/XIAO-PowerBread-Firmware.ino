@@ -30,9 +30,9 @@ float old_chB_v = 0, old_chB_a = 0, old_chB_w = 0;
 enum function_mode {
   dataMonitor,
   dataChart,
-  serialMonitor,
-  pwmOutput,
-  analogInputMonitor
+  // serialMonitor,
+  // pwmOutput,
+  // analogInputMonitor,
 };
 
 volatile function_mode current_function_mode = dataMonitor;
@@ -99,9 +99,21 @@ void func_dataMonitor(const DualChannelData& sensorData) {
   }
 }
 
+uint8_t dataChart_ch = 0;
+void func_dataChart(const DualChannelData& sensorData, uint8_t ch) {
+  tft.fillScreen(color_Background);
+  tft.setCursor(0, tft.height()/2);
+  tft.print("Data Chart");
+}
+
 void updateUITask(void *pvParameters) {
   (void) pvParameters;
   while (1) {
+    //wait for sensor data
+    xSemaphoreTake(xSemaphore, portMAX_DELAY);
+    //fetch sensor data
+    DualChannelData sensorData = inaSensor.readCurrentSensors();
+
     //Rotation handler
     if (rotationChangeRequested) {
       rotationChangeRequested = false;
@@ -113,19 +125,26 @@ void updateUITask(void *pvParameters) {
     //functionModeChangeRequested handler
     if (functionModeChangeRequested) {
       functionModeChangeRequested = false;
-      //do something here
-      Serial.println("functionModeChangeRequested triggered.");
+      //init the UI for different function mode
+      tft.fillScreen(color_Background);//clear the screen
+      if (current_function_mode == dataMonitor) {
+        //init dataMonitor UI
+        drawUIFramework();
+        ChannelInfoUpdate_A(old_chA_v, old_chA_a, old_chA_w, -1, -1, -1);
+        ChannelInfoUpdate_B(old_chB_v, old_chB_a, old_chB_w, -1, -1, -1);
+      } else if (current_function_mode == dataChart) {
+        //init dataChart UI
+        func_dataChart(sensorData, dataChart_ch);
+      }
     }
 
-    xSemaphoreTake(xSemaphore, portMAX_DELAY);
-    DualChannelData sensorData = inaSensor.readCurrentSensors();
-
+    //update data to UI
     switch (current_function_mode) {
       case dataMonitor:
         func_dataMonitor(sensorData);
         break;
       case dataChart:
-        //do something here
+        func_dataChart(sensorData, dataChart_ch);
         break;
       // Add more cases for additional function modes
     }
@@ -182,23 +201,44 @@ void dialReadTask(void *pvParameters) {
           // Serial.println("Dial reset");
         }
 
-        // Check if the dial was just released after being turned up or down
-        if (dialStatus == 0 && (lastDialStatus == 1 || lastDialStatus == 2)) {
-          int newRotation = tft_Rotation;
-          if (lastDialStatus == 1) { // Was turned up
-            newRotation++;
-            if (newRotation > 3) newRotation = 0;
-          } else if (lastDialStatus == 2) { // Was turned down
-            newRotation--;
-            if (newRotation < 0) newRotation = 3;
-          }
-          
-          if (newRotation != tft_Rotation) {
-            // Serial.println("Requesting rotation change to " + String(newRotation));
-            rotationChangeRequested = true;
-            tft_Rotation = newRotation;
-          } else {
-            // Serial.println("Rotation unchanged: " + String(tft_Rotation));
+        // Check if the dial was just released after being turned up or down or pressed
+        if (dialStatus == 0 && (lastDialStatus == 1 || lastDialStatus == 2 || lastDialStatus == 3)) {
+          if (lastDialStatus == 3) { // Dial was pressed
+            //change the function mode
+            functionModeChangeRequested = true;
+            current_function_mode = (current_function_mode == dataMonitor) ? dataChart : dataMonitor;
+            Serial.println("Function mode changed to " + String(current_function_mode));
+            
+            // Add a delay to prevent multiple mode changes
+            vTaskDelay(pdMS_TO_TICKS(300));
+          } else if (current_function_mode == dataMonitor) { // Handle rotation changes only in dataMonitor mode
+            int newRotation = tft_Rotation;
+            if (lastDialStatus == 1) { // Was turned up
+              newRotation++;
+              if (newRotation > 3) newRotation = 0;
+            } else if (lastDialStatus == 2) { // Was turned down
+              newRotation--;
+              if (newRotation < 0) newRotation = 3;
+            }
+            if (newRotation != tft_Rotation) { //check if the rotation is changed
+              rotationChangeRequested = true;
+              tft_Rotation = newRotation;
+            } else {
+              // Serial.println("Rotation unchanged: " + String(tft_Rotation));
+            }
+          } else if (current_function_mode == dataChart) {// Handle channel changes only in dataChart mode
+            int newChannel = dataChart_ch;
+            if (lastDialStatus == 1) { // Was turned up
+              newChannel++;
+              if (newChannel > 1) newChannel = 0;
+            } else if (lastDialStatus == 2) { // Was turned down
+              newChannel--;
+              if (newChannel < 0) newChannel = 1;
+            }
+            if (newChannel != dataChart_ch) { //check if the channel is changed 
+              dataChart_ch = newChannel;
+              Serial.println("Change the channel of dataChart to " + String(dataChart_ch));
+            }
           }
         }
 
