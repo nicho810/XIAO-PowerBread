@@ -1,5 +1,5 @@
-#ifndef UI_FUNCTIONS_H
-#define UI_FUNCTIONS_H
+#ifndef DATAMONITOR_FUNCTIONS_H
+#define DATAMONITOR_FUNCTIONS_H
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7735.h>
@@ -8,7 +8,7 @@
 
 extern Adafruit_ST7735 tft;
 
-// Declare color definitions and global variables
+// Declare color definitions and global variables as extern
 extern uint16_t color_Background;
 extern uint16_t color_Text;
 extern uint16_t color_ChannelA;
@@ -23,4 +23,5 @@ void dataMonitor_changeRotation(int rotation, float old_chA_v, float old_chA_a, 
 void dataMonitor_update_chAB_xy_by_Rotation(int rotation);
 void dataChart_changeRotation(int rotation);
 
-#endif // UI_FUNCTIONS_H
+#endif // DATAMONITOR_FUNCTIONS_H
+
