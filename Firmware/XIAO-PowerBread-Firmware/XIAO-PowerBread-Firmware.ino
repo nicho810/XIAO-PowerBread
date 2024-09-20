@@ -118,7 +118,7 @@ void updateUITask(void *pvParameters) {
     if (rotationChangeRequested) {
       rotationChangeRequested = false;
       update_chAB_xy_by_Rotation(tft_Rotation);
-      changeRotation(tft_Rotation, old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w);
+      changeRotation_dataMonitor(tft_Rotation, old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w);
       Serial.println("New rotation applied: " + String(tft_Rotation));
     }
 
@@ -134,6 +134,9 @@ void updateUITask(void *pvParameters) {
         ChannelInfoUpdate_B(old_chB_v, old_chB_a, old_chB_w, -1, -1, -1);
       } else if (current_function_mode == dataChart) {
         //init dataChart UI
+        tft_Rotation = 1; //force the rotation to 1
+        changeRotation_dataChart(tft_Rotation);
+        Serial.println("New rotation applied: " + String(tft_Rotation));
         func_dataChart(sensorData, dataChart_ch);
       }
     }

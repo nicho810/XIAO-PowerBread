@@ -141,7 +141,7 @@ void drawUIFramework() {
   tft.setFont(&FreeSansBold9pt7b);  // set font first in case
 }
 
-void changeRotation(int rotation, float old_chA_v, float old_chA_a, float old_chA_w, float old_chB_v, float old_chB_a, float old_chB_w) {
+void changeRotation_dataMonitor(int rotation, float old_chA_v, float old_chA_a, float old_chA_w, float old_chB_v, float old_chB_a, float old_chB_w) {
   tft.initR(INITR_GREENTAB);
   tft.setRotation(rotation);  //Rotate the LCD 180 degree (0-3)
   // delay(50);
@@ -149,6 +149,12 @@ void changeRotation(int rotation, float old_chA_v, float old_chA_a, float old_ch
   ChannelInfoUpdate_A(old_chA_v, old_chA_a, old_chA_w, -1, -1, -1);
   ChannelInfoUpdate_B(old_chB_v, old_chB_a, old_chB_w, -1, -1, -1);
   // delay(50);
+}
+
+void changeRotation_dataChart(int rotation) {
+  tft.initR(INITR_GREENTAB);
+  tft.setRotation(rotation);  //Rotate the LCD 180 degree (0-3)
+  update_chAB_xy_by_Rotation(rotation); //reset this variable in case of switch back to dataMonitor
 }
 
 void update_chAB_xy_by_Rotation(int rotation) {
