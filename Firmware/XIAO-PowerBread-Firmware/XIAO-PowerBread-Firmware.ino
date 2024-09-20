@@ -103,11 +103,6 @@ void func_dataMonitor(const DualChannelData &sensorData) {
 }
 
 uint8_t dataChart_ch = 0;
-void func_dataChart(const DualChannelData &sensorData, uint8_t ch) {
-  tft.fillScreen(color_Background);
-  tft.setCursor(0, tft.height() / 2);
-  tft.print("Data Chart");
-}
 
 void updateUITask(void *pvParameters) {
   (void)pvParameters;
@@ -140,7 +135,7 @@ void updateUITask(void *pvParameters) {
         tft_Rotation = 1;  //force the rotation to 1
         dataChart_changeRotation(tft_Rotation);
         Serial.println("New rotation applied: " + String(tft_Rotation));
-        func_dataChart(sensorData, dataChart_ch);
+        dataChart_initUI(dataChart_ch);
       }
     }
 
@@ -150,7 +145,7 @@ void updateUITask(void *pvParameters) {
         func_dataMonitor(sensorData);
         break;
       case dataChart:
-        func_dataChart(sensorData, dataChart_ch);
+        dataChart_updateData(sensorData, dataChart_ch);
         break;
         // Add more cases for additional function modes
     }

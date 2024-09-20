@@ -6,13 +6,10 @@
 #include <SPI.h>
 #include <Fonts/FreeSansBold9pt7b.h>
 
+#include "ui_style.h"
+
 extern Adafruit_ST7735 tft;
 
-// Declare color definitions and global variables as extern
-extern uint16_t color_Background;
-extern uint16_t color_Text;
-extern uint16_t color_ChannelA;
-extern uint16_t color_ChannelB;
 extern uint8_t chA_x, chA_y, chB_x, chB_y;
 
 // Function declarations
