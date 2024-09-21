@@ -27,14 +27,12 @@ void dataChart_initUI(uint8_t channel) {
   }
   chartCanvas->fillScreen(0); // Clear the canvas with black
 
-  //   tft.drawRoundRect(0, 1, 160, 78, 4, color_channel);
-  tft.drawRect(0, 0, 160, 78, color_channel);
   tft.fillRoundRect(-2, -2, 69, 16, 4, color_channel);
 
   tft.setFont();
   tft.setTextColor(color_Text);
   tft.setTextSize(0);
-  tft.setCursor(5, 2);
+  tft.setCursor(5, 4);
   if (channel == 0) {
     tft.print("Channel A");
   } else if (channel == 1) {
@@ -59,7 +57,7 @@ void dataChart_updateData(const DualChannelData &sensorData, uint8_t ch) {
   const uint8_t y_bottom = 79;
   const uint8_t y_max = y_bottom - y_top;
 
-  const float current_maxScale = 10.0; // mA, lowered for better visibility
+  const float current_maxScale = 100.0; // mA, lowered for better visibility
   float current_mA = 0; // mA
 
   // Fetch new current data from sensorData based on ch
@@ -73,18 +71,22 @@ void dataChart_updateData(const DualChannelData &sensorData, uint8_t ch) {
   int16_t bar_height = (int16_t)((current_mA / current_maxScale) * CHART_HEIGHT);
   bar_height = constrain(bar_height, 0, CHART_HEIGHT);
 
+  // Draw grid lines
+  for (int i = 0; i < CHART_HEIGHT; i += CHART_HEIGHT / 4) {
+    chartCanvas->drawFastHLine(0, i, CHART_WIDTH, color_GridLines);
+  }
+
   // Shift the existing chart data to the left
-  chartCanvas->drawFastVLine(CHART_WIDTH - 1, 0, CHART_HEIGHT, color_Background); // Clear the rightmost column
   chartCanvas->drawRGBBitmap(-1, 0, chartCanvas->getBuffer(), CHART_WIDTH, CHART_HEIGHT);
 
+  // Clear the rightmost column
+  chartCanvas->drawFastVLine(CHART_WIDTH - 1, 0, CHART_HEIGHT, color_Background);
+
   // Draw the new data point on the rightmost column
-  uint16_t lineColor = (ch == 0) ? color_ChannelA : color_ChannelB;
+  uint16_t lineColor = color_Text;
   chartCanvas->drawFastVLine(CHART_WIDTH - 1, CHART_HEIGHT - bar_height, bar_height, lineColor);
 
-  // Draw grid lines (optional)
-  for (int i = 0; i < CHART_HEIGHT; i += CHART_HEIGHT / 4) {
-    chartCanvas->drawFastHLine(0, i, CHART_WIDTH, color_Text);
-  }
+
 
   // Draw the entire updated canvas on the TFT display
   tft.drawRGBBitmap(0, y_top, chartCanvas->getBuffer(), CHART_WIDTH, CHART_HEIGHT);
@@ -93,7 +95,7 @@ void dataChart_updateData(const DualChannelData &sensorData, uint8_t ch) {
   tft.setFont();
   tft.setTextSize(1);
   tft.setTextColor(color_Text, color_Background);
-  tft.setCursor(5, y_top + 2);
+  tft.setCursor(80, 4);
   tft.print(current_mA, 2);
   tft.print(" mA   ");
 }
