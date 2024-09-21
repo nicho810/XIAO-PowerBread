@@ -1,10 +1,6 @@
 #include "dataMonitor_functions.h"
 
-// Define color definitions and global variables
-uint16_t color_Background = 0x0000;
-uint16_t color_Text = 0xFFFF;
-uint16_t color_ChannelA = 0x055B;
-uint16_t color_ChannelB = 0xF97C;
+// Define global variables
 uint8_t chA_x = 1;
 uint8_t chA_y = 82;
 uint8_t chB_x = 1;

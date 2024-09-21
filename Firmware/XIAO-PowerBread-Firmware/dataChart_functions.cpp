@@ -83,7 +83,12 @@ void dataChart_updateData(const DualChannelData &sensorData, uint8_t ch) {
   chartCanvas->drawFastVLine(CHART_WIDTH - 1, 0, CHART_HEIGHT, color_Background);
 
   // Draw the new data point on the rightmost column
-  uint16_t lineColor = color_Text;
+  uint16_t lineColor;
+  if (ch == 0) {
+    lineColor = color_ChartChannelA;
+  } else if (ch == 1) {
+    lineColor = color_ChartChannelB;
+  }
   chartCanvas->drawFastVLine(CHART_WIDTH - 1, CHART_HEIGHT - bar_height, bar_height, lineColor);
 
 
