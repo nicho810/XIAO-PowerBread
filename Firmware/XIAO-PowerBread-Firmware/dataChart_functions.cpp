@@ -27,7 +27,7 @@ void dataChart_initUI(uint8_t channel) {
   }
   chartCanvas->fillScreen(0); // Clear the canvas with black
 
-  tft.fillRoundRect(-2, -2, 36, 14, 4, color_channel);
+  tft.fillRoundRect(-2, -2, 36, 13, 4, color_channel);
 
   tft.setFont();
   tft.setTextColor(color_Text);
