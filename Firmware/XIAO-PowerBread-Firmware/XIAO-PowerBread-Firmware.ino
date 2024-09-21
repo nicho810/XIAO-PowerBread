@@ -76,6 +76,7 @@ StaticSemaphore_t xMutexBuffer;
 
 // Add this near the top of the file with other global declarations
 TaskHandle_t xUITaskHandle = NULL;
+volatile bool dataChartChannelChangeRequested = false;
 
 void func_dataMonitor(const DualChannelData &sensorData) {
   if (sensorData.channel0.isDirty) {
@@ -145,6 +146,12 @@ void updateUITask(void *pvParameters) {
         func_dataMonitor(sensorData);
         break;
       case dataChart:
+        if (dataChartChannelChangeRequested) {
+          dataChartChannelChangeRequested = false;
+          tft.fillScreen(color_Background);  // Clear the screen
+          dataChart_initUI(dataChart_ch);  // Reinitialize the UI for the new channel
+          Serial.println("Changed dataChart channel to: " + String(dataChart_ch));
+        }
         dataChart_updateData(sensorData, dataChart_ch);
         break;
         // Add more cases for additional function modes
@@ -227,18 +234,20 @@ void dialReadTask(void *pvParameters) {
             } else {
               // Serial.println("Rotation unchanged: " + String(tft_Rotation));
             }
-          } else if (current_function_mode == dataChart) {  // Handle channel changes only in dataChart mode
-            int newChannel = dataChart_ch;
-            if (lastDialStatus == 1) {  // Was turned up
-              newChannel++;
-              if (newChannel > 1) newChannel = 0;
-            } else if (lastDialStatus == 2) {  // Was turned down
-              newChannel--;
-              if (newChannel < 0) newChannel = 1;
-            }
-            if (newChannel != dataChart_ch) {  //check if the channel is changed
-              dataChart_ch = newChannel;
-              Serial.println("Change the channel of dataChart to " + String(dataChart_ch));
+          } else if (current_function_mode == dataChart) {
+            if (lastDialStatus == 1 || lastDialStatus == 2) {  // Was turned up or down
+              int newChannel = dataChart_ch;
+              if (lastDialStatus == 1) {  // Was turned up
+                newChannel++;
+                if (newChannel > 1) newChannel = 0;
+              } else if (lastDialStatus == 2) {  // Was turned down
+                newChannel--;
+                if (newChannel < 0) newChannel = 1;
+              }
+              if (newChannel != dataChart_ch) {
+                dataChart_ch = newChannel;
+                dataChartChannelChangeRequested = true;
+              }
             }
           }
         }
