@@ -113,14 +113,6 @@ void updateUITask(void *pvParameters) {
     //fetch sensor data
     DualChannelData sensorData = inaSensor.readCurrentSensors();
 
-    //Rotation handler
-    if (rotationChangeRequested) {
-      rotationChangeRequested = false;
-      dataMonitor_update_chAB_xy_by_Rotation(tft_Rotation);
-      dataMonitor_changeRotation(tft_Rotation, old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w);
-      Serial.println("New rotation applied: " + String(tft_Rotation));
-    }
-
     //functionModeChangeRequested handler
     if (functionModeChangeRequested) {
       functionModeChangeRequested = false;
@@ -143,18 +135,27 @@ void updateUITask(void *pvParameters) {
     //update data to UI
     switch (current_function_mode) {
       case dataMonitor:
+        //Rotation change requested
+        if (rotationChangeRequested) {
+          rotationChangeRequested = false;
+          dataMonitor_update_chAB_xy_by_Rotation(tft_Rotation);
+          dataMonitor_changeRotation(tft_Rotation, old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w);
+          Serial.println("New rotation applied: " + String(tft_Rotation));
+        }
+        //regular update
         func_dataMonitor(sensorData);
         break;
       case dataChart:
+        //channel switch requested
         if (dataChartChannelChangeRequested) {
           dataChartChannelChangeRequested = false;
           tft.fillScreen(color_Background);  // Clear the screen
           dataChart_initUI(dataChart_ch);  // Reinitialize the UI for the new channel
           Serial.println("Changed dataChart channel to: " + String(dataChart_ch));
         }
+        //regular update
         dataChart_updateData(sensorData, dataChart_ch);
         break;
-        // Add more cases for additional function modes
     }
 
     xSemaphoreGive(xSemaphore);
