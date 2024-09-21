@@ -93,7 +93,8 @@ void dataMonitor_updateChangedDigits(int x, int y, float oldValue, float newValu
   tft.print(newStr);
 }
 
-void dataMonitor_initUI() {
+void dataMonitor_initUI(int rotation) {
+  dataMonitor_update_chAB_xy_by_Rotation(rotation);
   tft.fillScreen(color_Background);
 
   tft.drawRoundRect(chA_x, chA_y, 78, 78, 4, color_ChannelA);
@@ -117,7 +118,7 @@ void dataMonitor_changeRotation(int rotation, float old_chA_v, float old_chA_a, 
   tft.initR(INITR_GREENTAB);
   tft.setRotation(rotation);  //Rotate the LCD 180 degree (0-3)
   // delay(50);
-  dataMonitor_initUI();
+  dataMonitor_initUI(rotation);
   dataMonitor_ChannelInfoUpdate(0, old_chA_v, old_chA_a, old_chA_w, -1, -1, -1, color_Text);
   dataMonitor_ChannelInfoUpdate(1, old_chB_v, old_chB_a, old_chB_w, -1, -1, -1, color_Text);
   // delay(50);

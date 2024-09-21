@@ -1,5 +1,5 @@
 #include "dataChart_functions.h"
-#include "dataMonitor_functions.h" //only need dataMonitor_update_chAB_xy_by_Rotation()
+
 
 #include "ui_style.h"
 
@@ -7,7 +7,7 @@
 void dataChart_changeRotation(int rotation) {
   tft.initR(INITR_GREENTAB);
   tft.setRotation(rotation);  //Rotate the LCD 180 degree (0-3)
-  dataMonitor_update_chAB_xy_by_Rotation(rotation); //reset this variable in case of switch back to dataMonitor
+
 }
 
 
@@ -28,7 +28,7 @@ void dataChart_initUI(uint8_t channel) {
   tft.setFont();
   tft.setTextColor(color_Text);
   tft.setTextSize(0);
-  tft.setCursor(chA_x + 5, chA_y + 2);
+  tft.setCursor(5, 2);
   if (channel == 0) {
     tft.print("Channel A");
   } else if (channel == 1) {

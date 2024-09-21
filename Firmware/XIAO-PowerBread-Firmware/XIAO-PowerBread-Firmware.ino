@@ -127,7 +127,7 @@ void updateUITask(void *pvParameters) {
       tft.fillScreen(color_Background);  //clear the screen
       if (current_function_mode == dataMonitor) {
         //init dataMonitor UI
-        dataMonitor_initUI();
+        dataMonitor_initUI(tft_Rotation);
         dataMonitor_ChannelInfoUpdate(0, old_chA_v, old_chA_a, old_chA_w, -1, -1, -1, color_Text);
         dataMonitor_ChannelInfoUpdate(1, old_chB_v, old_chB_a, old_chB_w, -1, -1, -1, color_Text);
       } else if (current_function_mode == dataChart) {
@@ -266,7 +266,7 @@ void setup(void) {
   tft.fillScreen(color_Background);
 
   //UI init
-  dataMonitor_initUI();
+  dataMonitor_initUI(tft_Rotation);
   dataMonitor_ChannelInfoUpdate(0, 0, 0, 0, -1, -1, -1, color_Text);  //init data of chA
   dataMonitor_ChannelInfoUpdate(1, 0, 0, 0, -1, -1, -1, color_Text);  //init data of chB
 
