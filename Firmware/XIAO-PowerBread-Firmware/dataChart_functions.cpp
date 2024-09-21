@@ -48,8 +48,8 @@ uint8_t y_bottom = 79;
 uint8_t y_max = y_bottom-y_top;
 
 
-uint8_t current_maxScale = 1000; //mA
-float current_mA = 300;//mA
+unsigned int current_maxScale = 1000; //mA
+float current_mA = 0;//mA
 
 //fetch new current data from sensorData base on ch
 // if (ch == 0) {

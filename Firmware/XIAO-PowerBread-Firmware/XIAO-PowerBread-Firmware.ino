@@ -59,15 +59,15 @@ int read_dial() {
   return analogRead(dial_adc);
 }
 
-#define STACK_SIZE 8192
+#define STACK_SIZE 16384
 StaticTask_t xTaskBuffer_UI;
 StackType_t xStack_UI[STACK_SIZE];
 
-#define STACK_SIZE_SERIAL 2048
+#define STACK_SIZE_SERIAL 4096
 StaticTask_t xTaskBuffer_Serial;
 StackType_t xStack_Serial[STACK_SIZE_SERIAL];
 
-#define STACK_SIZE_DIAL 2048
+#define STACK_SIZE_DIAL 4096
 StaticTask_t xTaskBuffer_Dial;
 StackType_t xStack_Dial[STACK_SIZE_DIAL];
 
@@ -288,26 +288,32 @@ void setup(void) {
   }
 
   // Task creation with error checking
+  Serial.println("Creating UI Task");
   xUITaskHandle = xTaskCreateStatic(updateUITask, "UI_Update", STACK_SIZE, NULL, 3, xStack_UI, &xTaskBuffer_UI);
   if (xUITaskHandle == NULL) {
     Serial.println("UI Task creation failed");
     while (1)
       ;
   }
+  Serial.println("UI Task created successfully");
 
+  Serial.println("Creating Serial Task");
   TaskHandle_t xSerialHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print", STACK_SIZE_SERIAL, NULL, 1, xStack_Serial, &xTaskBuffer_Serial);
   if (xSerialHandle == NULL) {
     Serial.println("Serial Task creation failed");
     while (1)
       ;
   }
+  Serial.println("Serial Task created successfully");
 
+  Serial.println("Creating Dial Task");
   TaskHandle_t xDialHandle = xTaskCreateStatic(dialReadTask, "Dial_Read", STACK_SIZE_DIAL, NULL, 2, xStack_Dial, &xTaskBuffer_Dial);
   if (xDialHandle == NULL) {
     Serial.println("Dial Task creation failed");
     while (1)
       ;
   }
+  Serial.println("Dial Task created successfully");
 
   Serial.println("Starting scheduler");
   vTaskStartScheduler();
@@ -330,7 +336,7 @@ extern "C" void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskNa
     ;
 }
 
-// Add this function at the end of your file
+// Modify the Idle Hook to print less frequently
 extern "C" void vApplicationIdleHook(void) {
   static TickType_t lastIdleTime = 0;
   static uint32_t idleCount = 0;
@@ -338,13 +344,29 @@ extern "C" void vApplicationIdleHook(void) {
   TickType_t currentTime = xTaskGetTickCount();
   idleCount++;
 
-  // Print message only once per second
-  if (currentTime - lastIdleTime >= pdMS_TO_TICKS(1000)) {
+  // Print message only once per 5 seconds
+  if (currentTime - lastIdleTime >= pdMS_TO_TICKS(5000)) {
     Serial.print("Idle Hook called ");
     Serial.print(idleCount);
-    Serial.println(" times in the last second");
+    Serial.println(" times in the last 5 seconds");
 
     lastIdleTime = currentTime;
     idleCount = 0;
+  }
+}
+
+// Add a new function to check task states
+void vApplicationTickHook(void) {
+  static TickType_t lastCheckTime = 0;
+  TickType_t currentTime = xTaskGetTickCount();
+
+  // Check task states every 10 seconds
+  if (currentTime - lastCheckTime >= pdMS_TO_TICKS(10000)) {
+    Serial.println("Task States:");
+    Serial.print("UI Task: ");
+    Serial.println(eTaskGetState(xUITaskHandle) == eRunning ? "Running" : "Not Running");
+    // Add similar checks for other tasks if needed
+
+    lastCheckTime = currentTime;
   }
 }
