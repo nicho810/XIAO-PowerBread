@@ -1,13 +1,10 @@
 #include "dataChart_functions.h"
-
-
 #include "ui_style.h"
 
 // dataChart functions
 void dataChart_changeRotation(int rotation) {
   tft.initR(INITR_GREENTAB);
   tft.setRotation(rotation);  //Rotate the LCD 180 degree (0-3)
-
 }
 
 
