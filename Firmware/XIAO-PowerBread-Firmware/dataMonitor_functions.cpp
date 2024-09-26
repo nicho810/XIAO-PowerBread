@@ -6,6 +6,36 @@ uint8_t chA_y = 82;
 uint8_t chB_x = 1;
 uint8_t chB_y = 0;
 
+// Add these declarations at the top of the file if they're not already present
+extern float old_chA_v, old_chA_a, old_chA_w;
+extern float old_chB_v, old_chB_a, old_chB_w;
+
+// Add the function
+void dataMonitor_updateData(const DualChannelData &sensorData) {
+  if (sensorData.channel0.isDirty) {
+    dataMonitor_ChannelInfoUpdate(0,
+                                  sensorData.channel0.busVoltage,
+                                  sensorData.channel0.busCurrent,
+                                  sensorData.channel0.busPower,
+                                  old_chA_v, old_chA_a, old_chA_w,
+                                  color_Text);
+    old_chA_v = sensorData.channel0.busVoltage;
+    old_chA_a = sensorData.channel0.busCurrent;
+    old_chA_w = sensorData.channel0.busPower;
+  }
+  if (sensorData.channel1.isDirty) {
+    dataMonitor_ChannelInfoUpdate(1,
+                                  sensorData.channel1.busVoltage,
+                                  sensorData.channel1.busCurrent,
+                                  sensorData.channel1.busPower,
+                                  old_chB_v, old_chB_a, old_chB_w,
+                                  color_Text);
+    old_chB_v = sensorData.channel1.busVoltage;
+    old_chB_a = sensorData.channel1.busCurrent;
+    old_chB_w = sensorData.channel1.busPower;
+  }
+}
+
 void dataMonitor_ChannelInfoUpdate(uint8_t channel, float new_v, float new_a, float new_w, float old_v, float old_a, float old_w, uint16_t color=color_Text) {
   uint8_t ch_x = 0;
   uint8_t ch_y = 0;

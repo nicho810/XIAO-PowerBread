@@ -83,31 +83,6 @@ volatile bool dataChartChannelChangeRequested = false;
 
 #define WATCHDOG_TIMEOUT 2000  // 2 seconds
 
-void func_dataMonitor(const DualChannelData &sensorData) {
-  if (sensorData.channel0.isDirty) {
-    dataMonitor_ChannelInfoUpdate(0,
-                                  sensorData.channel0.busVoltage,
-                                  sensorData.channel0.busCurrent,
-                                  sensorData.channel0.busPower,
-                                  old_chA_v, old_chA_a, old_chA_w,
-                                  color_Text);
-    old_chA_v = sensorData.channel0.busVoltage;
-    old_chA_a = sensorData.channel0.busCurrent;
-    old_chA_w = sensorData.channel0.busPower;
-  }
-  if (sensorData.channel1.isDirty) {
-    dataMonitor_ChannelInfoUpdate(1,
-                                  sensorData.channel1.busVoltage,
-                                  sensorData.channel1.busCurrent,
-                                  sensorData.channel1.busPower,
-                                  old_chB_v, old_chB_a, old_chB_w,
-                                  color_Text);
-    old_chB_v = sensorData.channel1.busVoltage;
-    old_chB_a = sensorData.channel1.busCurrent;
-    old_chB_w = sensorData.channel1.busPower;
-  }
-}
-
 uint8_t dataChart_ch = 0;
 
 void updateUITask(void *pvParameters) {
@@ -151,7 +126,7 @@ void updateUITask(void *pvParameters) {
           Serial.println("New rotation applied: " + String(tft_Rotation));
         }
         //regular update
-        func_dataMonitor(sensorData);
+        dataMonitor_updateData(sensorData);
         break;
       case dataChart:
         //channel switch requested
@@ -390,8 +365,8 @@ void vApplicationTickHook(void) {
   // Check task states every 10 seconds
   if (currentTime - lastCheckTime >= pdMS_TO_TICKS(10000)) {
     // Serial.println("Task States:");
-    Serial.print("UI Task: ");
-    Serial.println(eTaskGetState(xUITaskHandle) == eRunning ? "Running" : "Not Running");
+    // Serial.print("UI Task: ");
+    // Serial.println(eTaskGetState(xUITaskHandle) == eRunning ? "Running" : "Not Running");
     // Add similar checks for other tasks if needed
 
     lastCheckTime = currentTime;

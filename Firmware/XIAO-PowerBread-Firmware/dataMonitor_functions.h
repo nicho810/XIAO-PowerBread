@@ -3,6 +3,7 @@
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7735.h>
+#include "INA3221Sensor.h"  // Add this include
 #include <SPI.h>
 #include <Fonts/FreeSansBold9pt7b.h>
 
@@ -18,7 +19,7 @@ void dataMonitor_updateChangedDigits(int x, int y, float oldValue, float newValu
 void dataMonitor_initUI(int rotation);
 void dataMonitor_changeRotation(int rotation, float old_chA_v, float old_chA_a, float old_chA_w, float old_chB_v, float old_chB_a, float old_chB_w);
 void dataMonitor_update_chAB_xy_by_Rotation(int rotation);
-
+void dataMonitor_updateData(const DualChannelData &sensorData);
 
 #endif // DATAMONITOR_FUNCTIONS_H
 
