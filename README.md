@@ -59,6 +59,15 @@
 - [ ] PWM output on IO0 and IO1.
 - [ ] ADC reading from IO0 and IO1.
 
+### Firmware Version
+
+| Version | Stable | Development | Features added |
+|---------|---------|---------|---------|
+| 0.9     | Yes | Yes | Real-time current sensor data displayed on the LCD. |
+| 1.0     | Yes | Yes | Dial wheel to adjust the UI for different viewing angles. |
+| 1.1     | No  | Yes | Line chart mode to visualize power usage for each channel. |
+
+
 ### Libraries Used
 - [INA3221_RT Library](https://github.com/RobTillaart/INA3221_RT/tree/master)
 - [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library)
