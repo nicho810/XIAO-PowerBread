@@ -372,7 +372,7 @@ void vApplicationTickHook(void) {
 
   // Check task states every 10 seconds
   if (currentTime - lastCheckTime >= pdMS_TO_TICKS(10000)) {
-    Serial.println("Task States:");
+    // Serial.println("Task States:");
     Serial.print("UI Task: ");
     Serial.println(eTaskGetState(xUITaskHandle) == eRunning ? "Running" : "Not Running");
     // Add similar checks for other tasks if needed
