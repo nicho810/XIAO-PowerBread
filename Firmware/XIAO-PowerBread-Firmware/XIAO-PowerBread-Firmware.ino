@@ -9,6 +9,9 @@
 #include <task.h>
 #include <semphr.h>
 
+// Add watchdog include
+#include <Adafruit_SleepyDog.h>
+
 //LCD
 #define TFT_CS -1  //CS is always connected to ground in this project.
 #define TFT_RST D3
@@ -78,6 +81,8 @@ StaticSemaphore_t xMutexBuffer;
 TaskHandle_t xUITaskHandle = NULL;
 volatile bool dataChartChannelChangeRequested = false;
 
+#define WATCHDOG_TIMEOUT 2000  // 2 seconds
+
 void func_dataMonitor(const DualChannelData &sensorData) {
   if (sensorData.channel0.isDirty) {
     dataMonitor_ChannelInfoUpdate(0,
@@ -108,6 +113,9 @@ uint8_t dataChart_ch = 0;
 void updateUITask(void *pvParameters) {
   (void)pvParameters;
   while (1) {
+    // Reset the watchdog timer
+    Watchdog.reset();
+
     //wait for sensor data
     xSemaphoreTake(xSemaphore, portMAX_DELAY);
     //fetch sensor data
@@ -192,6 +200,9 @@ void dialReadTask(void *pvParameters) {
   uint16_t lastDialValue = 0;
   int lastDialStatus = 0;
   while (1) {
+    // Reset the watchdog timer
+    Watchdog.reset();
+
     TickType_t xCurrentTime = xTaskGetTickCount();
     if ((xCurrentTime - xLastReadTime) >= xReadInterval) {
       dialValue = read_dial();
@@ -296,6 +307,12 @@ void setup(void) {
     while (1)
       ;
   }
+
+  // Initialize and start the watchdog
+  int countdownMS = Watchdog.enable(WATCHDOG_TIMEOUT);
+  Serial.print("Watchdog enabled with ");
+  Serial.print(countdownMS);
+  Serial.println("ms timeout");
 
   // Task creation with error checking
   Serial.println("Creating UI Task");
