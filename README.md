@@ -54,18 +54,18 @@
 ### Planned Software Features
 - [x] Real-time current sensor data displayed on the LCD.
 - [x] Dial wheel to adjust the UI for different viewing angles.
-- [ ] Line chart mode to visualize power usage for each channel.
+- [x] Line chart mode to visualize power usage for each channel.
 - [ ] USB-Serial mode for data transfer.
 - [ ] PWM output on IO0 and IO1.
 - [ ] ADC reading from IO0 and IO1.
 
-### Firmware Version
+### Firmware Releases
 
-| Version | Stable | Development | Features added |
-|---------|---------|---------|---------|
-| 0.9     | Yes | Yes | Real-time current sensor data displayed on the LCD. |
-| 1.0     | Yes | Yes | Dial wheel to adjust the UI for different viewing angles. |
-| 1.1     | No  | Yes | Line chart mode to visualize power usage for each channel. |
+| Version | Stable | Development | Features added | Link |
+|---------|---------|---------|---------|---------|
+| 0.9     | Yes | Yes | Real-time current sensor data displayed on the LCD. | - |
+| 1.0     | Yes | Yes | Dial wheel to adjust the UI for different viewing angles. | [v1.0.0](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.0.0) |
+| 1.1     | No  | Yes | Line chart mode to visualize power usage for each channel. | [v1.1.0](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.0) |
 
 
 ### Libraries Used
