@@ -13,9 +13,14 @@ bool INA3221Sensor::begin() {
     Serial.println("INA3221 Found");
     disableChannel(2); // Disable unused channel 2
     setShuntResistors(0.020, 0.020); // 20 mR shunt resistors for channels 0 and 1
+    setAverage(1);//get 4 samples and average them
     delay(100);
     return true;
   }
+}
+
+void INA3221Sensor::setAverage(int average) {
+  ina.setAverage(average);//get 4 samples and average them
 }
 
 void INA3221Sensor::disableChannel(int channel) {

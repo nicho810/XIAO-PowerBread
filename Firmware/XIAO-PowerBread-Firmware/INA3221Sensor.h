@@ -24,6 +24,7 @@ public:
     bool begin();
     void setShuntResistors(float shunt0, float shunt1);
     void disableChannel(int channel);
+    void setAverage(int average);
     DualChannelData readCurrentSensors();
 
 private:
