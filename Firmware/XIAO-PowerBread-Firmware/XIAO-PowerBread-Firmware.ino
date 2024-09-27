@@ -44,6 +44,8 @@ enum function_mode {
 
 volatile function_mode current_function_mode = dataMonitor;
 volatile bool functionModeChangeRequested = false;  //a flag to indicate a mode change is requested
+volatile bool singleModeDisplayChannel_ChangeRequested = false;
+uint8_t singleModeDisplayChannel = 0;
 
 
 //Current sensor
@@ -81,12 +83,10 @@ SemaphoreHandle_t xSemaphore = NULL;
 StaticSemaphore_t xMutexBuffer;
 
 TaskHandle_t xUITaskHandle = NULL;
-volatile bool dataChartChannelChangeRequested = false;
 
 //Watchdog
 #define WATCHDOG_TIMEOUT 2000  // 2 seconds
 
-uint8_t singleModeDisplayChannel = 0;
 
 void updateUITask(void *pvParameters) {
   (void)pvParameters;
@@ -118,6 +118,7 @@ void updateUITask(void *pvParameters) {
       } else if (current_function_mode == dataMonitorChart) {
         //init dataMonitorChart UI
         dataMonitorChart_initUI(singleModeDisplayChannel, tft_Rotation);
+        dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation, 1);//force update all data
       }
     }
 
@@ -136,8 +137,8 @@ void updateUITask(void *pvParameters) {
         break;
       case dataChart:
         //channel switch requested
-        if (dataChartChannelChangeRequested) {
-          dataChartChannelChangeRequested = false;
+        if (singleModeDisplayChannel_ChangeRequested) {
+          singleModeDisplayChannel_ChangeRequested = false;
           tft.fillScreen(color_Background);  // Clear the screen
           dataChart_initUI(singleModeDisplayChannel);  // Reinitialize the UI for the new channel
           Serial.println("Changed dataChart channel to: " + String(singleModeDisplayChannel));
@@ -146,6 +147,13 @@ void updateUITask(void *pvParameters) {
         dataChart_updateData(sensorData, singleModeDisplayChannel);
         break;
       case dataMonitorChart:
+        //channel switch requested
+        if (singleModeDisplayChannel_ChangeRequested) {
+          singleModeDisplayChannel_ChangeRequested = false;
+          dataMonitorChart_initUI(singleModeDisplayChannel, tft_Rotation);
+          dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation, 1);//force update all data
+          Serial.println("Changed dataChart channel to: " + String(singleModeDisplayChannel));
+        }
         //regular update
         dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation);
         break;
@@ -287,8 +295,16 @@ void longPress_Handler(function_mode currentMode) {
 
     //Switch channel
     singleModeDisplayChannel = (singleModeDisplayChannel == 0) ? 1 : 0;
-    dataChartChannelChangeRequested = true;
-    Serial.println("Data Chart channel changed to " + String(singleModeDisplayChannel));
+    singleModeDisplayChannel_ChangeRequested = true;
+    Serial.println("Channel changed to " + String(singleModeDisplayChannel));
+  } else if (currentMode == dataMonitorChart) {
+    // Serial.println("Data Monitor Chart long pressed");
+
+    //Switch channel
+    singleModeDisplayChannel = (singleModeDisplayChannel == 0) ? 1 : 0;
+    singleModeDisplayChannel_ChangeRequested = true;
+    Serial.println("Channel changed to " + String(singleModeDisplayChannel));
+
   }
 }
 

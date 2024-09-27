@@ -61,7 +61,7 @@ void dataMonitorChart_initUI(uint8_t channel, int rotation) {
   smallChartCanvas->fillScreen(0); // Clear the canvas with black
 }
 
-void dataMonitorChart_updateData(const DualChannelData &sensorData, uint8_t ch, int rotation) {
+void dataMonitorChart_updateData(const DualChannelData &sensorData, uint8_t ch, int rotation, uint8_t forceUpdate) {
   uint8_t dataBox_x = 0;
   uint8_t dataBox_y = 0;
   uint8_t chartBox_x = 0;
@@ -115,15 +115,23 @@ void dataMonitorChart_updateData(const DualChannelData &sensorData, uint8_t ch, 
     power_old = old_chB_w;
   }
 
-  if (busVoltage != volatge_old) {
+
+  //if forceUpdate is 1, update all data anyway
+  if (forceUpdate == 1) {
     dataMonitorChart_updateChangedDigits(volatge_x, volatge_y, volatge_old, busVoltage, color_Text);
-  }
-  if (busCurrent != current_old) {
     dataMonitorChart_updateChangedDigits(current_x, current_y, current_old, busCurrent, color_Text);
-  }
-  if (busPower != power_old) {
     dataMonitorChart_updateChangedDigits(power_x, power_y, power_old, busPower, color_Text);
-  }
+  } else if (forceUpdate == 0) {
+    if (busVoltage != volatge_old) {
+      dataMonitorChart_updateChangedDigits(volatge_x, volatge_y, volatge_old, busVoltage, color_Text);
+    }
+    if (busCurrent != current_old) {
+      dataMonitorChart_updateChangedDigits(current_x, current_y, current_old, busCurrent, color_Text);
+    }
+    if (busPower != power_old) {
+      dataMonitorChart_updateChangedDigits(power_x, power_y, power_old, busPower, color_Text);
+    }
+  } 
 
 
   // Print units (these don't need to be erased or updated)
