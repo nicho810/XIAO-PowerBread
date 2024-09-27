@@ -12,5 +12,6 @@ extern Adafruit_ST7735 tft;
 void dataChart_changeRotation(int rotation);
 void dataChart_initUI(uint8_t channel);
 void dataChart_updateData(const DualChannelData &sensorData, uint8_t ch);
+void dataChart_exitUI();
 
 #endif // DATACHART_FUNCTIONS_H

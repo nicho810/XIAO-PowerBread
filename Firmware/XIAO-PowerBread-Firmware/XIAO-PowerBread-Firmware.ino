@@ -28,12 +28,15 @@ int tft_Rotation = 2;  // default rotation.
 //UIs
 #include "dataMonitor_functions.h"
 #include "dataChart_functions.h"
+#include "dataMonitorChart_functions.h"
+
 float old_chA_v = 0, old_chA_a = 0, old_chA_w = 0;
 float old_chB_v = 0, old_chB_a = 0, old_chB_w = 0;
 
 enum function_mode {
   dataMonitor,
   dataChart,
+  dataMonitorChart
   // serialMonitor,
   // pwmOutput,
   // analogInputMonitor,
@@ -112,6 +115,9 @@ void updateUITask(void *pvParameters) {
         dataChart_changeRotation(tft_Rotation);
         Serial.println("New rotation applied: " + String(tft_Rotation));
         dataChart_initUI(singleModeDisplayChannel);
+      } else if (current_function_mode == dataMonitorChart) {
+        //init dataMonitorChart UI
+        dataMonitorChart_initUI(singleModeDisplayChannel, tft_Rotation);
       }
     }
 
@@ -138,6 +144,10 @@ void updateUITask(void *pvParameters) {
         }
         //regular update
         dataChart_updateData(sensorData, singleModeDisplayChannel);
+        break;
+      case dataMonitorChart:
+        //regular update
+        dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation);
         break;
     }
 
@@ -252,17 +262,21 @@ void dialReadTask(void *pvParameters) {
 }
 
 void shortPress_Handler(function_mode currentMode) {
-  if (currentMode == dataMonitor) {
-    //SWITCH TO DATA CHART
-    functionModeChangeRequested = true;
-    current_function_mode = (current_function_mode == dataMonitor) ? dataChart : dataMonitor;
-    Serial.println("Function mode changed to " + String(current_function_mode));
-  } else if (currentMode == dataChart) {
-    //SWITCH TO DATA MONITOR
-    functionModeChangeRequested = true;
-    current_function_mode = (current_function_mode == dataChart) ? dataMonitor : dataChart;
-    Serial.println("Function mode changed to " + String(current_function_mode));
+  functionModeChangeRequested = true;
+  switch (currentMode) {
+    case dataMonitor:
+      current_function_mode = dataChart;
+      break;
+    case dataChart:
+      current_function_mode = dataMonitorChart;
+      //dataChart_exitUI();//aim to free the memory of chartCanvas, but not working, leave it later.
+      break;
+    case dataMonitorChart:
+      current_function_mode = dataMonitor;
+      break;
   }
+  
+  Serial.println("Function mode changed to " + String(current_function_mode));
 }
 
 void longPress_Handler(function_mode currentMode) {
