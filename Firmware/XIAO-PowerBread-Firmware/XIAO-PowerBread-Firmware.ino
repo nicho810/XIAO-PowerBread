@@ -48,7 +48,7 @@ volatile bool functionModeChangeRequested = false;  //a flag to indicate a mode 
 INA3221Sensor inaSensor;
 
 //Dial wheel switch
-volatile int dialStatus = 0;  // 0: reset, 1: up, 2: down, 3: press
+volatile int dialStatus = 0;  // 0: reset, 1: up, 2: down, 3: press, 4: long press
 #define dial_adc A2
 bool dial_enable = true;
 volatile uint16_t dialValue = 0;  // Variable to store ADC value
@@ -174,6 +174,11 @@ void dialReadTask(void *pvParameters) {
   const TickType_t xReadInterval = pdMS_TO_TICKS(50);  // Read every 50ms
   uint16_t lastDialValue = 0;
   int lastDialStatus = 0;
+  TickType_t pressStartTime = 0;
+  const TickType_t longPressThreshold = pdMS_TO_TICKS(500);  // 0.5 second
+  bool longPressDetected = false;
+  bool shortPressHandled = false;
+
   while (1) {
     // Reset the watchdog timer
     Watchdog.reset();
@@ -183,30 +188,45 @@ void dialReadTask(void *pvParameters) {
       dialValue = read_dial();
       if (dialValue != lastDialValue) {
         if (dialValue >= 300 && dialValue < 800) {
-          dialStatus = 3;
-          // Serial.println("Dial pressed");
+          if (pressStartTime == 0) {
+            pressStartTime = xCurrentTime;
+            dialStatus = 3;  // Set to press, but don't handle it yet
+            shortPressHandled = false;
+          } else if ((xCurrentTime - pressStartTime) >= longPressThreshold && !longPressDetected) {
+            dialStatus = 4;  // Long press
+            longPressDetected = true;
+            Serial.println("Dial long pressed");
+            vTaskDelay(pdMS_TO_TICKS(300));  // Debounce delay
+          }
         } else if (dialValue >= 800 && dialValue < 1500) {
           dialStatus = 2;
-          // Serial.println("Dial turned down");
+          pressStartTime = 0;
+          longPressDetected = false;
+          shortPressHandled = false;
         } else if (dialValue >= 1500 && dialValue < 2000) {
           dialStatus = 1;
-          // Serial.println("Dial turned up");
+          pressStartTime = 0;
+          longPressDetected = false;
+          shortPressHandled = false;
         } else {
-          dialStatus = 0;  // Reset status for other values
-          // Serial.println("Dial reset");
-        }
-
-        // Check if the dial was just released after being turned up or down or pressed
-        if (dialStatus == 0 && (lastDialStatus == 1 || lastDialStatus == 2 || lastDialStatus == 3)) {
-          if (lastDialStatus == 3) {  // Dial was pressed
-            //change the function mode
+          if (pressStartTime != 0 && !longPressDetected && !shortPressHandled) {
+            // This was a short press that just ended
+            Serial.println("Dial short pressed");
+            shortPressHandled = true;
+            // Handle short press action here
             functionModeChangeRequested = true;
             current_function_mode = (current_function_mode == dataMonitor) ? dataChart : dataMonitor;
             Serial.println("Function mode changed to " + String(current_function_mode));
+            vTaskDelay(pdMS_TO_TICKS(300));  // Debounce delay
+          }
+          dialStatus = 0;  // Reset status for other values
+          pressStartTime = 0;
+          longPressDetected = false;
+        }
 
-            // Add a delay to prevent multiple mode changes
-            vTaskDelay(pdMS_TO_TICKS(300));
-          } else if (current_function_mode == dataMonitor) {  // Handle rotation changes only in dataMonitor mode
+        // Handle rotation changes
+        if (dialStatus == 0 && (lastDialStatus == 1 || lastDialStatus == 2)) {
+          if (current_function_mode == dataMonitor) {
             int newRotation = tft_Rotation;
             if (lastDialStatus == 1) {  // Was turned up
               newRotation++;
@@ -215,26 +235,22 @@ void dialReadTask(void *pvParameters) {
               newRotation--;
               if (newRotation < 0) newRotation = 3;
             }
-            if (newRotation != tft_Rotation) {  //check if the rotation is changed
+            if (newRotation != tft_Rotation) {
               rotationChangeRequested = true;
               tft_Rotation = newRotation;
-            } else {
-              // Serial.println("Rotation unchanged: " + String(tft_Rotation));
             }
           } else if (current_function_mode == dataChart) {
-            if (lastDialStatus == 1 || lastDialStatus == 2) {  // Was turned up or down
-              int newChannel = dataChart_ch;
-              if (lastDialStatus == 1) {  // Was turned up
-                newChannel++;
-                if (newChannel > 1) newChannel = 0;
-              } else if (lastDialStatus == 2) {  // Was turned down
-                newChannel--;
-                if (newChannel < 0) newChannel = 1;
-              }
-              if (newChannel != dataChart_ch) {
-                dataChart_ch = newChannel;
-                dataChartChannelChangeRequested = true;
-              }
+            int newChannel = dataChart_ch;
+            if (lastDialStatus == 1) {  // Was turned up
+              newChannel++;
+              if (newChannel > 1) newChannel = 0;
+            } else if (lastDialStatus == 2) {  // Was turned down
+              newChannel--;
+              if (newChannel < 0) newChannel = 1;
+            }
+            if (newChannel != dataChart_ch) {
+              dataChart_ch = newChannel;
+              dataChartChannelChangeRequested = true;
             }
           }
         }
@@ -244,7 +260,7 @@ void dialReadTask(void *pvParameters) {
       }
       xLastReadTime = xCurrentTime;
     }
-    vTaskDelay(pdMS_TO_TICKS(50));  // Increase delay to 50ms
+    vTaskDelay(pdMS_TO_TICKS(50));
   }
 }
 
