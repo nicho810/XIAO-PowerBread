@@ -77,13 +77,13 @@ StackType_t xStack_Dial[STACK_SIZE_DIAL];
 SemaphoreHandle_t xSemaphore = NULL;
 StaticSemaphore_t xMutexBuffer;
 
-// Add this near the top of the file with other global declarations
 TaskHandle_t xUITaskHandle = NULL;
 volatile bool dataChartChannelChangeRequested = false;
 
+//Watchdog
 #define WATCHDOG_TIMEOUT 2000  // 2 seconds
 
-uint8_t dataChart_ch = 0;
+uint8_t singleModeDisplayChannel = 0;
 
 void updateUITask(void *pvParameters) {
   (void)pvParameters;
@@ -111,7 +111,7 @@ void updateUITask(void *pvParameters) {
         tft_Rotation = 1;  //force the rotation to 1
         dataChart_changeRotation(tft_Rotation);
         Serial.println("New rotation applied: " + String(tft_Rotation));
-        dataChart_initUI(dataChart_ch);
+        dataChart_initUI(singleModeDisplayChannel);
       }
     }
 
@@ -133,11 +133,11 @@ void updateUITask(void *pvParameters) {
         if (dataChartChannelChangeRequested) {
           dataChartChannelChangeRequested = false;
           tft.fillScreen(color_Background);  // Clear the screen
-          dataChart_initUI(dataChart_ch);  // Reinitialize the UI for the new channel
-          Serial.println("Changed dataChart channel to: " + String(dataChart_ch));
+          dataChart_initUI(singleModeDisplayChannel);  // Reinitialize the UI for the new channel
+          Serial.println("Changed dataChart channel to: " + String(singleModeDisplayChannel));
         }
         //regular update
-        dataChart_updateData(sensorData, dataChart_ch);
+        dataChart_updateData(sensorData, singleModeDisplayChannel);
         break;
     }
 
@@ -196,6 +196,7 @@ void dialReadTask(void *pvParameters) {
             dialStatus = 4;  // Long press
             longPressDetected = true;
             Serial.println("Dial long pressed");
+            longPress_Handler(current_function_mode);
             vTaskDelay(pdMS_TO_TICKS(300));  // Debounce delay
           }
         } else if (dialValue >= 800 && dialValue < 1500) {
@@ -212,11 +213,8 @@ void dialReadTask(void *pvParameters) {
           if (pressStartTime != 0 && !longPressDetected && !shortPressHandled) {
             // This was a short press that just ended
             Serial.println("Dial short pressed");
+            shortPress_Handler(current_function_mode);// Handle short press action here
             shortPressHandled = true;
-            // Handle short press action here
-            functionModeChangeRequested = true;
-            current_function_mode = (current_function_mode == dataMonitor) ? dataChart : dataMonitor;
-            Serial.println("Function mode changed to " + String(current_function_mode));
             vTaskDelay(pdMS_TO_TICKS(300));  // Debounce delay
           }
           dialStatus = 0;  // Reset status for other values
@@ -240,18 +238,7 @@ void dialReadTask(void *pvParameters) {
               tft_Rotation = newRotation;
             }
           } else if (current_function_mode == dataChart) {
-            int newChannel = dataChart_ch;
-            if (lastDialStatus == 1) {  // Was turned up
-              newChannel++;
-              if (newChannel > 1) newChannel = 0;
-            } else if (lastDialStatus == 2) {  // Was turned down
-              newChannel--;
-              if (newChannel < 0) newChannel = 1;
-            }
-            if (newChannel != dataChart_ch) {
-              dataChart_ch = newChannel;
-              dataChartChannelChangeRequested = true;
-            }
+            //do nothing here for now, but will change rotation later
           }
         }
 
@@ -261,6 +248,33 @@ void dialReadTask(void *pvParameters) {
       xLastReadTime = xCurrentTime;
     }
     vTaskDelay(pdMS_TO_TICKS(50));
+  }
+}
+
+void shortPress_Handler(function_mode currentMode) {
+  if (currentMode == dataMonitor) {
+    //SWITCH TO DATA CHART
+    functionModeChangeRequested = true;
+    current_function_mode = (current_function_mode == dataMonitor) ? dataChart : dataMonitor;
+    Serial.println("Function mode changed to " + String(current_function_mode));
+  } else if (currentMode == dataChart) {
+    //SWITCH TO DATA MONITOR
+    functionModeChangeRequested = true;
+    current_function_mode = (current_function_mode == dataChart) ? dataMonitor : dataChart;
+    Serial.println("Function mode changed to " + String(current_function_mode));
+  }
+}
+
+void longPress_Handler(function_mode currentMode) {
+  if (currentMode == dataMonitor) {
+    Serial.println("Data Monitor long pressed");
+  } else if (currentMode == dataChart) {
+    // Serial.println("Data Chart long pressed");
+
+    //Switch channel
+    singleModeDisplayChannel = (singleModeDisplayChannel == 0) ? 1 : 0;
+    dataChartChannelChangeRequested = true;
+    Serial.println("Data Chart channel changed to " + String(singleModeDisplayChannel));
   }
 }
 
