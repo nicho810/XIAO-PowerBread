@@ -8,9 +8,12 @@ GFXcanvas16* smallChartCanvas = nullptr;  // Change to GFXcanvas16
 extern float old_chA_v, old_chA_a, old_chA_w;
 extern float old_chB_v, old_chB_a, old_chB_w;
 
-void dataMonitorChart_changeRotation(int rotation) {
+void dataMonitorChart_changeRotation(const DualChannelData &sensorData, uint8_t channel, int rotation) {
   tft.initR(INITR_GREENTAB);
   tft.setRotation(rotation);  //Rotate the LCD 180 degree (0-3)
+  // vTaskDelay(50);
+  dataMonitorChart_initUI(channel, rotation);
+  dataMonitorChart_updateData(sensorData, channel, rotation, 1);//force update all data
 }
 
 

@@ -154,6 +154,12 @@ void updateUITask(void *pvParameters) {
           dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation, 1);//force update all data
           Serial.println("Changed dataChart channel to: " + String(singleModeDisplayChannel));
         }
+        //Rotation change requested
+        if (rotationChangeRequested) {
+          rotationChangeRequested = false;
+          dataMonitorChart_changeRotation(sensorData, singleModeDisplayChannel, tft_Rotation);
+          Serial.println("New rotation applied: " + String(tft_Rotation));
+        }
         //regular update
         dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation);
         break;
@@ -242,30 +248,28 @@ void dialReadTask(void *pvParameters) {
 
         // Handle rotation changes
         if (dialStatus == 0 && (lastDialStatus == 1 || lastDialStatus == 2)) {
-          if (current_function_mode == dataMonitor) {
-            int newRotation = tft_Rotation;
-            if (lastDialStatus == 1) {  // Was turned up
-              newRotation++;
-              if (newRotation > 3) newRotation = 0;
-            } else if (lastDialStatus == 2) {  // Was turned down
-              newRotation--;
-              if (newRotation < 0) newRotation = 3;
-            }
-            if (newRotation != tft_Rotation) {
-              rotationChangeRequested = true;
-              tft_Rotation = newRotation;
-            }
-          } else if (current_function_mode == dataChart) {
-            //do nothing here for now, but will change rotation later
-          }
+          rotationChange_Handler(current_function_mode, lastDialStatus); //handle rotation change based on lastDialStatus and currentMode
         }
 
+        //reset lastDialStatus and lastDialValue
         lastDialStatus = dialStatus;
         lastDialValue = dialValue;
       }
       xLastReadTime = xCurrentTime;
     }
     vTaskDelay(pdMS_TO_TICKS(50));
+  }
+}
+
+void rotationChange_Handler(function_mode currentMode, int lastDialStatus) {
+  if (currentMode == dataMonitor) {
+    rotationChangeRequested = true;
+    tft_Rotation = (lastDialStatus == 1) ? (tft_Rotation + 1) % 4 : (tft_Rotation - 1 + 4) % 4; 
+  } else if (currentMode == dataChart) {
+    //do nothing here for now, but will change rotation later
+  } else if (currentMode == dataMonitorChart) {
+    rotationChangeRequested = true;
+    tft_Rotation = (lastDialStatus == 1) ? (tft_Rotation + 1) % 4 : (tft_Rotation - 1 + 4) % 4; 
   }
 }
 
