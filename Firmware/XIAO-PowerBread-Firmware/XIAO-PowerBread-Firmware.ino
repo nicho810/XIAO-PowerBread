@@ -31,7 +31,8 @@ volatile int tft_Rotation = 2;  // default rotation.
 #include "dataMonitorChart_functions.h"
 #include "systemUI_functions.h"
 
-volatile float old_chA_v = 0, old_chA_a = 0, old_chA_w = 0;
+//todo, still need to remove and also remove the usage in other functions.
+volatile float old_chA_v = 0, old_chA_a = 0, old_chA_w = 0; 
 volatile float old_chB_v = 0, old_chB_a = 0, old_chB_w = 0;
 
 enum function_mode {
@@ -98,12 +99,13 @@ TaskHandle_t xSensorTaskHandle = NULL;
 
 // Add a global variable to store the latest sensor data
 DualChannelData latestSensorData;
+DualChannelData oldSensorData; //todo, use this to replace old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w
 
 // Add the new sensor update task
 void sensorUpdateTask(void *pvParameters) {
   (void)pvParameters;
   TickType_t xLastWakeTime = xTaskGetTickCount();
-  const TickType_t xFrequency = pdMS_TO_TICKS(20);  // Update every 100ms
+  const TickType_t xFrequency = pdMS_TO_TICKS(20);  // Update every 20ms
 
   while (1) {
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
@@ -113,7 +115,16 @@ void sensorUpdateTask(void *pvParameters) {
 
     if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE) {
       // Read sensor data
-      latestSensorData = inaSensor.readCurrentSensors();
+      DualChannelData newSensorData = inaSensor.readCurrentSensors();
+      
+      // Update oldSensorData if values have changed
+      if (newSensorData.channel0.isDirty || newSensorData.channel1.isDirty) {
+        oldSensorData = latestSensorData;
+      }
+      
+      // Update latestSensorData
+      latestSensorData = newSensorData;
+      
       xSemaphoreGive(xSemaphore);
     }
   }
@@ -160,8 +171,8 @@ void handleFunctionModeChange(const DualChannelData &sensorData) {
   switch (current_function_mode) {
     case dataMonitor:
       dataMonitor_initUI(tft_Rotation);
-      dataMonitor_ChannelInfoUpdate(0, old_chA_v, old_chA_a, old_chA_w, -1, -1, -1, color_Text);
-      dataMonitor_ChannelInfoUpdate(1, old_chB_v, old_chB_a, old_chB_w, -1, -1, -1, color_Text);
+      dataMonitor_ChannelInfoUpdate(0, oldSensorData.channel0.busVoltage, oldSensorData.channel0.busCurrent, oldSensorData.channel0.busPower, -1, -1, -1, color_Text);
+      dataMonitor_ChannelInfoUpdate(1, oldSensorData.channel1.busVoltage, oldSensorData.channel1.busCurrent, oldSensorData.channel1.busPower, -1, -1, -1, color_Text);
       break;
     case dataChart:
       tft_Rotation = 1;
@@ -179,7 +190,9 @@ void handleDataMonitorMode(const DualChannelData &sensorData) {
   if (rotationChangeRequested) {
     rotationChangeRequested = false;
     dataMonitor_update_chAB_xy_by_Rotation(tft_Rotation);
-    dataMonitor_changeRotation(tft_Rotation, old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w);
+    dataMonitor_changeRotation(tft_Rotation, 
+                               oldSensorData.channel0.busVoltage, oldSensorData.channel0.busCurrent, oldSensorData.channel0.busPower,
+                               oldSensorData.channel1.busVoltage, oldSensorData.channel1.busCurrent, oldSensorData.channel1.busPower);
   }
   dataMonitor_updateData(sensorData);
 }
@@ -383,6 +396,7 @@ void setup(void) {
   //Dial init
   dial_init();
 
+  //semaphore init
   xSemaphore = xSemaphoreCreateMutexStatic(&xMutexBuffer);
   if (xSemaphore == NULL) {
     Serial.println("Error creating semaphore");
