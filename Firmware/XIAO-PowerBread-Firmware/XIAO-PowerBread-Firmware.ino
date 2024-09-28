@@ -23,15 +23,16 @@ Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 // LCD Rotation
 volatile bool rotationChangeRequested = false;
 volatile int newRotation = 0;
-int tft_Rotation = 2;  // default rotation.
+volatile int tft_Rotation = 2;  // default rotation.
 
 //UIs
 #include "dataMonitor_functions.h"
 #include "dataChart_functions.h"
 #include "dataMonitorChart_functions.h"
+#include "systemUI_functions.h"
 
-float old_chA_v = 0, old_chA_a = 0, old_chA_w = 0;
-float old_chB_v = 0, old_chB_a = 0, old_chB_w = 0;
+volatile float old_chA_v = 0, old_chA_a = 0, old_chA_w = 0;
+volatile float old_chB_v = 0, old_chB_a = 0, old_chB_w = 0;
 
 enum function_mode {
   dataMonitor,
@@ -43,7 +44,7 @@ enum function_mode {
 };
 
 volatile function_mode current_function_mode = dataMonitor;
-volatile bool functionModeChangeRequested = false;  //a flag to indicate a mode change is requested
+volatile bool functionModeChangeRequested = true;  //a flag to indicate a mode change is requested
 volatile bool singleModeDisplayChannel_ChangeRequested = false;
 uint8_t singleModeDisplayChannel = 0;
 
@@ -67,37 +68,73 @@ int read_dial() {
   return analogRead(dial_adc);
 }
 
-#define STACK_SIZE 16384
-StaticTask_t xTaskBuffer_UI;
-StackType_t xStack_UI[STACK_SIZE];
 
-#define STACK_SIZE_SERIAL 4096
+#define STACK_SIZE_UI 2048
+StaticTask_t xTaskBuffer_UI;
+StackType_t xStack_UI[STACK_SIZE_UI];
+
+#define STACK_SIZE_SERIAL 1024
 StaticTask_t xTaskBuffer_Serial;
 StackType_t xStack_Serial[STACK_SIZE_SERIAL];
 
-#define STACK_SIZE_DIAL 4096
+#define STACK_SIZE_DIAL 1024
 StaticTask_t xTaskBuffer_Dial;
 StackType_t xStack_Dial[STACK_SIZE_DIAL];
+
+#define STACK_SIZE_SENSOR 1024
+StaticTask_t xTaskBuffer_Sensor;
+StackType_t xStack_Sensor[STACK_SIZE_SENSOR];
 
 SemaphoreHandle_t xSemaphore = NULL;
 StaticSemaphore_t xMutexBuffer;
 
 TaskHandle_t xUITaskHandle = NULL;
+TaskHandle_t xSerialTaskHandle = NULL;
+TaskHandle_t xDialTaskHandle = NULL;
+TaskHandle_t xSensorTaskHandle = NULL;
 
 //Watchdog
-#define WATCHDOG_TIMEOUT 2000  // 2 seconds
+#define WATCHDOG_TIMEOUT 5000  // 5 seconds
 
+// Add a global variable to store the latest sensor data
+DualChannelData latestSensorData;
 
-void updateUITask(void *pvParameters) {
+// Add the new sensor update task
+void sensorUpdateTask(void *pvParameters) {
   (void)pvParameters;
   TickType_t xLastWakeTime = xTaskGetTickCount();
-  const TickType_t xFrequency = pdMS_TO_TICKS(100);
+  const TickType_t xFrequency = pdMS_TO_TICKS(20);  // Update every 100ms
 
   while (1) {
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
+    // Reset the watchdog timer
+    Watchdog.reset();
+
+    if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE) {
+      // Read sensor data
+      latestSensorData = inaSensor.readCurrentSensors();
+      xSemaphoreGive(xSemaphore);
+    }
+  }
+}
+
+void updateUITask(void *pvParameters) {
+  (void)pvParameters;
+  TickType_t xLastWakeTime = xTaskGetTickCount();
+  const TickType_t xFrequency = pdMS_TO_TICKS(50);
+
+  while (1) {
+    // Reset the watchdog timer
+    Watchdog.reset();
+
+    vTaskDelayUntil(&xLastWakeTime, xFrequency);
+
     xSemaphoreTake(xSemaphore, portMAX_DELAY);
-    DualChannelData sensorData = inaSensor.readCurrentSensors();
+    // Use the latest sensor data
+    DualChannelData sensorData = latestSensorData;
+
+    xSemaphoreGive(xSemaphore);
 
     if (functionModeChangeRequested) {
       handleFunctionModeChange(sensorData);
@@ -114,8 +151,6 @@ void updateUITask(void *pvParameters) {
         handleDataMonitorChartMode(sensorData);
         break;
     }
-
-    xSemaphoreGive(xSemaphore);
   }
 }
 
@@ -176,17 +211,25 @@ void serialPrintTask(void *pvParameters) {
   TickType_t xLastPrintTime = 0;
   const TickType_t xPrintInterval = pdMS_TO_TICKS(1000);
   while (1) {
+    // Reset the watchdog timer
+    Watchdog.reset();
+
     TickType_t xCurrentTime = xTaskGetTickCount();
     if ((xCurrentTime - xLastPrintTime) >= xPrintInterval) {
-      xSemaphoreTake(xSemaphore, portMAX_DELAY);
-      DualChannelData sensorData = inaSensor.readCurrentSensors();
-      Serial.printf("A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW\n",
-                    sensorData.channel0.busVoltage, sensorData.channel0.shuntVoltage * 1000, sensorData.channel0.busCurrent, sensorData.channel0.busPower,
-                    sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000, sensorData.channel1.busCurrent, sensorData.channel1.busPower);
+      if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(100)) == pdTRUE) {
+        // Use the latest sensor data
+        DualChannelData sensorData = latestSensorData;
+        xSemaphoreGive(xSemaphore);
+        // Only print if Serial is available
+        if (Serial) {
+          Serial.printf("A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW\n",
+                        sensorData.channel0.busVoltage, sensorData.channel0.shuntVoltage * 1000, sensorData.channel0.busCurrent, sensorData.channel0.busPower,
+                        sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000, sensorData.channel1.busCurrent, sensorData.channel1.busPower);
+        }
 
-      xSemaphoreGive(xSemaphore);
-      xLastPrintTime = xCurrentTime;
-      // Serial.println("Serial Task running");
+        xLastPrintTime = xCurrentTime;
+      }
+      // If we couldn't acquire the semaphore, we'll try again next time
     }
     vTaskDelay(pdMS_TO_TICKS(100));  // Increase delay to 100ms
   }
@@ -219,7 +262,7 @@ void dialReadTask(void *pvParameters) {
           } else if ((xCurrentTime - pressStartTime) >= longPressThreshold && !longPressDetected) {
             dialStatus = 4;  // Long press
             longPressDetected = true;
-            Serial.println("Dial long pressed");
+            // Serial.println("Dial long pressed");
             longPress_Handler(current_function_mode);
             vTaskDelay(pdMS_TO_TICKS(300));  // Debounce delay
           }
@@ -236,7 +279,7 @@ void dialReadTask(void *pvParameters) {
         } else {
           if (pressStartTime != 0 && !longPressDetected && !shortPressHandled) {
             // This was a short press that just ended
-            Serial.println("Dial short pressed");
+            // Serial.println("Dial short pressed");
             shortPress_Handler(current_function_mode);// Handle short press action here
             shortPressHandled = true;
             vTaskDelay(pdMS_TO_TICKS(300));  // Debounce delay
@@ -320,17 +363,15 @@ void setup(void) {
   Serial.println(F("Hello! XIAO PowerBread."));
 
   // LCD init
-  tft.setSPISpeed(24000000);      //50MHz
+  tft.setSPISpeed(24000000);      //24MHz
   tft.initR(INITR_GREENTAB);      // Init ST7735S 0.96inch display (160*80), Also need to modify the _colstart = 24 and _rowstart = 0 in Adafruit_ST7735.cpp>initR(uint8_t)
   tft.setRotation(tft_Rotation);  //Rotate the LCD 180 degree (0-3)
-  dataMonitor_update_chAB_xy_by_Rotation(tft_Rotation);
-
   tft.fillScreen(color_Background);
 
   //UI init
-  dataMonitor_initUI(tft_Rotation);
-  dataMonitor_ChannelInfoUpdate(0, 0, 0, 0, -1, -1, -1, color_Text);  //init data of chA
-  dataMonitor_ChannelInfoUpdate(1, 0, 0, 0, -1, -1, -1, color_Text);  //init data of chB
+  systemUI_init();
+  systemUI_bootScreen();
+
 
   //Current sensor init
   if (!inaSensor.begin()) {
@@ -355,9 +396,19 @@ void setup(void) {
   Serial.print(countdownMS);
   Serial.println("ms timeout");
 
-  // Task creation with error checking
+
+  //Create sensor tasks
+  Serial.println("Creating Sensor Task");
+  xSensorTaskHandle = xTaskCreateStatic(sensorUpdateTask, "Sensor_Update", STACK_SIZE_SENSOR, NULL, 4, xStack_Sensor, &xTaskBuffer_Sensor);
+  if (xSensorTaskHandle == NULL) {
+    Serial.println("Sensor Task creation failed");
+    while (1);
+  }
+  Serial.println("Sensor Task created successfully");
+
+  //Create UI tasks
   Serial.println("Creating UI Task");
-  xUITaskHandle = xTaskCreateStatic(updateUITask, "UI_Update", STACK_SIZE, NULL, 3, xStack_UI, &xTaskBuffer_UI);
+  xUITaskHandle = xTaskCreateStatic(updateUITask, "UI_Update", STACK_SIZE_UI, NULL, 3, xStack_UI, &xTaskBuffer_UI);
   if (xUITaskHandle == NULL) {
     Serial.println("UI Task creation failed");
     while (1)
@@ -365,31 +416,30 @@ void setup(void) {
   }
   Serial.println("UI Task created successfully");
 
-  Serial.println("Creating Serial Task");
-  TaskHandle_t xSerialHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print", STACK_SIZE_SERIAL, NULL, 1, xStack_Serial, &xTaskBuffer_Serial);
-  if (xSerialHandle == NULL) {
-    Serial.println("Serial Task creation failed");
-    while (1)
-      ;
-  }
-  Serial.println("Serial Task created successfully");
-
+  //Create dial tasks
   Serial.println("Creating Dial Task");
-  TaskHandle_t xDialHandle = xTaskCreateStatic(dialReadTask, "Dial_Read", STACK_SIZE_DIAL, NULL, 2, xStack_Dial, &xTaskBuffer_Dial);
-  if (xDialHandle == NULL) {
+  xDialTaskHandle = xTaskCreateStatic(dialReadTask, "Dial_Read", STACK_SIZE_DIAL, NULL, 2, xStack_Dial, &xTaskBuffer_Dial);
+  if (xDialTaskHandle == NULL) {
     Serial.println("Dial Task creation failed");
     while (1)
       ;
   }
   Serial.println("Dial Task created successfully");
 
-  Serial.println("Starting scheduler");
-  vTaskStartScheduler();
+  // Create serial tasks
+  Serial.println("Creating Serial Task");
+  xSerialTaskHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print", STACK_SIZE_SERIAL, NULL, 1, xStack_Serial, &xTaskBuffer_Serial);
+  if (xSerialTaskHandle == NULL) {
+    Serial.println("Serial Task creation failed");
+    while (1)
+      ;
+  }
+  Serial.println("Serial Task created successfully");
 
-  // We should never get here as control is now taken by the scheduler
-  Serial.println("Scheduler failed to start");
-  while (1)
-    ;
+
+  //it is a way to start scheduler, but this will cause crash, so we don't use it, and marked as comment
+  //vTaskStartScheduler(); 
+
 }
 
 void loop() {
@@ -398,43 +448,18 @@ void loop() {
 
 // Add this function at the end of your file
 extern "C" void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
+  //it use for checking task stack overflow when debugging
   Serial.print("Stack Overflow in task: ");
   Serial.println(pcTaskName);
   while (1)
     ;
 }
 
-// Modify the Idle Hook to print less frequently
+
 extern "C" void vApplicationIdleHook(void) {
-  static TickType_t lastIdleTime = 0;
-  static uint32_t idleCount = 0;
-
-  TickType_t currentTime = xTaskGetTickCount();
-  idleCount++;
-
-  // Print message only once per 5 seconds
-  if (currentTime - lastIdleTime >= pdMS_TO_TICKS(5000)) {
-    Serial.print("Idle Hook called ");
-    Serial.print(idleCount);
-    Serial.println(" times in the last 5 seconds");
-
-    lastIdleTime = currentTime;
-    idleCount = 0;
-  }
+ //it use for checking task states when debugging
 }
 
-// Add a new function to check task states
 void vApplicationTickHook(void) {
-  static TickType_t lastCheckTime = 0;
-  TickType_t currentTime = xTaskGetTickCount();
-
-  // Check task states every 10 seconds
-  if (currentTime - lastCheckTime >= pdMS_TO_TICKS(10000)) {
-    // Serial.println("Task States:");
-    // Serial.print("UI Task: ");
-    // Serial.println(eTaskGetState(xUITaskHandle) == eRunning ? "Running" : "Not Running");
-    // Add similar checks for other tasks if needed
-
-    lastCheckTime = currentTime;
-  }
+  //it use for checking task states when debugging
 }
