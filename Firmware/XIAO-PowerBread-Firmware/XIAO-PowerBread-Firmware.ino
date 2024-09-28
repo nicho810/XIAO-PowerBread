@@ -273,15 +273,16 @@ void rotationChange_Handler(function_mode currentMode, int lastDialStatus) {
   }
 }
 
+
+//Short press is basicly for switching mode
 void shortPress_Handler(function_mode currentMode) {
   functionModeChangeRequested = true;
   switch (currentMode) {
     case dataMonitor:
-      current_function_mode = dataChart;
+      current_function_mode = dataMonitorChart;
       break;
     case dataChart:
-      current_function_mode = dataMonitorChart;
-      //dataChart_exitUI();//aim to free the memory of chartCanvas, but not working, leave it later.
+      current_function_mode = dataMonitor; //skip this mode for now
       break;
     case dataMonitorChart:
       current_function_mode = dataMonitor;
@@ -291,6 +292,7 @@ void shortPress_Handler(function_mode currentMode) {
   Serial.println("Function mode changed to " + String(current_function_mode));
 }
 
+//Long press is basicly for changing channel
 void longPress_Handler(function_mode currentMode) {
   if (currentMode == dataMonitor) {
     Serial.println("Data Monitor long pressed");

@@ -9,6 +9,8 @@ std::unique_ptr<GFXcanvas16> smallChartCanvas;  // Change to GFXcanvas16
 extern float old_chA_v, old_chA_a, old_chA_w;
 extern float old_chB_v, old_chB_a, old_chB_w;
 
+float chartScale = 100.0;
+
 void dataMonitorChart_changeRotation(const DualChannelData &sensorData, uint8_t channel, int rotation) {
   tft.setRotation(rotation);  // Only set rotation, don't reinitialize the display
   dataMonitorChart_initUI(channel, rotation);
@@ -115,6 +117,9 @@ void dataMonitorChart_updateData(const DualChannelData &sensorData, uint8_t ch, 
     power_old = old_chB_w;
   }
 
+  uint16_t lineColor = (ch == 0) ? color_ChartChannelA : color_ChartChannelB;
+  uint16_t lineHighlightColor = (ch == 0) ? color_ChannelA : color_ChannelB;
+
 
   //if forceUpdate is 1, update all data anyway
   if (forceUpdate == 1) {
@@ -147,8 +152,27 @@ void dataMonitorChart_updateData(const DualChannelData &sensorData, uint8_t ch, 
   //update chartBox
   if (!smallChartCanvas) return; // Safety check
 
+  //Adjust the max scale of the chart based on the current value
+  float current_maxScale = chartScale; // mA, default scale
+  if (busCurrent >= 1800) {
+    current_maxScale = 5000.0;
+  } else if (busCurrent >= 800) {
+    current_maxScale = 2000.0;
+  } else if (busCurrent >= 400) {
+    current_maxScale = 1000.0;
+  } else if (busCurrent > 80) {
+    current_maxScale = 500.0;
+  } else if (busCurrent <= 80) {
+    current_maxScale = 100.0;
+  }
+
+  //draw a V line to indicate the scale is changed
+  if (chartScale != current_maxScale) {
+    smallChartCanvas->drawFastVLine(smallChart_WIDTH - 1, 0, smallChart_HEIGHT, lineHighlightColor);
+    chartScale = current_maxScale;
+  }
+
   // Calculate the height of the current bar    
-  const float current_maxScale = 100.0; // mA, lowered for better visibility
   int16_t bar_height = (int16_t)((busCurrent / current_maxScale) * smallChart_HEIGHT);
   bar_height = constrain(bar_height, 0, smallChart_HEIGHT);
 
@@ -171,9 +195,6 @@ void dataMonitorChart_updateData(const DualChannelData &sensorData, uint8_t ch, 
   }
 
   //draw the new data
-  uint16_t lineColor = (ch == 0) ? color_ChartChannelA : color_ChartChannelB;
-  uint16_t lineHighlightColor = (ch == 0) ? color_ChannelA : color_ChannelB;
-
   smallChartCanvas->drawFastVLine(smallChart_WIDTH - 1, smallChart_HEIGHT - bar_height, bar_height, lineColor);
   smallChartCanvas->drawFastVLine(smallChart_WIDTH - 1, smallChart_HEIGHT - bar_height, 2, lineHighlightColor);
 
