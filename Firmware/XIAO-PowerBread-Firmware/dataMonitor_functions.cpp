@@ -141,7 +141,7 @@ void dataMonitor_initUI(int rotation) {
 }
 
 void dataMonitor_changeRotation(int rotation, float old_chA_v, float old_chA_a, float old_chA_w, float old_chB_v, float old_chB_a, float old_chB_w) {
-  tft.initR(INITR_GREENTAB);
+  // tft.initR(INITR_GREENTAB);
   tft.setRotation(rotation);  //Rotate the LCD 180 degree (0-3)
   // delay(50);
   dataMonitor_initUI(rotation);

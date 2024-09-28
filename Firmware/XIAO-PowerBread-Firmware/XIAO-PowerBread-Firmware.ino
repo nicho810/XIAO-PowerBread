@@ -90,85 +90,85 @@ TaskHandle_t xUITaskHandle = NULL;
 
 void updateUITask(void *pvParameters) {
   (void)pvParameters;
-  while (1) {
-    // Reset the watchdog timer
-    Watchdog.reset();
+  TickType_t xLastWakeTime = xTaskGetTickCount();
+  const TickType_t xFrequency = pdMS_TO_TICKS(100);
 
-    //wait for sensor data
+  while (1) {
+    vTaskDelayUntil(&xLastWakeTime, xFrequency);
+
     xSemaphoreTake(xSemaphore, portMAX_DELAY);
-    //fetch sensor data
     DualChannelData sensorData = inaSensor.readCurrentSensors();
 
-    //functionModeChangeRequested handler
     if (functionModeChangeRequested) {
-      functionModeChangeRequested = false;
-      //init the UI for different function mode
-      tft.fillScreen(color_Background);  //clear the screen
-      if (current_function_mode == dataMonitor) {
-        //init dataMonitor UI
-        dataMonitor_initUI(tft_Rotation);
-        dataMonitor_ChannelInfoUpdate(0, old_chA_v, old_chA_a, old_chA_w, -1, -1, -1, color_Text);
-        dataMonitor_ChannelInfoUpdate(1, old_chB_v, old_chB_a, old_chB_w, -1, -1, -1, color_Text);
-      } else if (current_function_mode == dataChart) {
-        //init dataChart UI
-        tft_Rotation = 1;  //force the rotation to 1
-        dataChart_changeRotation(tft_Rotation);
-        Serial.println("New rotation applied: " + String(tft_Rotation));
-        dataChart_initUI(singleModeDisplayChannel);
-      } else if (current_function_mode == dataMonitorChart) {
-        //init dataMonitorChart UI
-        dataMonitorChart_initUI(singleModeDisplayChannel, tft_Rotation);
-        dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation, 1);//force update all data
-      }
+      handleFunctionModeChange(sensorData);
     }
 
-    //update data to UI
     switch (current_function_mode) {
       case dataMonitor:
-        //Rotation change requested
-        if (rotationChangeRequested) {
-          rotationChangeRequested = false;
-          dataMonitor_update_chAB_xy_by_Rotation(tft_Rotation);
-          dataMonitor_changeRotation(tft_Rotation, old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w);
-          Serial.println("New rotation applied: " + String(tft_Rotation));
-        }
-        //regular update
-        dataMonitor_updateData(sensorData);
+        handleDataMonitorMode(sensorData);
         break;
       case dataChart:
-        //channel switch requested
-        if (singleModeDisplayChannel_ChangeRequested) {
-          singleModeDisplayChannel_ChangeRequested = false;
-          tft.fillScreen(color_Background);  // Clear the screen
-          dataChart_initUI(singleModeDisplayChannel);  // Reinitialize the UI for the new channel
-          Serial.println("Changed dataChart channel to: " + String(singleModeDisplayChannel));
-        }
-        //regular update
-        dataChart_updateData(sensorData, singleModeDisplayChannel);
+        handleDataChartMode(sensorData);
         break;
       case dataMonitorChart:
-        //channel switch requested
-        if (singleModeDisplayChannel_ChangeRequested) {
-          singleModeDisplayChannel_ChangeRequested = false;
-          dataMonitorChart_initUI(singleModeDisplayChannel, tft_Rotation);
-          dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation, 1);//force update all data
-          Serial.println("Changed dataChart channel to: " + String(singleModeDisplayChannel));
-        }
-        //Rotation change requested
-        if (rotationChangeRequested) {
-          rotationChangeRequested = false;
-          dataMonitorChart_changeRotation(sensorData, singleModeDisplayChannel, tft_Rotation);
-          Serial.println("New rotation applied: " + String(tft_Rotation));
-        }
-        //regular update
-        dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation);
+        handleDataMonitorChartMode(sensorData);
         break;
     }
 
     xSemaphoreGive(xSemaphore);
-    // Serial.println("UI Task running"); //for debug
-    vTaskDelay(pdMS_TO_TICKS(100));  // Change delay to 100ms
   }
+}
+
+void handleFunctionModeChange(const DualChannelData &sensorData) {
+  functionModeChangeRequested = false;
+  tft.fillScreen(color_Background);
+  switch (current_function_mode) {
+    case dataMonitor:
+      dataMonitor_initUI(tft_Rotation);
+      dataMonitor_ChannelInfoUpdate(0, old_chA_v, old_chA_a, old_chA_w, -1, -1, -1, color_Text);
+      dataMonitor_ChannelInfoUpdate(1, old_chB_v, old_chB_a, old_chB_w, -1, -1, -1, color_Text);
+      break;
+    case dataChart:
+      tft_Rotation = 1;
+      dataChart_changeRotation(tft_Rotation);
+      dataChart_initUI(singleModeDisplayChannel);
+      break;
+    case dataMonitorChart:
+      dataMonitorChart_initUI(singleModeDisplayChannel, tft_Rotation);
+      dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation, 1);
+      break;
+  }
+}
+
+void handleDataMonitorMode(const DualChannelData &sensorData) {
+  if (rotationChangeRequested) {
+    rotationChangeRequested = false;
+    dataMonitor_update_chAB_xy_by_Rotation(tft_Rotation);
+    dataMonitor_changeRotation(tft_Rotation, old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w);
+  }
+  dataMonitor_updateData(sensorData);
+}
+
+void handleDataChartMode(const DualChannelData &sensorData) {
+  if (singleModeDisplayChannel_ChangeRequested) {
+    singleModeDisplayChannel_ChangeRequested = false;
+    tft.fillScreen(color_Background);
+    dataChart_initUI(singleModeDisplayChannel);
+  }
+  dataChart_updateData(sensorData, singleModeDisplayChannel);
+}
+
+void handleDataMonitorChartMode(const DualChannelData &sensorData) {
+  if (singleModeDisplayChannel_ChangeRequested) {
+    singleModeDisplayChannel_ChangeRequested = false;
+    dataMonitorChart_initUI(singleModeDisplayChannel, tft_Rotation);
+    dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation, 1);
+  }
+  if (rotationChangeRequested) {
+    rotationChangeRequested = false;
+    dataMonitorChart_changeRotation(sensorData, singleModeDisplayChannel, tft_Rotation);
+  }
+  dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation);
 }
 
 void serialPrintTask(void *pvParameters) {

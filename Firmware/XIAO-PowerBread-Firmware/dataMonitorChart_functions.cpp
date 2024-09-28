@@ -1,19 +1,18 @@
 #include "dataMonitorChart_functions.h"
 #include "ui_style.h"
+#include <memory>
 
 const int smallChart_WIDTH = 74;
 const int smallChart_HEIGHT = 74;
-GFXcanvas16* smallChartCanvas = nullptr;  // Change to GFXcanvas16
+std::unique_ptr<GFXcanvas16> smallChartCanvas;  // Change to GFXcanvas16
 
 extern float old_chA_v, old_chA_a, old_chA_w;
 extern float old_chB_v, old_chB_a, old_chB_w;
 
 void dataMonitorChart_changeRotation(const DualChannelData &sensorData, uint8_t channel, int rotation) {
-  tft.initR(INITR_GREENTAB);
-  tft.setRotation(rotation);  //Rotate the LCD 180 degree (0-3)
-  // vTaskDelay(50);
+  tft.setRotation(rotation);  // Only set rotation, don't reinitialize the display
   dataMonitorChart_initUI(channel, rotation);
-  dataMonitorChart_updateData(sensorData, channel, rotation, 1);//force update all data
+  dataMonitorChart_updateData(sensorData, channel, rotation, 1); // Force update all data
 }
 
 
@@ -58,9 +57,7 @@ void dataMonitorChart_initUI(uint8_t channel, int rotation) {
 
   //chartBox
   tft.drawRoundRect(chartBox_x, chartBox_y, 78, 78, 4, color_channel);
-  if (smallChartCanvas == nullptr) { // Initialize the chartCanvas
-    smallChartCanvas = new GFXcanvas16(smallChart_WIDTH, smallChart_HEIGHT);  // Change to GFXcanvas16
-  }
+  smallChartCanvas.reset(new GFXcanvas16(smallChart_WIDTH, smallChart_HEIGHT));
   smallChartCanvas->fillScreen(0); // Clear the canvas with black
 }
 
@@ -148,7 +145,7 @@ void dataMonitorChart_updateData(const DualChannelData &sensorData, uint8_t ch, 
   tft.print("mW");
 
   //update chartBox
-  if (smallChartCanvas == nullptr) return; // Safety check
+  if (!smallChartCanvas) return; // Safety check
 
   // Calculate the height of the current bar    
   const float current_maxScale = 100.0; // mA, lowered for better visibility
@@ -186,6 +183,7 @@ void dataMonitorChart_updateData(const DualChannelData &sensorData, uint8_t ch, 
 }
 
 void dataMonitorChart_exitUI() {
+  smallChartCanvas.reset();
 }
 
 
