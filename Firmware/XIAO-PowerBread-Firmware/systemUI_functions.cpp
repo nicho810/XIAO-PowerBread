@@ -1,5 +1,4 @@
 #include "systemUI_functions.h"
-#include "ui_style.h"
 
 void systemUI_init() {
     tft.fillScreen(color_Background);

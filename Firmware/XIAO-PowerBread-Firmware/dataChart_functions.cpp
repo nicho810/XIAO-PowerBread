@@ -1,5 +1,4 @@
 #include "dataChart_functions.h"
-#include "ui_style.h"
 
 // dataChart functions
 void dataChart_changeRotation(int rotation) {

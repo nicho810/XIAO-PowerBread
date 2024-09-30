@@ -1,42 +1,34 @@
 #include "dataMonitor_functions.h"
 
-// Define global variables
-uint8_t chA_x = 1;
-uint8_t chA_y = 82;
-uint8_t chB_x = 1;
-uint8_t chB_y = 0;
 
-// Add these declarations at the top of the file if they're not already present
-extern float old_chA_v, old_chA_a, old_chA_w;
-extern float old_chB_v, old_chB_a, old_chB_w;
+extern DualChannelData oldSensorData;
 
-// Add the function
+
+// Update dual channel data
 void dataMonitor_updateData(const DualChannelData &sensorData) {
   if (sensorData.channel0.isDirty) {
     dataMonitor_ChannelInfoUpdate(0,
                                   sensorData.channel0.busVoltage,
                                   sensorData.channel0.busCurrent,
                                   sensorData.channel0.busPower,
-                                  old_chA_v, old_chA_a, old_chA_w,
+                                  oldSensorData.channel0.busVoltage,
+                                  oldSensorData.channel0.busCurrent, 
+                                  oldSensorData.channel0.busPower,
                                   color_Text);
-    old_chA_v = sensorData.channel0.busVoltage;
-    old_chA_a = sensorData.channel0.busCurrent;
-    old_chA_w = sensorData.channel0.busPower;
   }
   if (sensorData.channel1.isDirty) {
     dataMonitor_ChannelInfoUpdate(1,
                                   sensorData.channel1.busVoltage,
                                   sensorData.channel1.busCurrent,
                                   sensorData.channel1.busPower,
-                                  old_chB_v, old_chB_a, old_chB_w,
+                                  oldSensorData.channel1.busVoltage, 
+                                  oldSensorData.channel1.busCurrent, 
+                                  oldSensorData.channel1.busPower,
                                   color_Text);
-    old_chB_v = sensorData.channel1.busVoltage;
-    old_chB_a = sensorData.channel1.busCurrent;
-    old_chB_w = sensorData.channel1.busPower;
   }
 }
 
-void dataMonitor_ChannelInfoUpdate(uint8_t channel, float new_v, float new_a, float new_w, float old_v, float old_a, float old_w, uint16_t color=color_Text) {
+void dataMonitor_ChannelInfoUpdate(uint8_t channel, float new_v, float new_a, float new_w, float old_v, float old_a, float old_w, uint16_t color, uint8_t forceUpdate) {
   uint8_t ch_x = 0;
   uint8_t ch_y = 0;
   if (channel == 0) {
@@ -140,13 +132,13 @@ void dataMonitor_initUI(int rotation) {
   tft.setFont(&FreeSansBold9pt7b);  // set font first in case
 }
 
-void dataMonitor_changeRotation(int rotation, float old_chA_v, float old_chA_a, float old_chA_w, float old_chB_v, float old_chB_a, float old_chB_w) {
+void dataMonitor_changeRotation(int rotation, const DualChannelData &oldSensorData) {
   // tft.initR(INITR_GREENTAB);
   tft.setRotation(rotation);  //Rotate the LCD 180 degree (0-3)
   // delay(50);
   dataMonitor_initUI(rotation);
-  dataMonitor_ChannelInfoUpdate(0, old_chA_v, old_chA_a, old_chA_w, -1, -1, -1, color_Text);
-  dataMonitor_ChannelInfoUpdate(1, old_chB_v, old_chB_a, old_chB_w, -1, -1, -1, color_Text);
+  dataMonitor_ChannelInfoUpdate(0, oldSensorData.channel0.busVoltage, oldSensorData.channel0.busCurrent, oldSensorData.channel0.busPower, -1, -1, -1, color_Text, 1); //force update all data
+  dataMonitor_ChannelInfoUpdate(1, oldSensorData.channel1.busVoltage, oldSensorData.channel1.busCurrent, oldSensorData.channel1.busPower, -1, -1, -1, color_Text, 1); //force update all data
   // delay(50);
 }
 

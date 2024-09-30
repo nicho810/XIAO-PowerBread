@@ -5,6 +5,7 @@
 #include <Adafruit_ST7735.h>
 #include <SPI.h>
 #include <Fonts/FreeSansBold9pt7b.h>
+#include "ui_style.h"
 
 extern Adafruit_ST7735 tft;
 

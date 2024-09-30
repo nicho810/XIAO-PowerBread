@@ -6,6 +6,8 @@
 #include <SPI.h>
 #include <Fonts/FreeSansBold9pt7b.h>
 #include "INA3221Sensor.h"  // Add this line to include the DualChannelData type
+#include "ui_style.h"
+#include <memory>
 
 extern Adafruit_ST7735 tft;
 

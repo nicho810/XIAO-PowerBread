@@ -1,3 +1,4 @@
+#include <cstdint>
 //LCD init
 #include <Adafruit_GFX.h>     // Core graphics library
 #include <Adafruit_ST7735.h>  // Hardware-specific library for ST7735
@@ -31,9 +32,6 @@ volatile int tft_Rotation = 2;  // default rotation.
 #include "dataMonitorChart_functions.h"
 #include "systemUI_functions.h"
 
-//todo, still need to remove and also remove the usage in other functions.
-volatile float old_chA_v = 0, old_chA_a = 0, old_chA_w = 0; 
-volatile float old_chB_v = 0, old_chB_a = 0, old_chB_w = 0;
 
 enum function_mode {
   dataMonitor,
@@ -190,9 +188,7 @@ void handleDataMonitorMode(const DualChannelData &sensorData) {
   if (rotationChangeRequested) {
     rotationChangeRequested = false;
     dataMonitor_update_chAB_xy_by_Rotation(tft_Rotation);
-    dataMonitor_changeRotation(tft_Rotation, 
-                               oldSensorData.channel0.busVoltage, oldSensorData.channel0.busCurrent, oldSensorData.channel0.busPower,
-                               oldSensorData.channel1.busVoltage, oldSensorData.channel1.busCurrent, oldSensorData.channel1.busPower);
+    dataMonitor_changeRotation(tft_Rotation, oldSensorData);
   }
   dataMonitor_updateData(sensorData);
 }

@@ -1,13 +1,11 @@
 #include "dataMonitorChart_functions.h"
-#include "ui_style.h"
-#include <memory>
+
 
 const int smallChart_WIDTH = 74;
 const int smallChart_HEIGHT = 74;
 std::unique_ptr<GFXcanvas16> smallChartCanvas;  // Change to GFXcanvas16
 
-extern float old_chA_v, old_chA_a, old_chA_w;
-extern float old_chB_v, old_chB_a, old_chB_w;
+extern DualChannelData oldSensorData;
 
 float chartScale = 100.0;
 
@@ -108,13 +106,13 @@ void dataMonitorChart_updateData(const DualChannelData &sensorData, uint8_t ch, 
   uint8_t current_old = 0;
   uint8_t power_old = 0;
   if (ch == 0) {
-    volatge_old = old_chA_v;
-    current_old = old_chA_a;
-    power_old = old_chA_w;
+    volatge_old = oldSensorData.channel0.busVoltage;
+    current_old = oldSensorData.channel0.busCurrent;
+    power_old = oldSensorData.channel0.busPower;
   } else if (ch == 1) {
-    volatge_old = old_chB_v;
-    current_old = old_chB_a;
-    power_old = old_chB_w;
+    volatge_old = oldSensorData.channel1.busVoltage;
+    current_old = oldSensorData.channel1.busCurrent;
+    power_old = oldSensorData.channel1.busPower;
   }
 
   uint16_t lineColor = (ch == 0) ? color_ChartChannelA : color_ChartChannelB;
