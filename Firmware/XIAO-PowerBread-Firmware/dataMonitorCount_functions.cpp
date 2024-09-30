@@ -3,31 +3,45 @@
 
 extern DualChannelData oldSensorData;
 
+// Add these global variables at the top of the file
+extern float avgS[2], avgM[2], avgA[2], peak[2];
+extern unsigned long dataCount[2];
+extern unsigned long lastUpdate;
+extern double sumS[2], sumM[2], sumA[2];  // Changed to double for higher precision
+extern unsigned long countS[2], countM[2];  // Changed to unsigned long for larger range
+
+// Constants for overflow prevention
+const unsigned long MAX_COUNT = 1000000000;  // 1 billion samples
+const double MAX_SUM = 1.0e12;  // 1 trillion
+
 // Function definitions
 void dataMonitorCount_initUI(uint8_t channel, uint8_t rotation) {
   tft.fillScreen(color_Background);
 
   uint16_t color_channel = color_ChannelA;
+  uint16_t color_channel_highlight = color_ChartChannelA;
   if (channel == 0) {
     color_channel = color_ChannelA;
+    color_channel_highlight = color_ChartChannelA;
   } else {
     color_channel = color_ChannelB;
+    color_channel_highlight = color_ChartChannelB;
   }
 
   uint8_t dataBox_x = 0;
   uint8_t dataBox_y = 0;
-  uint8_t chartBox_x = 0;
-  uint8_t chartBox_y = 0;
+  uint8_t countBox_x = 0;
+  uint8_t countBox_y = 0;
   if (rotation == 0 || rotation == 2) {
     dataBox_x = 1;
     dataBox_y = 0;
-    chartBox_x = 1;
-    chartBox_y = 82;
+    countBox_x = 1;
+    countBox_y = 82;
   } else if (rotation == 1 || rotation == 3) {
     dataBox_x = 1;
     dataBox_y = 0;
-    chartBox_x = 82;
-    chartBox_y = 0;
+    countBox_x = 82;
+    countBox_y = 0;
   }
 
   //dataBox
@@ -44,27 +58,49 @@ void dataMonitorCount_initUI(uint8_t channel, uint8_t rotation) {
   }
 
   //countBox
-  tft.drawRoundRect(chartBox_x, chartBox_y, 78, 78, 4, color_channel);
-  
-  //todo
+  tft.drawRoundRect(dataBox_x, dataBox_y, 78, 78, 4, color_channel);
+
+  tft.setFont();
+  tft.setTextColor(color_Text);
+  tft.setTextSize(0);
+  const char* countBox_text[4] = {"AvgS", "AvgM", "AvgA", "Peak"};
+
+  //AvgS = Average current over 1 second
+  //AvgM = Average current over 1 minute
+  //AvgA = Average current since enter this mode
+  //Peak = Peak current
+
+  const uint8_t boxWidth = 78;
+  const uint8_t boxHeight = 18;
+  const uint8_t cornerRadius = 4;
+  const uint8_t highlightWidth = 28;
+
+  for (int i = 0; i <= 3; i++) {
+    uint8_t yPos = countBox_y + (i * 20);
+    tft.fillRoundRect(countBox_x, yPos, highlightWidth, boxHeight, cornerRadius, color_channel_highlight);
+    tft.fillRect(countBox_x + highlightWidth -3, yPos, 4, boxHeight, color_channel_highlight); //fill the right top and bottom corner of the highlight
+    tft.drawRoundRect(countBox_x, yPos, boxWidth, boxHeight, cornerRadius, color_channel);
+    tft.setCursor(countBox_x + 3, yPos + 5);
+    tft.print(countBox_text[i]);
+  }
 }
 
 
 void dataMonitorCount_updateData(const DualChannelData &sensorData, uint8_t channel, uint8_t rotation, uint8_t forceUpdate) {
   uint8_t dataBox_x = 0;
   uint8_t dataBox_y = 0;
-  uint8_t chartBox_x = 0;
-  uint8_t chartBox_y = 0;
+  uint8_t countBox_x = 0;
+  uint8_t countBox_y = 0;
   if (rotation == 0 || rotation == 2) {
     dataBox_x = 1;
     dataBox_y = 0;
-    chartBox_x = 1;
-    chartBox_y = 82;
+    countBox_x = 1;
+    countBox_y = 82;
   } else if (rotation == 1 || rotation == 3) {
     dataBox_x = 1;
     dataBox_y = 0;
-    chartBox_x = 82;
-    chartBox_y = 0;
+    countBox_x = 82;
+    countBox_y = 0;
   }
 
   int offset_defaultFont = -6;
@@ -135,6 +171,83 @@ void dataMonitorCount_updateData(const DualChannelData &sensorData, uint8_t chan
   tft.print("mA");
   tft.setCursor(power_x + 59, power_y + offset_defaultFont);
   tft.print("mW");
+
+
+  //update the countBox: AvgS, AvgM, AvgA, Peak
+  // AvgS = Average current over 1 second
+  // AvgM = Average current over 1 minute
+  // AvgA = Average current since enter this mode
+  // Peak = Peak current
+
+  // Update averages and peak
+  unsigned long currentTime = millis();
+  float currentValue = busCurrent;
+
+  // Accumulate data for averages
+  sumS[channel] += currentValue;
+  sumM[channel] += currentValue;
+  sumA[channel] += currentValue;
+  countS[channel]++;
+  countM[channel]++;
+  dataCount[channel]++;
+
+  // Prevent overflow
+  if (countS[channel] >= MAX_COUNT || sumS[channel] >= MAX_SUM) {
+    avgS[channel] = sumS[channel] / countS[channel];
+    sumS[channel] = avgS[channel];
+    countS[channel] = 1;
+  }
+  if (countM[channel] >= MAX_COUNT || sumM[channel] >= MAX_SUM) {
+    avgM[channel] = sumM[channel] / countM[channel];
+    sumM[channel] = avgM[channel];
+    countM[channel] = 1;
+  }
+  if (dataCount[channel] >= MAX_COUNT || sumA[channel] >= MAX_SUM) {
+    avgA[channel] = sumA[channel] / dataCount[channel];
+    sumA[channel] = avgA[channel];
+    dataCount[channel] = 1;
+  }
+
+  // Update all averages every 100ms
+  if (currentTime - lastUpdate >= 100) {
+    for (int i = 0; i < 2; i++) {
+      if (countS[i] > 0) {
+        avgS[i] = sumS[i] / countS[i];
+        sumS[i] = 0;
+        countS[i] = 0;
+      }
+      if (countM[i] > 0) {
+        // For AvgM, we'll use an exponential moving average
+        float alpha = 2.0 / 601.0;  // Smoothing factor for last ~60 seconds
+        avgM[i] = alpha * currentValue + (1 - alpha) * avgM[i];
+      }
+      if (dataCount[i] > 0) {
+        avgA[i] = sumA[i] / dataCount[i];
+      }
+    }
+    lastUpdate = currentTime;
+
+    // Update peak
+    if (currentValue > peak[channel]) {
+      peak[channel] = currentValue;
+    }
+
+    // Display the updated data
+    tft.setFont();
+    tft.setTextColor(color_Text, color_Background);
+    tft.setTextSize(0);
+    char countBox_text[4][10];
+    snprintf(countBox_text[0], sizeof(countBox_text[0]), "%7.2f", avgS[channel]);
+    snprintf(countBox_text[1], sizeof(countBox_text[1]), "%7.2f", avgM[channel]);
+    snprintf(countBox_text[2], sizeof(countBox_text[2]), "%7.2f", avgA[channel]);
+    snprintf(countBox_text[3], sizeof(countBox_text[3]), "%7.2f", peak[channel]);
+
+    for (int i = 0; i <= 3; i++) {
+      uint8_t yPos = countBox_y + (i * 20) + 5;
+      tft.setCursor(countBox_x + 30, yPos);
+      tft.print(countBox_text[i]);
+    }
+  }
 }
 
 

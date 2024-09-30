@@ -55,6 +55,12 @@ uint8_t singleModeDisplayChannel = 0;
 #include "INA3221Sensor.h"
 INA3221Sensor inaSensor;
 
+float avgS[2] = {0}, avgM[2] = {0}, avgA[2] = {0}, peak[2] = {0};
+unsigned long dataCount[2] = {0};
+unsigned long lastUpdate = 0;
+double sumS[2] = {0}, sumM[2] = {0}, sumA[2] = {0};
+unsigned long countS[2] = {0}, countM[2] = {0};
+
 //Dial wheel switch
 volatile int dialStatus = 0;  // 0: reset, 1: up, 2: down, 3: press, 4: long press
 #define dial_adc A2
@@ -509,3 +515,4 @@ extern "C" void vApplicationIdleHook(void) {
 void vApplicationTickHook(void) {
   //it use for checking task states when debugging
 }
+
