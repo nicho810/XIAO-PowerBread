@@ -27,16 +27,19 @@ volatile int newRotation = 0;
 volatile int tft_Rotation = 2;  // default rotation.
 
 //UIs
-#include "dataMonitor_functions.h"
-#include "dataChart_functions.h"
-#include "dataMonitorChart_functions.h"
 #include "systemUI_functions.h"
+#include "dataMonitor_functions.h"
+#include "dataMonitorChart_functions.h"
+#include "dataMonitorCount_functions.h"
+#include "dataChart_functions.h" //This mode is similar to dataMonitorChart, so disable it by default. Enable it if need a big chart.
+
 
 
 enum function_mode {
   dataMonitor,
+  dataMonitorChart,
+  dataMonitorCount,
   dataChart,
-  dataMonitorChart
   // serialMonitor,
   // pwmOutput,
   // analogInputMonitor,
@@ -159,6 +162,9 @@ void updateUITask(void *pvParameters) {
       case dataMonitorChart:
         handleDataMonitorChartMode(sensorData);
         break;
+      case dataMonitorCount:
+        handleDataMonitorCountMode(sensorData);
+        break;
     }
   }
 }
@@ -180,6 +186,10 @@ void handleFunctionModeChange(const DualChannelData &sensorData) {
     case dataMonitorChart:
       dataMonitorChart_initUI(singleModeDisplayChannel, tft_Rotation);
       dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation, 1);
+      break;
+    case dataMonitorCount:
+      dataMonitorCount_initUI(singleModeDisplayChannel, tft_Rotation);
+      dataMonitorCount_updateData(sensorData, singleModeDisplayChannel, tft_Rotation, 1);
       break;
   }
 }
@@ -213,6 +223,19 @@ void handleDataMonitorChartMode(const DualChannelData &sensorData) {
     dataMonitorChart_changeRotation(sensorData, singleModeDisplayChannel, tft_Rotation);
   }
   dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation);
+}
+
+void handleDataMonitorCountMode(const DualChannelData &sensorData) {
+  if (singleModeDisplayChannel_ChangeRequested) {
+    singleModeDisplayChannel_ChangeRequested = false;
+    dataMonitorCount_initUI(singleModeDisplayChannel, tft_Rotation);
+    dataMonitorCount_updateData(sensorData, singleModeDisplayChannel, tft_Rotation, 1);
+  }
+  if (rotationChangeRequested) {
+    rotationChangeRequested = false;
+    dataMonitorCount_changeRotation(sensorData, singleModeDisplayChannel, tft_Rotation);
+  }
+  dataMonitorCount_updateData(sensorData, singleModeDisplayChannel, tft_Rotation, 0);
 }
 
 void serialPrintTask(void *pvParameters) {
@@ -322,22 +345,29 @@ void rotationChange_Handler(function_mode currentMode, int lastDialStatus) {
   } else if (currentMode == dataMonitorChart) {
     rotationChangeRequested = true;
     tft_Rotation = (lastDialStatus == 1) ? (tft_Rotation + 1) % 4 : (tft_Rotation - 1 + 4) % 4; 
+  } else if (currentMode == dataMonitorCount) {
+    rotationChangeRequested = true;
+    tft_Rotation = (lastDialStatus == 1) ? (tft_Rotation + 1) % 4 : (tft_Rotation - 1 + 4) % 4; 
   }
 }
 
 
 //Short press is basicly for switching mode
+//Mode change order: dataMonitor -> dataMonitorChart -> dataMonitorCount -> dataChart(skip) -> dataMonitor
 void shortPress_Handler(function_mode currentMode) {
   functionModeChangeRequested = true;
   switch (currentMode) {
     case dataMonitor:
       current_function_mode = dataMonitorChart;
       break;
+    case dataMonitorChart:
+      current_function_mode = dataMonitorCount;
+      break;
+    case dataMonitorCount:
+      current_function_mode = dataMonitor;
+      break;
     case dataChart:
       current_function_mode = dataMonitor; //skip this mode for now
-      break;
-    case dataMonitorChart:
-      current_function_mode = dataMonitor;
       break;
   }
   
@@ -362,7 +392,13 @@ void longPress_Handler(function_mode currentMode) {
     singleModeDisplayChannel = (singleModeDisplayChannel == 0) ? 1 : 0;
     singleModeDisplayChannel_ChangeRequested = true;
     Serial.println("Channel changed to " + String(singleModeDisplayChannel));
+  } else if (currentMode == dataMonitorCount) {
+    // Serial.println("Data Monitor Count long pressed");
 
+    //Switch channel
+    singleModeDisplayChannel = (singleModeDisplayChannel == 0) ? 1 : 0;
+    singleModeDisplayChannel_ChangeRequested = true;
+    Serial.println("Channel changed to " + String(singleModeDisplayChannel));
   }
 }
 
