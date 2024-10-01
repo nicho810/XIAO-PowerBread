@@ -23,7 +23,8 @@ struct sysConfig_data{
     uint8_t default_mode = 0; 
     //default channel: 0-CH1, 1-CH2
     uint8_t default_channel = 0; 
-    //shunt resistor: 0-20mOhm, 1-50mOhm, 2-100mOhm, 3-200mOhm
+    //shunt resistor: usually the shunt resistor should below 100mOhm,
+    //so we use 8bit to store the value, the max value is 255
     uint8_t shuntResistorCH1 = 20;
     uint8_t shuntResistorCH2 = 20;
     //serial enable: 0-disable, 1-enable

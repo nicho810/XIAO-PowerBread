@@ -13,3 +13,6 @@ void systemUI_bootScreen() {
 }
 
 
+void systemUI_sysConfig_init(){
+
+}

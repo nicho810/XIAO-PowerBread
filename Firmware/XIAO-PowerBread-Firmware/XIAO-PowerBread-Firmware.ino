@@ -21,6 +21,13 @@
 #define TFT_SCLK D8
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
+//Dial Switch
+#include "dialSwitch.h"
+
+DialFunction dial;
+volatile int dialStatus = 0;  // 0: reset, 1: up, 2: down, 3: press, 4: long press
+volatile int lastDialStatus = 0;
+
 // LCD Rotation
 volatile bool rotationChangeRequested = false;
 volatile int newRotation = 0;
@@ -55,28 +62,16 @@ uint8_t singleModeDisplayChannel = 0;
 #include "INA3221Sensor.h"
 INA3221Sensor inaSensor;
 
+DualChannelData latestSensorData; // Add a global variable to store the latest sensor data
+DualChannelData oldSensorData; 
+
 float avgS[2] = {0}, avgM[2] = {0}, avgA[2] = {0}, peak[2] = {0};
 unsigned long dataCount[2] = {0};
 unsigned long lastUpdate = 0;
 double sumS[2] = {0}, sumM[2] = {0}, sumA[2] = {0};
 unsigned long countS[2] = {0}, countM[2] = {0};
 
-//Dial wheel switch
-volatile int dialStatus = 0;  // 0: reset, 1: up, 2: down, 3: press, 4: long press
-#define dial_adc A2
-bool dial_enable = true;
-volatile uint16_t dialValue = 0;  // Variable to store ADC value
-
-void dial_init() {
-  pinMode(dial_adc, INPUT);
-  analogReadResolution(12);  // Set the ADC resolution to 10 bits
-}
-
-int read_dial() {
-  return analogRead(dial_adc);
-}
-
-
+//Tasks
 #define STACK_SIZE_UI 2048
 StaticTask_t xTaskBuffer_UI;
 StackType_t xStack_UI[STACK_SIZE_UI];
@@ -104,9 +99,6 @@ TaskHandle_t xSensorTaskHandle = NULL;
 //Watchdog
 #define WATCHDOG_TIMEOUT 5000  // 5 seconds
 
-// Add a global variable to store the latest sensor data
-DualChannelData latestSensorData;
-DualChannelData oldSensorData; //todo, use this to replace old_chA_v, old_chA_a, old_chA_w, old_chB_v, old_chB_a, old_chB_w
 
 // Add the new sensor update task
 void sensorUpdateTask(void *pvParameters) {
@@ -260,9 +252,12 @@ void serialPrintTask(void *pvParameters) {
         xSemaphoreGive(xSemaphore);
         // Only print if Serial is available
         if (Serial) {
-          Serial.printf("A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW\n",
+          int dialValue = dial.read();
+          int dialStatus = dial.readDialStatus();
+          Serial.printf("A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW | Dial: %d, Value: %d\n",
                         sensorData.channel0.busVoltage, sensorData.channel0.shuntVoltage * 1000, sensorData.channel0.busCurrent, sensorData.channel0.busPower,
-                        sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000, sensorData.channel1.busCurrent, sensorData.channel1.busPower);
+                        sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000, sensorData.channel1.busCurrent, sensorData.channel1.busPower,
+                        dialStatus, dialValue);
         }
 
         xLastPrintTime = xCurrentTime;
@@ -277,8 +272,6 @@ void dialReadTask(void *pvParameters) {
   (void)pvParameters;
   TickType_t xLastReadTime = 0;
   const TickType_t xReadInterval = pdMS_TO_TICKS(50);  // Read every 50ms
-  uint16_t lastDialValue = 0;
-  int lastDialStatus = 0;
   TickType_t pressStartTime = 0;
   const TickType_t longPressThreshold = pdMS_TO_TICKS(500);  // 0.5 second
   bool longPressDetected = false;
@@ -290,70 +283,53 @@ void dialReadTask(void *pvParameters) {
 
     TickType_t xCurrentTime = xTaskGetTickCount();
     if ((xCurrentTime - xLastReadTime) >= xReadInterval) {
-      dialValue = read_dial();
-      if (dialValue != lastDialValue) {
-        if (dialValue >= 300 && dialValue < 800) {
-          if (pressStartTime == 0) {
-            pressStartTime = xCurrentTime;
-            dialStatus = 3;  // Set to press, but don't handle it yet
-            shortPressHandled = false;
-          } else if ((xCurrentTime - pressStartTime) >= longPressThreshold && !longPressDetected) {
-            dialStatus = 4;  // Long press
-            longPressDetected = true;
-            // Serial.println("Dial long pressed");
-            longPress_Handler(current_function_mode);
-            vTaskDelay(pdMS_TO_TICKS(300));  // Debounce delay
-          }
-        } else if (dialValue >= 800 && dialValue < 1500) {
-          dialStatus = 2;
-          pressStartTime = 0;
-          longPressDetected = false;
+      dialStatus = dial.readDialStatus();
+      
+      if (dialStatus == 3) {  // Pressed
+        if (pressStartTime == 0) {
+          pressStartTime = xCurrentTime;
           shortPressHandled = false;
-        } else if (dialValue >= 1500 && dialValue < 2000) {
-          dialStatus = 1;
-          pressStartTime = 0;
-          longPressDetected = false;
-          shortPressHandled = false;
-        } else {
-          if (pressStartTime != 0 && !longPressDetected && !shortPressHandled) {
-            // This was a short press that just ended
-            // Serial.println("Dial short pressed");
-            shortPress_Handler(current_function_mode);// Handle short press action here
-            shortPressHandled = true;
-            vTaskDelay(pdMS_TO_TICKS(300));  // Debounce delay
-          }
-          dialStatus = 0;  // Reset status for other values
-          pressStartTime = 0;
-          longPressDetected = false;
+        } else if ((xCurrentTime - pressStartTime) >= longPressThreshold && !longPressDetected) {
+          longPressDetected = true;
+          Serial.println("Dial long pressed");
+          longPress_Handler(current_function_mode);
+          vTaskDelay(pdMS_TO_TICKS(300));  // Debounce delay
         }
-
-        // Handle rotation changes
-        if (dialStatus == 0 && (lastDialStatus == 1 || lastDialStatus == 2)) {
-          rotationChange_Handler(current_function_mode, lastDialStatus); //handle rotation change based on lastDialStatus and currentMode
+      } else if (dialStatus == 0) {  // Reset
+        if (lastDialStatus == 1) {  // Was Up
+          Serial.println("Dial released from Up");
+          rotationChange_Handler(current_function_mode, 1);
+          vTaskDelay(pdMS_TO_TICKS(50));  // Debounce delay
+        } else if (lastDialStatus == 2) {  // Was Down
+          Serial.println("Dial released from Down");
+          rotationChange_Handler(current_function_mode, 2);
+          vTaskDelay(pdMS_TO_TICKS(50));  // Debounce delay
+        } else if (pressStartTime != 0 && !longPressDetected && !shortPressHandled) {
+          // This was a short press that just ended
+          Serial.println("Dial short pressed");
+          shortPress_Handler(current_function_mode);
+          shortPressHandled = true;
+          vTaskDelay(pdMS_TO_TICKS(300));  // Debounce delay
         }
-
-        //reset lastDialStatus and lastDialValue
-        lastDialStatus = dialStatus;
-        lastDialValue = dialValue;
+        pressStartTime = 0;
+        longPressDetected = false;
       }
+
+      lastDialStatus = dialStatus;
       xLastReadTime = xCurrentTime;
     }
-    vTaskDelay(pdMS_TO_TICKS(50));
+    vTaskDelay(pdMS_TO_TICKS(10));  // Reduced delay for more frequent checks
   }
 }
 
-void rotationChange_Handler(function_mode currentMode, int lastDialStatus) {
-  if (currentMode == dataMonitor) {
+void rotationChange_Handler(function_mode currentMode, int dialStatus) {
+  if (currentMode == dataMonitor || currentMode == dataMonitorChart || currentMode == dataMonitorCount) {
     rotationChangeRequested = true;
-    tft_Rotation = (lastDialStatus == 1) ? (tft_Rotation + 1) % 4 : (tft_Rotation - 1 + 4) % 4; 
+    tft_Rotation = (dialStatus == 1) ? (tft_Rotation + 1) % 4 : (tft_Rotation - 1 + 4) % 4; 
+    Serial.println("Rotation changed to: " + String(tft_Rotation));  // Debug print
   } else if (currentMode == dataChart) {
-    //do nothing here for now, but will change rotation later
-  } else if (currentMode == dataMonitorChart) {
-    rotationChangeRequested = true;
-    tft_Rotation = (lastDialStatus == 1) ? (tft_Rotation + 1) % 4 : (tft_Rotation - 1 + 4) % 4; 
-  } else if (currentMode == dataMonitorCount) {
-    rotationChangeRequested = true;
-    tft_Rotation = (lastDialStatus == 1) ? (tft_Rotation + 1) % 4 : (tft_Rotation - 1 + 4) % 4; 
+    // Handle dataChart rotation if needed
+    Serial.println("Rotation in dataChart mode");  // Debug print
   }
 }
 
@@ -419,9 +395,8 @@ void longPress_Handler(function_mode currentMode) {
 }
 
 void setup(void) {
-  // init serial
-  Serial.begin(115200);
-  Serial.println(F("Hello! XIAO PowerBread."));
+  //Dial init
+  dial.init();
 
   // LCD init
   tft.setSPISpeed(24000000);      //24MHz
@@ -433,6 +408,10 @@ void setup(void) {
   systemUI_init();
   systemUI_bootScreen();
 
+// init serial
+  Serial.begin(115200);
+  Serial.println(F("Hello! XIAO PowerBread."));
+
 
   //Current sensor init
   if (!inaSensor.begin()) {
@@ -441,8 +420,6 @@ void setup(void) {
       ;  // Halt execution
   }
 
-  //Dial init
-  dial_init();
 
   //semaphore init
   xSemaphore = xSemaphoreCreateMutexStatic(&xMutexBuffer);
