@@ -386,25 +386,35 @@ void longPress_Handler(function_mode currentMode) {
     Serial.println("Data Monitor long pressed");
   } else if (currentMode == dataChart) {
     // Serial.println("Data Chart long pressed");
-
     //Switch channel
     singleModeDisplayChannel = (singleModeDisplayChannel == 0) ? 1 : 0;
     singleModeDisplayChannel_ChangeRequested = true;
     Serial.println("Channel changed to " + String(singleModeDisplayChannel));
   } else if (currentMode == dataMonitorChart) {
     // Serial.println("Data Monitor Chart long pressed");
-
     //Switch channel
     singleModeDisplayChannel = (singleModeDisplayChannel == 0) ? 1 : 0;
     singleModeDisplayChannel_ChangeRequested = true;
     Serial.println("Channel changed to " + String(singleModeDisplayChannel));
   } else if (currentMode == dataMonitorCount) {
     // Serial.println("Data Monitor Count long pressed");
-
     //Switch channel
     singleModeDisplayChannel = (singleModeDisplayChannel == 0) ? 1 : 0;
     singleModeDisplayChannel_ChangeRequested = true;
     Serial.println("Channel changed to " + String(singleModeDisplayChannel));
+    //Reset the AvgA, AvgM, AvgS, Peak data when switch channel
+    for (int i = 0; i < 2; i++) {
+      avgA[i] = 0;
+      avgM[i] = 0;
+      avgS[i] = 0;
+      peak[i] = 0;
+      dataCount[i] = 0;
+      sumA[i] = 0;
+      sumM[i] = 0;
+      sumS[i] = 0;
+      countS[i] = 0;
+      countM[i] = 0;
+    }
   }
 }
 
