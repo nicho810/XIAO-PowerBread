@@ -14,5 +14,21 @@ void systemUI_bootScreen() {
 
 
 void systemUI_sysConfig_init(){
+    uint16_t color_sysConfig = color_ChannelA;  
+    tft.fillScreen(color_Background);
+    tft.fillRoundRect(0, 0, 80, 12, 4, color_sysConfig);
+
+    tft.setFont();
+    tft.setTextColor(color_Text);
+    tft.setTextSize(0);
+    tft.setCursor(4, 2);
+    tft.print("SysConfig V1");
+
+    const char* config_text[8] = {"Dft Mode", "Dft CH", "ShuntR CHA", "ShuntR CHB", "Serial EN", "Serial BR", "Serial Mode", "Chart ITl"};
+    tft.setTextColor(color_Text, color_Background);
+    for (int i = 0; i < 8; i++) {
+        tft.setCursor(0, 20 + i * 14);
+        tft.print(config_text[i]);
+    }
 
 }

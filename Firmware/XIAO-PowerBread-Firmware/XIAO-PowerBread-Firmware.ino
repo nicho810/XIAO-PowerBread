@@ -40,7 +40,9 @@ volatile int tft_Rotation = 2;  // default rotation.
 #include "dataMonitorCount_functions.h"
 #include "dataChart_functions.h" //This mode is similar to dataMonitorChart, so disable it by default. Enable it if need a big chart.
 
-
+//Sys Config
+#include "sysConfig.h"
+sysConfig sysConfig;
 
 enum function_mode {
   dataMonitor,
@@ -404,13 +406,23 @@ void setup(void) {
   tft.setRotation(tft_Rotation);  //Rotate the LCD 180 degree (0-3)
   tft.fillScreen(color_Background);
 
+  // init serial
+  Serial.begin(115200);
+  Serial.println(F("Hello! XIAO PowerBread."));
+
   //UI init
   systemUI_init();
   systemUI_bootScreen();
 
-// init serial
-  Serial.begin(115200);
-  Serial.println(F("Hello! XIAO PowerBread."));
+  delay(3000);
+
+  sysConfig.begin();
+  sysConfig.init();
+  Serial.println(sysConfig.debugPrintOnSerial());
+
+  systemUI_sysConfig_init();
+  delay(3000);
+
 
 
   //Current sensor init

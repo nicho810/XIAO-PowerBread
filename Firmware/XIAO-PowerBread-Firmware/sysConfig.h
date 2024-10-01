@@ -1,14 +1,15 @@
 #ifndef sysConfig_h
 #define sysConfig_h
 
+#include <Arduino.h>
 #include <EEPROM.h>
 
 struct sysConfig_addr{
     uint8_t cfg_version=0; //increment when the config struct is changed
     uint8_t default_mode=1;
     uint8_t default_channel=2;
-    uint8_t shuntResistorCH1=3;
-    uint8_t shuntResistorCH2=4;
+    uint8_t shuntResistorCHA=3;
+    uint8_t shuntResistorCHB=4;
     uint8_t serial_enable=5;
     uint8_t serial_baudRate=6;
     uint8_t serial_mode=7;
@@ -25,8 +26,8 @@ struct sysConfig_data{
     uint8_t default_channel = 0; 
     //shunt resistor: usually the shunt resistor should below 100mOhm,
     //so we use 8bit to store the value, the max value is 255
-    uint8_t shuntResistorCH1 = 20;
-    uint8_t shuntResistorCH2 = 20;
+    uint8_t shuntResistorCHA = 20;
+    uint8_t shuntResistorCHB = 20;
     //serial enable: 0-disable, 1-enable
     uint8_t serial_enable = 1; 
     //serial baud rate: 0-9600, 1-19200, 2-38400, 3-57600, 4-115200
@@ -43,9 +44,10 @@ class sysConfig {
         sysConfig_addr cfg_addr;
         sysConfig_data cfg_data;
         void begin();
-        void init();
+        void init(int force_write=0);
         void saveConfig();
         void loadConfig();
+        String debugPrintOnSerial();
 };
 
 #endif

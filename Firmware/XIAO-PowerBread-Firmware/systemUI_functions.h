@@ -11,5 +11,6 @@ extern Adafruit_ST7735 tft;
 
 void systemUI_init();
 void systemUI_bootScreen();
+void systemUI_sysConfig_init();
 
 #endif
