@@ -291,22 +291,22 @@ void dialReadTask(void *pvParameters) {
           shortPressHandled = false;
         } else if ((xCurrentTime - pressStartTime) >= longPressThreshold && !longPressDetected) {
           longPressDetected = true;
-          Serial.println("Dial long pressed");
+          // Serial.println("Dial long pressed");
           longPress_Handler(current_function_mode);
           vTaskDelay(pdMS_TO_TICKS(300));  // Debounce delay
         }
       } else if (dialStatus == 0) {  // Reset
         if (lastDialStatus == 1) {   // Was Up
-          Serial.println("Dial released from Up");
+          // Serial.println("Dial released from Up");
           rotationChange_Handler(current_function_mode, 1);
           vTaskDelay(pdMS_TO_TICKS(50));   // Debounce delay
         } else if (lastDialStatus == 2) {  // Was Down
-          Serial.println("Dial released from Down");
+          // Serial.println("Dial released from Down");
           rotationChange_Handler(current_function_mode, 2);
           vTaskDelay(pdMS_TO_TICKS(50));  // Debounce delay
         } else if (pressStartTime != 0 && !longPressDetected && !shortPressHandled) {
           // This was a short press that just ended
-          Serial.println("Dial short pressed");
+          // Serial.println("Dial short pressed");
           shortPress_Handler(current_function_mode);
           shortPressHandled = true;
           vTaskDelay(pdMS_TO_TICKS(300));  // Debounce delay
@@ -326,10 +326,10 @@ void rotationChange_Handler(function_mode currentMode, int dialStatus) {
   if (currentMode == dataMonitor || currentMode == dataMonitorChart || currentMode == dataMonitorCount) {
     rotationChangeRequested = true;
     tft_Rotation = (dialStatus == 1) ? (tft_Rotation + 1) % 4 : (tft_Rotation - 1 + 4) % 4;
-    Serial.println("Rotation changed to: " + String(tft_Rotation));  // Debug print
+    // Serial.println("Rotation changed to: " + String(tft_Rotation));  // Debug print
   } else if (currentMode == dataChart) {
     // Handle dataChart rotation if needed
-    Serial.println("Rotation in dataChart mode");  // Debug print
+    // Serial.println("Rotation in dataChart mode");  // Debug print
   }
 }
 
@@ -352,32 +352,31 @@ void shortPress_Handler(function_mode currentMode) {
       current_function_mode = dataMonitor;  //skip this mode for now
       break;
   }
-
-  Serial.println("Function mode changed to " + String(current_function_mode));
+  // Serial.println("Function mode changed to " + String(current_function_mode));
 }
 
 //Long press is basicly for changing channel
 void longPress_Handler(function_mode currentMode) {
   if (currentMode == dataMonitor) {
-    Serial.println("Data Monitor long pressed");
+    // Serial.println("Data Monitor long pressed");
   } else if (currentMode == dataChart) {
     // Serial.println("Data Chart long pressed");
     //Switch channel
     singleModeDisplayChannel = (singleModeDisplayChannel == 0) ? 1 : 0;
     singleModeDisplayChannel_ChangeRequested = true;
-    Serial.println("Channel changed to " + String(singleModeDisplayChannel));
+    // Serial.println("Channel changed to " + String(singleModeDisplayChannel));
   } else if (currentMode == dataMonitorChart) {
     // Serial.println("Data Monitor Chart long pressed");
     //Switch channel
     singleModeDisplayChannel = (singleModeDisplayChannel == 0) ? 1 : 0;
     singleModeDisplayChannel_ChangeRequested = true;
-    Serial.println("Channel changed to " + String(singleModeDisplayChannel));
+    // Serial.println("Channel changed to " + String(singleModeDisplayChannel));
   } else if (currentMode == dataMonitorCount) {
     // Serial.println("Data Monitor Count long pressed");
     //Switch channel
     singleModeDisplayChannel = (singleModeDisplayChannel == 0) ? 1 : 0;
     singleModeDisplayChannel_ChangeRequested = true;
-    Serial.println("Channel changed to " + String(singleModeDisplayChannel));
+    // Serial.println("Channel changed to " + String(singleModeDisplayChannel));
     //Reset the AvgA, AvgM, AvgS, Peak data when switch channel
     for (int i = 0; i < 2; i++) {
       avgA[i] = 0;
