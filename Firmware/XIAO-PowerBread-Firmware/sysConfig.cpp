@@ -2,15 +2,15 @@
 #include "sysConfig.h"
 
 
-void sysConfig::saveConfig() {
-    EEPROM.write(cfg_addr.default_mode, cfg_data.default_mode);
-    EEPROM.write(cfg_addr.default_channel, cfg_data.default_channel);
-    EEPROM.write(cfg_addr.shuntResistorCHA, cfg_data.shuntResistorCHA);
-    EEPROM.write(cfg_addr.shuntResistorCHB, cfg_data.shuntResistorCHB);
-    EEPROM.write(cfg_addr.serial_enable, cfg_data.serial_enable);
-    EEPROM.write(cfg_addr.serial_baudRate, cfg_data.serial_baudRate);
-    EEPROM.write(cfg_addr.serial_mode, cfg_data.serial_mode);
-    EEPROM.write(cfg_addr.dataChart_interval, cfg_data.dataChart_interval);
+void sysConfig::saveConfig(sysConfig_data data) {
+    EEPROM.write(cfg_addr.default_mode, data.default_mode);
+    EEPROM.write(cfg_addr.default_channel, data.default_channel);
+    EEPROM.write(cfg_addr.shuntResistorCHA, data.shuntResistorCHA);
+    EEPROM.write(cfg_addr.shuntResistorCHB, data.shuntResistorCHB);
+    EEPROM.write(cfg_addr.serial_enable, data.serial_enable);
+    EEPROM.write(cfg_addr.serial_baudRate, data.serial_baudRate);
+    EEPROM.write(cfg_addr.serial_mode, data.serial_mode);
+    EEPROM.write(cfg_addr.dataChart_interval, data.dataChart_interval);
 
     EEPROM.commit();
 }
@@ -39,7 +39,7 @@ void sysConfig::init(int force_write) {
         //update cfg_version
         EEPROM.write(cfg_addr.cfg_version, cfg_data.cfg_version);
         //write default config to EEPROM
-        saveConfig();
+        saveConfig(cfg_data);
     }
     else{
         //reed cfg_version
@@ -50,7 +50,7 @@ void sysConfig::init(int force_write) {
             //update cfg_version
             EEPROM.write(cfg_addr.cfg_version, cfg_data.cfg_version);
             //write default config to EEPROM
-            saveConfig();
+            saveConfig(cfg_data);
         }
         else if (cfg_data.cfg_version < cfg_data.cfg_version) {
             //detect a lower version, write default config to EEPROM
@@ -58,7 +58,7 @@ void sysConfig::init(int force_write) {
             //update cfg_version
             EEPROM.write(cfg_addr.cfg_version, cfg_data.cfg_version);
             //write default config to EEPROM
-            saveConfig();
+            saveConfig(cfg_data);
         } else {
             //load config from EEPROM
             Serial.println("Loading config from EEPROM");
@@ -68,7 +68,7 @@ void sysConfig::init(int force_write) {
 }
 
 String sysConfig::debugPrintOnSerial() {
-    String output = "Debug Print on Serial\n";
+    String output = "\n";
     output += "default_mode: " + String(cfg_data.default_mode) + "\n";
     output += "default_channel: " + String(cfg_data.default_channel) + "\n";
     output += "shuntResistorCHA: " + String(cfg_data.shuntResistorCHA) + "\n";

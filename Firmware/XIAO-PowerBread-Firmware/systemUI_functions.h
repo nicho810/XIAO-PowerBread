@@ -6,11 +6,17 @@
 #include <SPI.h>
 #include <Fonts/FreeSansBold9pt7b.h>
 #include "ui_style.h"
+#include "sysConfig.h"
 
 extern Adafruit_ST7735 tft;
 
 void systemUI_init();
 void systemUI_bootScreen();
 void systemUI_sysConfig_init();
+void systemUI_sysConfig_update(int cursor, bool isSelected, sysConfig_data tmp_cfg_data);
+
+void incrementConfigValue(int cursor, sysConfig_data &cfg_data);
+void decrementConfigValue(int cursor, sysConfig_data &cfg_data);
+void systemUI_MSG_savedConfig();
 
 #endif

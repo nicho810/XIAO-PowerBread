@@ -38,11 +38,12 @@ volatile int tft_Rotation = 2;  // default rotation.
 #include "dataMonitor_functions.h"
 #include "dataMonitorChart_functions.h"
 #include "dataMonitorCount_functions.h"
-#include "dataChart_functions.h" //This mode is similar to dataMonitorChart, so disable it by default. Enable it if need a big chart.
+#include "dataChart_functions.h"  //This mode is similar to dataMonitorChart, so disable it by default. Enable it if need a big chart.
 
 //Sys Config
 #include "sysConfig.h"
 sysConfig sysConfig;
+sysConfig_data tmp_cfg_data;
 
 enum function_mode {
   dataMonitor,
@@ -64,14 +65,14 @@ uint8_t singleModeDisplayChannel = 0;
 #include "INA3221Sensor.h"
 INA3221Sensor inaSensor;
 
-DualChannelData latestSensorData; // Add a global variable to store the latest sensor data
-DualChannelData oldSensorData; 
+DualChannelData latestSensorData;  // Add a global variable to store the latest sensor data
+DualChannelData oldSensorData;
 
-float avgS[2] = {0}, avgM[2] = {0}, avgA[2] = {0}, peak[2] = {0};
-unsigned long dataCount[2] = {0};
+float avgS[2] = { 0 }, avgM[2] = { 0 }, avgA[2] = { 0 }, peak[2] = { 0 };
+unsigned long dataCount[2] = { 0 };
 unsigned long lastUpdate = 0;
-double sumS[2] = {0}, sumM[2] = {0}, sumA[2] = {0};
-unsigned long countS[2] = {0}, countM[2] = {0};
+double sumS[2] = { 0 }, sumM[2] = { 0 }, sumA[2] = { 0 };
+unsigned long countS[2] = { 0 }, countM[2] = { 0 };
 
 //Tasks
 #define STACK_SIZE_UI 2048
@@ -117,15 +118,15 @@ void sensorUpdateTask(void *pvParameters) {
     if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE) {
       // Read sensor data
       DualChannelData newSensorData = inaSensor.readCurrentSensors();
-      
+
       // Update oldSensorData if values have changed
       if (newSensorData.channel0.isDirty || newSensorData.channel1.isDirty) {
         oldSensorData = latestSensorData;
       }
-      
+
       // Update latestSensorData
       latestSensorData = newSensorData;
-      
+
       xSemaphoreGive(xSemaphore);
     }
   }
@@ -286,7 +287,7 @@ void dialReadTask(void *pvParameters) {
     TickType_t xCurrentTime = xTaskGetTickCount();
     if ((xCurrentTime - xLastReadTime) >= xReadInterval) {
       dialStatus = dial.readDialStatus();
-      
+
       if (dialStatus == 3) {  // Pressed
         if (pressStartTime == 0) {
           pressStartTime = xCurrentTime;
@@ -298,10 +299,10 @@ void dialReadTask(void *pvParameters) {
           vTaskDelay(pdMS_TO_TICKS(300));  // Debounce delay
         }
       } else if (dialStatus == 0) {  // Reset
-        if (lastDialStatus == 1) {  // Was Up
+        if (lastDialStatus == 1) {   // Was Up
           Serial.println("Dial released from Up");
           rotationChange_Handler(current_function_mode, 1);
-          vTaskDelay(pdMS_TO_TICKS(50));  // Debounce delay
+          vTaskDelay(pdMS_TO_TICKS(50));   // Debounce delay
         } else if (lastDialStatus == 2) {  // Was Down
           Serial.println("Dial released from Down");
           rotationChange_Handler(current_function_mode, 2);
@@ -327,7 +328,7 @@ void dialReadTask(void *pvParameters) {
 void rotationChange_Handler(function_mode currentMode, int dialStatus) {
   if (currentMode == dataMonitor || currentMode == dataMonitorChart || currentMode == dataMonitorCount) {
     rotationChangeRequested = true;
-    tft_Rotation = (dialStatus == 1) ? (tft_Rotation + 1) % 4 : (tft_Rotation - 1 + 4) % 4; 
+    tft_Rotation = (dialStatus == 1) ? (tft_Rotation + 1) % 4 : (tft_Rotation - 1 + 4) % 4;
     Serial.println("Rotation changed to: " + String(tft_Rotation));  // Debug print
   } else if (currentMode == dataChart) {
     // Handle dataChart rotation if needed
@@ -351,10 +352,10 @@ void shortPress_Handler(function_mode currentMode) {
       current_function_mode = dataMonitor;
       break;
     case dataChart:
-      current_function_mode = dataMonitor; //skip this mode for now
+      current_function_mode = dataMonitor;  //skip this mode for now
       break;
   }
-  
+
   Serial.println("Function mode changed to " + String(current_function_mode));
 }
 
@@ -409,19 +410,87 @@ void setup(void) {
   // init serial
   Serial.begin(115200);
   Serial.println(F("Hello! XIAO PowerBread."));
+  Serial.println();
 
   //UI init
-  systemUI_init();
-  systemUI_bootScreen();
+  // systemUI_init();
+  // systemUI_bootScreen();
 
-  delay(3000);
-
+  //sysConfig init
   sysConfig.begin();
   sysConfig.init();
   Serial.println(sysConfig.debugPrintOnSerial());
 
-  systemUI_sysConfig_init();
-  delay(3000);
+  //check if dial is turn down, if so, enter the config mode
+  if (dial.readDialStatus() == 2) {
+    Serial.println("Entering config mode");
+    systemUI_sysConfig_init();
+    tmp_cfg_data = sysConfig.cfg_data;  //copy cfg_data to tmp_cfg_data
+
+
+    int cursor = 0;
+    bool isSelected = false;
+    int lastDialStatus = 0;
+    bool exitConfig = false;
+
+    while (!exitConfig) {
+      systemUI_sysConfig_update(cursor, isSelected, tmp_cfg_data);
+      dialStatus = dial.readDialStatus();
+
+      if (isSelected) {
+        // Modify selected value
+        if (dialStatus == 1) {
+          // Increase value
+          incrementConfigValue(cursor, tmp_cfg_data);
+        } else if (dialStatus == 2) {
+          // Decrease value
+          decrementConfigValue(cursor, tmp_cfg_data);
+        }
+      } else {
+        // Navigate menu
+        if (dialStatus == 2) {
+          cursor++;
+          if (cursor > 7) {
+            cursor = 0;
+          }
+        } else if (dialStatus == 1) {
+          cursor--;
+          if (cursor < 0) {
+            cursor = 7;
+          }
+        } else if (dialStatus == 3) {
+          // Long press to exit configuration
+          unsigned long pressStartTime = millis();
+          while (dial.readDialStatus() == 3) {
+            if (millis() - pressStartTime > 1000) {  // Long press for 1 second
+              exitConfig = true;
+              break;
+            }
+          }
+        }
+      }
+
+      // Handle button press and release for selection toggle
+      if (dialStatus == 3 && lastDialStatus != 3) {
+        // Button just pressed
+        isSelected = !isSelected;
+      }
+
+      lastDialStatus = dialStatus;
+      delay(100);  // A delay to prevent multiple clicks from being too fast
+    }
+
+    // Save configuration if changes were made
+    if (memcmp(&sysConfig.cfg_data, &tmp_cfg_data, sizeof(sysConfig_data)) != 0) {
+      sysConfig.cfg_data = tmp_cfg_data;
+      sysConfig.saveConfig(sysConfig.cfg_data);
+      Serial.println("Configuration saved");
+    }
+
+    //show the config saved message
+    systemUI_MSG_savedConfig();
+    delay(2000);
+  }
 
 
 
@@ -453,7 +522,8 @@ void setup(void) {
   xSensorTaskHandle = xTaskCreateStatic(sensorUpdateTask, "Sensor_Update", STACK_SIZE_SENSOR, NULL, 4, xStack_Sensor, &xTaskBuffer_Sensor);
   if (xSensorTaskHandle == NULL) {
     Serial.println("Sensor Task creation failed");
-    while (1);
+    while (1)
+      ;
   }
   Serial.println("Sensor Task created successfully");
 
@@ -489,8 +559,7 @@ void setup(void) {
 
 
   //it is a way to start scheduler, but this will cause crash, so we don't use it, and marked as comment
-  //vTaskStartScheduler(); 
-
+  //vTaskStartScheduler();
 }
 
 void loop() {
@@ -508,10 +577,9 @@ extern "C" void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskNa
 
 
 extern "C" void vApplicationIdleHook(void) {
- //it use for checking task states when debugging
+  //it use for checking task states when debugging
 }
 
 void vApplicationTickHook(void) {
   //it use for checking task states when debugging
 }
-

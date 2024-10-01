@@ -45,7 +45,7 @@ class sysConfig {
         sysConfig_data cfg_data;
         void begin();
         void init(int force_write=0);
-        void saveConfig();
+        void saveConfig(sysConfig_data data);
         void loadConfig();
         String debugPrintOnSerial();
 };
