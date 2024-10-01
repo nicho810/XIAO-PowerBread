@@ -10,7 +10,7 @@ bool INA3221Sensor::begin() {
     Serial.println("could not connect. Fix and Reboot");
     return false;
   } else {
-    Serial.println("INA3221 Found");
+    // Serial.println("INA3221 Found");
     disableChannel(2); // Disable unused channel 2
     setShuntResistors(0.020, 0.020); // 20 mR shunt resistors for channels 0 and 1
     setAverage(1);//get 4 samples and average them

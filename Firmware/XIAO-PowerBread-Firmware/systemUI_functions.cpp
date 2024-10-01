@@ -68,6 +68,8 @@ void systemUI_sysConfig_update(int cursor, bool isSelected, sysConfig_data tmp_c
     }
 
     for (int i = 0; i < 8; i++) {
+        // Clear the area before printing the new value
+        tft.fillRect(59, 20 + i * 14, 23, 8, color_Background);
         tft.setCursor(59, 20 + i * 14);
         tft.print(config_value[i]);
     }

@@ -210,20 +210,26 @@ void dataMonitorChart_updateChangedDigits(int x, int y, float oldValue, float ne
   char newStr[10];
   
   // Determine the number of decimal places dynamically
-  int decimalPlaces = (newValue < 10) ? 3 : (newValue < 100) ? 2 : (newValue < 1000) ? 1 : 0;
+  // Consider both old and new values to maintain consistency
+  float maxValue = max(abs(oldValue), abs(newValue));
+  int decimalPlaces = (maxValue < 10) ? 3 : (maxValue < 100) ? 2 : (maxValue < 1000) ? 1 : 0;
   
   tft.setFont(&FreeSansBold9pt7b);
   tft.setTextSize(0);
 
-  snprintf(newStr, sizeof(newStr), "%5.*f", decimalPlaces, newValue);
-
-  // Get bounds of the entire string
+  // Format string for maximum possible width (e.g., "9999.9")
+  char maxWidthStr[] = "9999.9";
+  
+  // Get bounds of the maximum width string
   int16_t x1, y1;
   uint16_t w, h;
-  tft.getTextBounds(newStr, x, y, &x1, &y1, &w, &h);
+  tft.getTextBounds(maxWidthStr, x, y, &x1, &y1, &w, &h);
 
-  // Erase the old value area
+  // Erase the maximum possible area
   tft.fillRect(x1-2, y1, w+3, h, color_Background);
+
+  // Format the new value
+  snprintf(newStr, sizeof(newStr), "%5.*f", decimalPlaces, newValue);
 
   // Draw the new value
   tft.setTextColor(color);

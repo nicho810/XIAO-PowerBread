@@ -255,12 +255,9 @@ void serialPrintTask(void *pvParameters) {
         xSemaphoreGive(xSemaphore);
         // Only print if Serial is available
         if (Serial) {
-          int dialValue = dial.read();
-          int dialStatus = dial.readDialStatus();
-          Serial.printf("A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW | Dial: %d, Value: %d\n",
+          Serial.printf("A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW\n",
                         sensorData.channel0.busVoltage, sensorData.channel0.shuntVoltage * 1000, sensorData.channel0.busCurrent, sensorData.channel0.busPower,
-                        sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000, sensorData.channel1.busCurrent, sensorData.channel1.busPower,
-                        dialStatus, dialValue);
+                        sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000, sensorData.channel1.busCurrent, sensorData.channel1.busPower);
         }
 
         xLastPrintTime = xCurrentTime;
@@ -409,12 +406,11 @@ void setup(void) {
 
   // init serial
   Serial.begin(115200);
-  Serial.println(F("Hello! XIAO PowerBread."));
-  Serial.println();
+  Serial.println("--------[XIAO PowerBread boot]--------");
 
   //UI init
   // systemUI_init();
-  // systemUI_bootScreen();
+  // systemUI_bootScreen(); //skip boot screen
 
   //sysConfig init
   sysConfig.begin();
@@ -518,7 +514,7 @@ void setup(void) {
 
 
   //Create sensor tasks
-  Serial.println("Creating Sensor Task");
+  // Serial.println("Creating Sensor Task");
   xSensorTaskHandle = xTaskCreateStatic(sensorUpdateTask, "Sensor_Update", STACK_SIZE_SENSOR, NULL, 4, xStack_Sensor, &xTaskBuffer_Sensor);
   if (xSensorTaskHandle == NULL) {
     Serial.println("Sensor Task creation failed");
@@ -528,7 +524,7 @@ void setup(void) {
   Serial.println("Sensor Task created successfully");
 
   //Create UI tasks
-  Serial.println("Creating UI Task");
+  // Serial.println("Creating UI Task");
   xUITaskHandle = xTaskCreateStatic(updateUITask, "UI_Update", STACK_SIZE_UI, NULL, 3, xStack_UI, &xTaskBuffer_UI);
   if (xUITaskHandle == NULL) {
     Serial.println("UI Task creation failed");
@@ -538,7 +534,7 @@ void setup(void) {
   Serial.println("UI Task created successfully");
 
   //Create dial tasks
-  Serial.println("Creating Dial Task");
+  // Serial.println("Creating Dial Task");
   xDialTaskHandle = xTaskCreateStatic(dialReadTask, "Dial_Read", STACK_SIZE_DIAL, NULL, 2, xStack_Dial, &xTaskBuffer_Dial);
   if (xDialTaskHandle == NULL) {
     Serial.println("Dial Task creation failed");
@@ -548,7 +544,7 @@ void setup(void) {
   Serial.println("Dial Task created successfully");
 
   // Create serial tasks
-  Serial.println("Creating Serial Task");
+  // Serial.println("Creating Serial Task");
   xSerialTaskHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print", STACK_SIZE_SERIAL, NULL, 1, xStack_Serial, &xTaskBuffer_Serial);
   if (xSerialTaskHandle == NULL) {
     Serial.println("Serial Task creation failed");
@@ -557,6 +553,7 @@ void setup(void) {
   }
   Serial.println("Serial Task created successfully");
 
+  Serial.println("-----------[Boot info end]------------");
 
   //it is a way to start scheduler, but this will cause crash, so we don't use it, and marked as comment
   //vTaskStartScheduler();
