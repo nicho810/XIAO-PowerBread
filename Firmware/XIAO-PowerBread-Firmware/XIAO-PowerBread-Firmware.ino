@@ -434,7 +434,7 @@ void setup(void) {
 
   //sysConfig init
   sysConfig.begin();
-  sysConfig.init();
+  sysConfig.init(0); //Pass 1 to force_write default config to EEPROM if needed, don't do it very frequently, or it will kill the EEPROM(SPI Flash)
   Serial.println(sysConfig.debugPrintOnSerial());
 
   //check if dial is turn down, if so, enter the config mode
@@ -442,7 +442,6 @@ void setup(void) {
     Serial.println("Entering config mode");
     systemUI_sysConfig_init();
     tmp_cfg_data = sysConfig.cfg_data;  //copy cfg_data to tmp_cfg_data
-
 
     int cursor = 0;
     bool isSelected = false;
