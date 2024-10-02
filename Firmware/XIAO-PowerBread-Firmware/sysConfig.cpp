@@ -97,7 +97,7 @@ void incrementConfigValue(int cursor, sysConfig_data& tmp_cfg_data) {
         case 5: tmp_cfg_data.serial_baudRate = min(tmp_cfg_data.serial_baudRate + 1, 0); break;
         case 6: tmp_cfg_data.serial_mode = min(tmp_cfg_data.serial_mode + 1, 1); break;
         case 7: tmp_cfg_data.serial_printInterval = min(tmp_cfg_data.serial_printInterval + 1, 4); break;
-        case 8: tmp_cfg_data.chart_updateInterval = min(tmp_cfg_data.chart_updateInterval + 1, 0); break;
+        case 8: tmp_cfg_data.chart_updateInterval = min(tmp_cfg_data.chart_updateInterval + 1, 4); break;
     }
 }
 

@@ -45,7 +45,7 @@ struct sysConfig_data{
     //serial print interval: 0-1000ms, 1-500ms, 2-100ms, 3-50ms, 4-10ms
     uint8_t serial_printInterval=0; 
 
-    //data chart interval: 0-default
+    //data chart interval: 0-50ms(default), 1-100ms, 2-250ms, 3-500ms, 4-1000ms
     uint8_t chart_updateInterval=0; 
 };
 

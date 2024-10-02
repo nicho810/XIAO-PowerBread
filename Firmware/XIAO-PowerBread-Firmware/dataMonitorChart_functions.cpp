@@ -1,6 +1,5 @@
 #include "dataMonitorChart_functions.h"
 
-
 const int smallChart_WIDTH = 74;
 const int smallChart_HEIGHT = 74;
 std::unique_ptr<GFXcanvas16> smallChartCanvas;  // Change to GFXcanvas16
@@ -9,14 +8,31 @@ extern DualChannelData oldSensorData;
 
 float chartScale = 100.0;
 
-void dataMonitorChart_changeRotation(const DualChannelData &sensorData, uint8_t channel, int rotation) {
-  tft.setRotation(rotation);  // Only set rotation, don't reinitialize the display
-  dataMonitorChart_initUI(channel, rotation);
-  dataMonitorChart_updateData(sensorData, channel, rotation, 1); // Force update all data
+static TickType_t xLastChartUpdateTime = 0;
+static TickType_t xChartUpdateInterval = pdMS_TO_TICKS(50); // Default to 50ms
+
+// Add this function to update the chart interval
+void dataMonitorChart_updateChartInterval(const sysConfig_data& cfg_data) {
+    switch(cfg_data.chart_updateInterval) {
+        case 0: xChartUpdateInterval = pdMS_TO_TICKS(50); break;  // 0 - 50ms (default)
+        case 1: xChartUpdateInterval = pdMS_TO_TICKS(100); break; // 1 - 100ms
+        case 2: xChartUpdateInterval = pdMS_TO_TICKS(250); break; // 2 - 250ms
+        case 3: xChartUpdateInterval = pdMS_TO_TICKS(500); break; // 3 - 500ms
+        case 4: xChartUpdateInterval = pdMS_TO_TICKS(1000); break; // 4 - 1000ms
+        default: xChartUpdateInterval = pdMS_TO_TICKS(50); break; // Default to 50ms
+    }
 }
 
+void dataMonitorChart_changeRotation(const DualChannelData &sensorData, uint8_t channel, int rotation, const sysConfig_data &cfg_data) {
+  tft.setRotation(rotation);
+  dataMonitorChart_initUI(channel, rotation, cfg_data);
+  dataMonitorChart_updateData(sensorData, channel, rotation, 1);
+}
 
-void dataMonitorChart_initUI(uint8_t channel, int rotation) {
+void dataMonitorChart_initUI(uint8_t channel, int rotation, const sysConfig_data& cfg_data) {
+  // Update the chart interval based on cfg_data
+  dataMonitorChart_updateChartInterval(cfg_data);
+
   tft.fillScreen(color_Background);
 
   uint16_t color_channel = color_ChannelA;
@@ -80,21 +96,7 @@ void dataMonitorChart_updateData(const DualChannelData &sensorData, uint8_t ch, 
 
   int offset_defaultFont = -6;
 
-  //fetch data
-  float busVoltage = 0;
-  float busCurrent = 0;
-  float busPower = 0;
-  if (ch == 0) {
-    busVoltage = sensorData.channel0.busVoltage;
-    busCurrent = sensorData.channel0.busCurrent;
-    busPower = sensorData.channel0.busPower;
-  } else if (ch == 1) {
-    busVoltage = sensorData.channel1.busVoltage;
-    busCurrent = sensorData.channel1.busCurrent;
-    busPower = sensorData.channel1.busPower;
-  }
-
-  //update dataBox
+  // Update dataBox
   uint8_t volatge_x = dataBox_x + 4;
   uint8_t volatge_y = dataBox_y + 30;
   uint8_t current_x = dataBox_x + 4;
@@ -102,40 +104,27 @@ void dataMonitorChart_updateData(const DualChannelData &sensorData, uint8_t ch, 
   uint8_t power_x = dataBox_x + 4;
   uint8_t power_y = dataBox_y + 70;
 
-  uint8_t volatge_old = 0;
-  uint8_t current_old = 0;
-  uint8_t power_old = 0;
-  if (ch == 0) {
-    volatge_old = oldSensorData.channel0.busVoltage;
-    current_old = oldSensorData.channel0.busCurrent;
-    power_old = oldSensorData.channel0.busPower;
-  } else if (ch == 1) {
-    volatge_old = oldSensorData.channel1.busVoltage;
-    current_old = oldSensorData.channel1.busCurrent;
-    power_old = oldSensorData.channel1.busPower;
-  }
+  float busVoltage = (ch == 0) ? sensorData.channel0.busVoltage : sensorData.channel1.busVoltage;
+  float busCurrent = (ch == 0) ? sensorData.channel0.busCurrent : sensorData.channel1.busCurrent;
+  float busPower = (ch == 0) ? sensorData.channel0.busPower : sensorData.channel1.busPower;
+
+  float volatge_old = (ch == 0) ? oldSensorData.channel0.busVoltage : oldSensorData.channel1.busVoltage;
+  float current_old = (ch == 0) ? oldSensorData.channel0.busCurrent : oldSensorData.channel1.busCurrent;
+  float power_old = (ch == 0) ? oldSensorData.channel0.busPower : oldSensorData.channel1.busPower;
 
   uint16_t lineColor = (ch == 0) ? color_ChartChannelA : color_ChartChannelB;
   uint16_t lineHighlightColor = (ch == 0) ? color_ChannelA : color_ChannelB;
 
-
-  //if forceUpdate is 1, update all data anyway
-  if (forceUpdate == 1) {
+  // Always update dataBox
+  if (forceUpdate == 1 || busVoltage != volatge_old) {
     dataMonitorChart_updateChangedDigits(volatge_x, volatge_y, volatge_old, busVoltage, color_Text);
+  }
+  if (forceUpdate == 1 || busCurrent != current_old) {
     dataMonitorChart_updateChangedDigits(current_x, current_y, current_old, busCurrent, color_Text);
+  }
+  if (forceUpdate == 1 || busPower != power_old) {
     dataMonitorChart_updateChangedDigits(power_x, power_y, power_old, busPower, color_Text);
-  } else if (forceUpdate == 0) {
-    if (busVoltage != volatge_old) {
-      dataMonitorChart_updateChangedDigits(volatge_x, volatge_y, volatge_old, busVoltage, color_Text);
-    }
-    if (busCurrent != current_old) {
-      dataMonitorChart_updateChangedDigits(current_x, current_y, current_old, busCurrent, color_Text);
-    }
-    if (busPower != power_old) {
-      dataMonitorChart_updateChangedDigits(power_x, power_y, power_old, busPower, color_Text);
-    }
-  } 
-
+  }
 
   // Print units (these don't need to be erased or updated)
   tft.setFont();
@@ -147,64 +136,68 @@ void dataMonitorChart_updateData(const DualChannelData &sensorData, uint8_t ch, 
   tft.setCursor(power_x + 59, power_y + offset_defaultFont);
   tft.print("mW");
 
-  //update chartBox
-  if (!smallChartCanvas) return; // Safety check
+  // Update chart at a slower rate or when forced
+  TickType_t xCurrentTime = xTaskGetTickCount();
+  if (forceUpdate == 1 || (xCurrentTime - xLastChartUpdateTime) >= xChartUpdateInterval) {
+    xLastChartUpdateTime = xCurrentTime;
 
-  //Adjust the max scale of the chart based on the current value
-  float current_maxScale = chartScale; // mA, default scale
-  if (busCurrent >= 1800) {
-    current_maxScale = 5000.0;
-  } else if (busCurrent >= 800) {
-    current_maxScale = 2000.0;
-  } else if (busCurrent >= 400) {
-    current_maxScale = 1000.0;
-  } else if (busCurrent > 80) {
-    current_maxScale = 500.0;
-  } else if (busCurrent <= 80) {
-    current_maxScale = 100.0;
-  }
+    // ... (existing chart update code)
+    if (!smallChartCanvas) return; // Safety check
 
-  //draw a V line to indicate the scale is changed
-  if (chartScale != current_maxScale) {
-    smallChartCanvas->drawFastVLine(smallChart_WIDTH - 1, 0, smallChart_HEIGHT, lineHighlightColor);
-    chartScale = current_maxScale;
-  }
-
-  // Calculate the height of the current bar    
-  int16_t bar_height = (int16_t)((busCurrent / current_maxScale) * smallChart_HEIGHT);
-  bar_height = constrain(bar_height, 0, smallChart_HEIGHT);
-
-  // Initialize horizontal grid lines if the canvas is empty
-  if (smallChartCanvas->getPixel(0, 0) == color_Background) {
-    for (int y = 0; y < smallChart_HEIGHT; y += smallChart_HEIGHT / 4) {
-      smallChartCanvas->drawFastHLine(0, y, smallChart_WIDTH, color_GridLines);
+    //Adjust the max scale of the chart based on the current value
+    float current_maxScale = chartScale; // mA, default scale
+    if (busCurrent >= 1800) {
+      current_maxScale = 5000.0;
+    } else if (busCurrent >= 800) {
+      current_maxScale = 2000.0;
+    } else if (busCurrent >= 400) {
+      current_maxScale = 1000.0;
+    } else if (busCurrent > 80) {
+      current_maxScale = 500.0;
+    } else if (busCurrent <= 80) {
+      current_maxScale = 100.0;
     }
+
+    //draw a V line to indicate the scale is changed
+    if (chartScale != current_maxScale) {
+      smallChartCanvas->drawFastVLine(smallChart_WIDTH - 1, 0, smallChart_HEIGHT, lineHighlightColor);
+      chartScale = current_maxScale;
+    }
+
+    // Calculate the height of the current bar    
+    int16_t bar_height = (int16_t)((busCurrent / current_maxScale) * smallChart_HEIGHT);
+    bar_height = constrain(bar_height, 0, smallChart_HEIGHT);
+
+    // Initialize horizontal grid lines if the canvas is empty
+    if (smallChartCanvas->getPixel(0, 0) == color_Background) {
+      for (int y = 0; y < smallChart_HEIGHT; y += smallChart_HEIGHT / 4) {
+        smallChartCanvas->drawFastHLine(0, y, smallChart_WIDTH, color_GridLines);
+      }
+    }
+
+    // Shift existing data to the left
+    smallChartCanvas->drawRGBBitmap(-1, 0, smallChartCanvas->getBuffer(), smallChart_WIDTH, smallChart_HEIGHT);
+
+    // Clear the rightmost column
+    smallChartCanvas->drawFastVLine(smallChart_WIDTH - 1, 0, smallChart_HEIGHT, color_Background);
+
+    // Redraw horizontal grid lines for the rightmost column
+    for (int y = 0; y < smallChart_HEIGHT; y += smallChart_HEIGHT / 4) {
+      smallChartCanvas->drawPixel(smallChart_WIDTH - 1, y, color_GridLines);
+    }
+
+    //draw the new data
+    smallChartCanvas->drawFastVLine(smallChart_WIDTH - 1, smallChart_HEIGHT - bar_height, bar_height, lineColor);
+    smallChartCanvas->drawFastVLine(smallChart_WIDTH - 1, smallChart_HEIGHT - bar_height, 2, lineHighlightColor);
+
+    // Draw the entire updated canvas on the TFT display
+    tft.drawRGBBitmap(chartBox_x + 2, chartBox_y + 2, smallChartCanvas->getBuffer(), smallChart_WIDTH, smallChart_HEIGHT);
   }
-
-  // Shift existing data to the left
-  smallChartCanvas->drawRGBBitmap(-1, 0, smallChartCanvas->getBuffer(), smallChart_WIDTH, smallChart_HEIGHT);
-
-  // Clear the rightmost column
-  smallChartCanvas->drawFastVLine(smallChart_WIDTH - 1, 0, smallChart_HEIGHT, color_Background);
-
-  // Redraw horizontal grid lines for the rightmost column
-  for (int y = 0; y < smallChart_HEIGHT; y += smallChart_HEIGHT / 4) {
-    smallChartCanvas->drawPixel(smallChart_WIDTH - 1, y, color_GridLines);
-  }
-
-  //draw the new data
-  smallChartCanvas->drawFastVLine(smallChart_WIDTH - 1, smallChart_HEIGHT - bar_height, bar_height, lineColor);
-  smallChartCanvas->drawFastVLine(smallChart_WIDTH - 1, smallChart_HEIGHT - bar_height, 2, lineHighlightColor);
-
-  // Draw the entire updated canvas on the TFT display
-  tft.drawRGBBitmap(chartBox_x + 2, chartBox_y + 2, smallChartCanvas->getBuffer(), smallChart_WIDTH, smallChart_HEIGHT); 
-
 }
 
 void dataMonitorChart_exitUI() {
   smallChartCanvas.reset();
 }
-
 
 void dataMonitorChart_updateChangedDigits(int x, int y, float oldValue, float newValue, uint16_t color = color_Text) {
   char newStr[10];

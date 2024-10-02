@@ -185,7 +185,7 @@ void handleFunctionModeChange(const DualChannelData &sensorData) {
       dataChart_initUI(singleModeDisplayChannel);
       break;
     case dataMonitorChart:
-      dataMonitorChart_initUI(singleModeDisplayChannel, tft_Rotation);
+      dataMonitorChart_initUI(singleModeDisplayChannel, tft_Rotation, sysConfig.cfg_data);
       dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation, 1);
       break;
     case dataMonitorCount:
@@ -216,12 +216,12 @@ void handleDataChartMode(const DualChannelData &sensorData) {
 void handleDataMonitorChartMode(const DualChannelData &sensorData) {
   if (singleModeDisplayChannel_ChangeRequested) {
     singleModeDisplayChannel_ChangeRequested = false;
-    dataMonitorChart_initUI(singleModeDisplayChannel, tft_Rotation);
+    dataMonitorChart_initUI(singleModeDisplayChannel, tft_Rotation, sysConfig.cfg_data);
     dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation, 1);
   }
   if (rotationChangeRequested) {
     rotationChangeRequested = false;
-    dataMonitorChart_changeRotation(sensorData, singleModeDisplayChannel, tft_Rotation);
+    dataMonitorChart_changeRotation(sensorData, singleModeDisplayChannel, tft_Rotation, sysConfig.cfg_data);
   }
   dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation);
 }
