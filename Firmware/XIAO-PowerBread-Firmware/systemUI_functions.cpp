@@ -31,8 +31,8 @@ void systemUI_sysConfig_init() {
     tft.setFont();
     tft.setTextColor(color_Text);
     tft.setTextSize(0);
-    tft.setCursor(4, 2);
-    tft.print("SysConfig V1");
+    tft.setCursor(14, 2);
+    tft.print("SysConfig");
 
     const char* config_text[9] = {"Dft Mode", "Dft CH", "ShuntR A", "ShuntR B", "UART EN", "UART BR", "UART Mode", "UART IT", "Chart IT"};
     tft.setTextColor(color_Text, color_Background);

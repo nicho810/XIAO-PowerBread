@@ -18,7 +18,7 @@ void dataMonitor_updateChangedDigits(int x, int y, float oldValue, float newValu
 void dataMonitor_initUI(int rotation);
 void dataMonitor_changeRotation(int rotation, const DualChannelData &oldSensorData);
 void dataMonitor_update_chAB_xy_by_Rotation(int rotation);
-void dataMonitor_updateData(const DualChannelData &sensorData);
+void dataMonitor_updateData(const DualChannelData &sensorData, uint8_t forceUpdate=0);
 
 #endif // DATAMONITOR_FUNCTIONS_H
 

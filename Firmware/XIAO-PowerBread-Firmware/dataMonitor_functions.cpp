@@ -5,7 +5,7 @@ extern DualChannelData oldSensorData;
 
 
 // Update dual channel data
-void dataMonitor_updateData(const DualChannelData &sensorData) {
+void dataMonitor_updateData(const DualChannelData &sensorData, uint8_t forceUpdate) {
   // Always update both channels, regardless of isDirty flag
   dataMonitor_ChannelInfoUpdate(0,
                                 sensorData.channel0.busVoltage,
@@ -14,7 +14,8 @@ void dataMonitor_updateData(const DualChannelData &sensorData) {
                                 oldSensorData.channel0.busVoltage,
                                 oldSensorData.channel0.busCurrent, 
                                 oldSensorData.channel0.busPower,
-                                color_Text);
+                                color_Text,
+                                forceUpdate);
 
   dataMonitor_ChannelInfoUpdate(1,
                                 sensorData.channel1.busVoltage,
@@ -23,7 +24,8 @@ void dataMonitor_updateData(const DualChannelData &sensorData) {
                                 oldSensorData.channel1.busVoltage, 
                                 oldSensorData.channel1.busCurrent, 
                                 oldSensorData.channel1.busPower,
-                                color_Text);
+                                color_Text,
+                                forceUpdate);
 
   // Update oldSensorData
   oldSensorData = sensorData;
@@ -49,18 +51,18 @@ void dataMonitor_ChannelInfoUpdate(uint8_t channel, float new_v, float new_a, fl
 
   int offset_defaultFont = -6;
 
-  // Update voltage if changed
-  if (new_v != old_v) {
+  // Update voltage if changed or forced
+  if (forceUpdate || new_v != old_v) {
     dataMonitor_updateChangedDigits(ch_1_x, ch_1_y, old_v, new_v, color);
   }
 
-  // Update current if changed
-  if (new_a != old_a) {
+  // Update current if changed or forced
+  if (forceUpdate || new_a != old_a) {
     dataMonitor_updateChangedDigits(ch_1_x, ch_2_y, old_a, new_a, color);
   }
 
-  // Update power if changed
-  if (new_w != old_w) {
+  // Update power if changed or forced
+  if (forceUpdate || new_w != old_w) {
     dataMonitor_updateChangedDigits(ch_1_x, ch_3_y, old_w, new_w, color);
   }
 

@@ -176,8 +176,7 @@ void handleFunctionModeChange(const DualChannelData &sensorData) {
   switch (current_function_mode) {
     case dataMonitor:
       dataMonitor_initUI(tft_Rotation);
-      dataMonitor_ChannelInfoUpdate(0, oldSensorData.channel0.busVoltage, oldSensorData.channel0.busCurrent, oldSensorData.channel0.busPower, -1, -1, -1, color_Text);
-      dataMonitor_ChannelInfoUpdate(1, oldSensorData.channel1.busVoltage, oldSensorData.channel1.busCurrent, oldSensorData.channel1.busPower, -1, -1, -1, color_Text);
+      dataMonitor_updateData(sensorData, 1);//force update
       break;
     case dataChart:
       tft_Rotation = 1;
@@ -518,7 +517,7 @@ void setup(void) {
   //Serial-baudRate is applied in the Serial.begin(), but now is only 115200
   //Serial-mode is applied in the serialPrintTask
   //Serial-printInterval is applied in the serialPrintTask
-  //chart_updateInterval is applied in the updateUITask:todo
+  //chart_updateInterval is applied in the dataMonitorChart_updateChartInterval()
 
 
   //Current sensor init
