@@ -67,7 +67,7 @@
 | Version | Stable | Development | Features added | Link |
 |---------|---------|---------|---------|---------|
 | 0.9.0     | Yes | Yes | Real-time current sensor data displayed on the LCD. | - |
-| 1.0.0     | Yes👍 | Yes | Dial wheel to adjust the UI for different viewing angles. | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.0.0) |
+| 1.0.0     | Yes | Yes | Dial wheel to adjust the UI for different viewing angles. | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.0.0) |
 | 1.1.0     | No  | Yes | Line chart mode to visualize power usage for each channel. | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.0) |
 | 1.1.1     | Yes👍  | Yes | support Data-Dashboard, Line-chart, current-Statistic，Setting | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.1) |
 
