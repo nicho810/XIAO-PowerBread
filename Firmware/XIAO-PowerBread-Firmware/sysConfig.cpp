@@ -45,17 +45,17 @@ void sysConfig::init(int force_write) {
         saveConfig(cfg_data);
     }
     else{
-        //reed cfg_version
-        cfg_data.cfg_version = EEPROM.read(cfg_addr.cfg_version);
+        //read cfg_version
+        uint8_t current_cfg_version = EEPROM.read(cfg_addr.cfg_version);
         //if cfg_version==0xFF, it means EEPROM is not initialized
-        if (cfg_data.cfg_version == 0xFF) {
+        if (current_cfg_version == 0xFF) {
             Serial.println("EEPROM is not initialized, writing default config to EEPROM");
             //update cfg_version
             EEPROM.write(cfg_addr.cfg_version, cfg_data.cfg_version);
             //write default config to EEPROM
             saveConfig(cfg_data);
         }
-        else if (cfg_data.cfg_version < cfg_data.cfg_version) {
+        else if (current_cfg_version < cfg_data.cfg_version) {
             //detect a lower version, write default config to EEPROM
             Serial.println("Detected a lower version, writing default config to EEPROM");
             //update cfg_version
