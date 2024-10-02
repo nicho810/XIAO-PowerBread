@@ -3,16 +3,17 @@
 INA3221Sensor::INA3221Sensor(uint8_t address)
   : ina(address) {}
 
-bool INA3221Sensor::begin() {
+bool INA3221Sensor::begin(float shuntResistorCHA=0.020, float shuntResistorCHB=0.020) {
   Wire.setClock(400000); // Set I2C to 400KHz
   Wire.begin();
   if (!ina.begin()) {
     Serial.println("could not connect. Fix and Reboot");
     return false;
   } else {
-    Serial.println("INA3221 Found");
+    // Serial.println("INA3221 Found");
     disableChannel(2); // Disable unused channel 2
-    setShuntResistors(0.020, 0.020); // 20 mR shunt resistors for channels 0 and 1
+    setShuntResistors(shuntResistorCHA, shuntResistorCHB); // 20 mR shunt resistors for channels 0 and 1, 20mR=0.020
+    Serial.printf("Shunt Resistors: %f, %f\n", ina.getShuntR(0), ina.getShuntR(1));
     setAverage(1);//get 4 samples and average them
     delay(100);
     return true;
