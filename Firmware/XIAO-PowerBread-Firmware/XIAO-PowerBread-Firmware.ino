@@ -55,7 +55,7 @@ enum function_mode {
   // analogInputMonitor,
 };
 
-volatile function_mode current_function_mode = dataMonitor;
+volatile function_mode current_function_mode = dataMonitorChart;
 volatile bool functionModeChangeRequested = true;  //a flag to indicate a mode change is requested
 volatile bool singleModeDisplayChannel_ChangeRequested = false;
 uint8_t singleModeDisplayChannel = 0;
@@ -487,10 +487,15 @@ void setup(void) {
     delay(2000);
   }
 
+  //Apply the cfg_data to the variables
+  current_function_mode = (function_mode)sysConfig.cfg_data.default_mode;
+  singleModeDisplayChannel = sysConfig.cfg_data.default_channel;
+  float shuntResistorCHA = sysConfig.cfg_data.shuntResistorCHA / 1000.0f;
+  float shuntResistorCHB = sysConfig.cfg_data.shuntResistorCHB / 1000.0f;
 
 
   //Current sensor init
-  if (!inaSensor.begin()) {
+  if (!inaSensor.begin(shuntResistorCHA, shuntResistorCHB)) {
     Serial.println("INA3221 initialization failed. Fix and Reboot");
     while (1)
       ;  // Halt execution

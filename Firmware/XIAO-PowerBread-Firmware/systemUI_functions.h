@@ -14,9 +14,6 @@ void systemUI_init();
 void systemUI_bootScreen();
 void systemUI_sysConfig_init();
 void systemUI_sysConfig_update(int cursor, bool isSelected, sysConfig_data tmp_cfg_data);
-
-void incrementConfigValue(int cursor, sysConfig_data &cfg_data);
-void decrementConfigValue(int cursor, sysConfig_data &cfg_data);
 void systemUI_MSG_savedConfig();
 
 #endif

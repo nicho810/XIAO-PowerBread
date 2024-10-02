@@ -34,7 +34,7 @@ void systemUI_sysConfig_init() {
     tft.setCursor(4, 2);
     tft.print("SysConfig V1");
 
-    const char* config_text[8] = {"Dft Mode", "Dft CH", "ShuntR A", "ShuntR B", "UART EN", "UART BR", "UART Mode", "Chart ITl"};
+    const char* config_text[8] = {"Dft Mode", "Dft CH", "ShuntR A", "ShuntR B", "UART EN", "UART BR", "UART Mode", "Chart IT"};
     tft.setTextColor(color_Text, color_Background);
     for (int i = 0; i < 8; i++) {
         tft.setCursor(0, 20 + i * 14);
@@ -60,7 +60,7 @@ void systemUI_sysConfig_update(int cursor, bool isSelected, sysConfig_data tmp_c
     snprintf(buffer[4], 10, "%d", tmp_cfg_data.serial_enable);
     snprintf(buffer[5], 10, "%d", tmp_cfg_data.serial_baudRate);
     snprintf(buffer[6], 10, "%d", tmp_cfg_data.serial_mode);
-    snprintf(buffer[7], 10, "%d", tmp_cfg_data.dataChart_interval);
+    snprintf(buffer[7], 10, "%d", tmp_cfg_data.chart_updateInterval);
 
     // Assign converted strings to config_value array
     for (int i = 0; i < 8; i++) {
@@ -96,28 +96,3 @@ void systemUI_sysConfig_update(int cursor, bool isSelected, sysConfig_data tmp_c
     lastIsSelected = isSelected;
 }
 
-void incrementConfigValue(int cursor, sysConfig_data &tmp_cfg_data) {
-    switch (cursor) {
-        case 0: tmp_cfg_data.default_mode = min(tmp_cfg_data.default_mode + 1, 255); break;
-        case 1: tmp_cfg_data.default_channel = min(tmp_cfg_data.default_channel + 1, 255); break;
-        case 2: tmp_cfg_data.shuntResistorCHA = min(tmp_cfg_data.shuntResistorCHA + 1, 255); break;
-        case 3: tmp_cfg_data.shuntResistorCHB = min(tmp_cfg_data.shuntResistorCHB + 1, 255); break;
-        case 4: tmp_cfg_data.serial_enable = !tmp_cfg_data.serial_enable; break;
-        case 5: tmp_cfg_data.serial_baudRate = min(tmp_cfg_data.serial_baudRate + 1, 255); break;
-        case 6: tmp_cfg_data.serial_mode = min(tmp_cfg_data.serial_mode + 1, 255); break;
-        case 7: tmp_cfg_data.dataChart_interval = min(tmp_cfg_data.dataChart_interval + 1, 255); break;
-    }
-}
-
-void decrementConfigValue(int cursor, sysConfig_data &tmp_cfg_data) {
-    switch (cursor) {
-        case 0: tmp_cfg_data.default_mode = max(tmp_cfg_data.default_mode - 1, 0); break;
-        case 1: tmp_cfg_data.default_channel = max(tmp_cfg_data.default_channel - 1, 0); break;
-        case 2: tmp_cfg_data.shuntResistorCHA = max(tmp_cfg_data.shuntResistorCHA - 1, 0); break;
-        case 3: tmp_cfg_data.shuntResistorCHB = max(tmp_cfg_data.shuntResistorCHB - 1, 0); break;
-        case 4: tmp_cfg_data.serial_enable = !tmp_cfg_data.serial_enable; break;
-        case 5: tmp_cfg_data.serial_baudRate = max(tmp_cfg_data.serial_baudRate - 1, 0); break;
-        case 6: tmp_cfg_data.serial_mode = max(tmp_cfg_data.serial_mode - 1, 0); break;
-        case 7: tmp_cfg_data.dataChart_interval = max(tmp_cfg_data.dataChart_interval - 1, 0); break;
-    }
-}

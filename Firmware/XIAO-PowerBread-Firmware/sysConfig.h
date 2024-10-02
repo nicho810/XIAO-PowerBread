@@ -13,29 +13,36 @@ struct sysConfig_addr{
     uint8_t serial_enable=5;
     uint8_t serial_baudRate=6;
     uint8_t serial_mode=7;
-    uint8_t dataChart_interval=8;
+    uint8_t chart_updateInterval=8;
 };
 
 struct sysConfig_data{
     //cfg_version: increment when the config struct is changed, 
     //if detect a lower version, will write the default config to EEPROM
     uint8_t cfg_version=1;
+
     //default mode: 0-dataMonitor, 1-dataMonitorChart, 2-dataMonitorCount
     uint8_t default_mode = 0; 
-    //default channel: 0-CH1, 1-CH2
+
+    //default channel: 0-CHA, 1-CHB
     uint8_t default_channel = 0; 
+
     //shunt resistor: usually the shunt resistor should below 100mOhm,
     //so we use 8bit to store the value, the max value is 255
     uint8_t shuntResistorCHA = 20;
     uint8_t shuntResistorCHB = 20;
+
     //serial enable: 0-disable, 1-enable
     uint8_t serial_enable = 1; 
+
     //serial baud rate: 0-9600, 1-19200, 2-38400, 3-57600, 4-115200
     uint8_t serial_baudRate=1; 
+
     //serial mode: 0-dafault mode
     uint8_t serial_mode=0; 
+
     //data chart interval: default
-    uint8_t dataChart_interval=0; 
+    uint8_t chart_updateInterval=0; 
 };
 
 class sysConfig {
@@ -49,5 +56,8 @@ class sysConfig {
         void loadConfig();
         String debugPrintOnSerial();
 };
+
+void incrementConfigValue(int cursor, sysConfig_data& cfg_data);
+void decrementConfigValue(int cursor, sysConfig_data& cfg_data);
 
 #endif
