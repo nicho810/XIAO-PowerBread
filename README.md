@@ -14,6 +14,7 @@
 5. **Open-Source and RP2040 Powered**: Powered by the RP2040, this open-source design provides flexibility for future extensions like USB-serial communication and PWM control.
 6. **Dual-Channel Voltage and Current Sensing**: Equipped with the INA3221 sensor for dual-channel voltage and current monitoring—know what’s happening with every aspect of your power supply.
 7. **Compact Powerhouse**: This compact design delivers both 3.3V and 5V outputs, optimizing your breadboard space without compromising on power.
+8. **Multiple UI functions**: The UI can be switched between data monitoring, line chart, and statistic mode.
 
 ![XIAO PowerBread](Images/pic_directPowerAndMonitoring.png)
 
@@ -44,8 +45,8 @@
 - **Arduino Code**: Modify or remix the project using the provided Arduino source code.
   - This code is built on top of freeRTOS from the Arduino Pico SDK. It has 4 tasks:
     - Task for reading current sensors (INA3221).
-    - Task for reading dial value from A2 pin of XIAO.
-    - Task for updating data to LCD.
+    - Task for serial communication.
+    - Task for data update to LCD.
     - Task for handling dial functions, such as changing the rotation of the UI.
 
 - **Bin File**: For XIAO RP2040 users, download the precompiled bin file and flash it via UF2 for quick setup.
@@ -55,6 +56,8 @@
 - [x] Real-time current sensor data displayed on the LCD.
 - [x] Dial wheel to adjust the UI for different viewing angles.
 - [x] Line chart mode to visualize power usage for each channel.
+- [x] Count mode to count average(second, minute, all time) and peak current consumption for each channel.
+- [x] Allow to save settings data to EEPROM.
 - [ ] USB-Serial mode for data transfer.
 - [ ] PWM output on IO0 and IO1.
 - [ ] ADC reading from IO0 and IO1.
@@ -63,9 +66,10 @@
 
 | Version | Stable | Development | Features added | Link |
 |---------|---------|---------|---------|---------|
-| 0.9     | Yes | Yes | Real-time current sensor data displayed on the LCD. | - |
-| 1.0     | Yes👍 | Yes | Dial wheel to adjust the UI for different viewing angles. | [v1.0.0](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.0.0) |
-| 1.1     | No  | Yes | Line chart mode to visualize power usage for each channel. | [v1.1.0](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.0) |
+| 0.9.0     | Yes | Yes | Real-time current sensor data displayed on the LCD. | - |
+| 1.0.0     | Yes👍 | Yes | Dial wheel to adjust the UI for different viewing angles. | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.0.0) |
+| 1.1.0     | No  | Yes | Line chart mode to visualize power usage for each channel. | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.0) |
+| 1.1.1     | Yes👍  | Yes | support Data-Dashboard, Line-chart, current-Statistic，Setting | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.1) |
 
 
 ### Libraries Used
@@ -73,6 +77,7 @@
 - [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library)
 - [Adafruit ST7735 Library](https://github.com/adafruit/Adafruit-ST7735-Library)
 - [Arduino-Pico Core (4.0.x)](https://github.com/earlephilhower/arduino-pico)
+- [adafruit sleepydog](https://github.com/adafruit/Adafruit_SleepyDog)
 
 ## Contributing
 
