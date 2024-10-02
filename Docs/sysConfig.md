@@ -36,4 +36,5 @@
 > **The config value is saved on the EEPROM, but the RP2040 does not have an EEPROM; instead, it uses the spi-flash to emulate the EEPROM. Please avoid writing the config value too frequently, as this can reduce the flash memory's lifespan. In this project, we only use it to save the config, so it's not a problem.**
 
 ## Demo Video
-[Setting demo](Videos/Setting%20demo.mov)
+https://github.com/user-attachments/assets/c8fd87f6-1eb2-4a54-b636-98af69b8ef97
+
