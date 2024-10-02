@@ -10,6 +10,7 @@ void sysConfig::saveConfig(sysConfig_data data) {
     EEPROM.write(cfg_addr.serial_enable, data.serial_enable);
     EEPROM.write(cfg_addr.serial_baudRate, data.serial_baudRate);
     EEPROM.write(cfg_addr.serial_mode, data.serial_mode);
+    EEPROM.write(cfg_addr.serial_printInterval, data.serial_printInterval);
     EEPROM.write(cfg_addr.chart_updateInterval, data.chart_updateInterval);
 
     EEPROM.commit();
@@ -25,6 +26,7 @@ void sysConfig::loadConfig() {
     cfg_data.serial_enable = EEPROM.read(cfg_addr.serial_enable);
     cfg_data.serial_baudRate = EEPROM.read(cfg_addr.serial_baudRate);
     cfg_data.serial_mode = EEPROM.read(cfg_addr.serial_mode);
+    cfg_data.serial_printInterval = EEPROM.read(cfg_addr.serial_printInterval);
     cfg_data.chart_updateInterval = EEPROM.read(cfg_addr.chart_updateInterval);
 }
 
@@ -78,6 +80,7 @@ String sysConfig::debugPrintOnSerial() {
     output += "serial_enable: " + String(cfg_data.serial_enable) + "\n";
     output += "serial_baudRate: " + String(cfg_data.serial_baudRate) + "\n";
     output += "serial_mode: " + String(cfg_data.serial_mode) + "\n";
+    output += "serial_printInterval: " + String(cfg_data.serial_printInterval) + "\n";
     output += "chart_updateInterval: " + String(cfg_data.chart_updateInterval) + "\n";
     return output;
 }
@@ -93,7 +96,8 @@ void incrementConfigValue(int cursor, sysConfig_data& tmp_cfg_data) {
         case 4: tmp_cfg_data.serial_enable = !tmp_cfg_data.serial_enable; break;
         case 5: tmp_cfg_data.serial_baudRate = min(tmp_cfg_data.serial_baudRate + 1, 0); break;
         case 6: tmp_cfg_data.serial_mode = min(tmp_cfg_data.serial_mode + 1, 1); break;
-        case 7: tmp_cfg_data.chart_updateInterval = min(tmp_cfg_data.chart_updateInterval + 1, 0); break;
+        case 7: tmp_cfg_data.serial_printInterval = min(tmp_cfg_data.serial_printInterval + 1, 4); break;
+        case 8: tmp_cfg_data.chart_updateInterval = min(tmp_cfg_data.chart_updateInterval + 1, 0); break;
     }
 }
 
@@ -106,7 +110,8 @@ void decrementConfigValue(int cursor, sysConfig_data& tmp_cfg_data) {
         case 4: tmp_cfg_data.serial_enable = !tmp_cfg_data.serial_enable; break;
         case 5: tmp_cfg_data.serial_baudRate = max(tmp_cfg_data.serial_baudRate - 1, 0); break;
         case 6: tmp_cfg_data.serial_mode = max(tmp_cfg_data.serial_mode - 1, 0); break;
-        case 7: tmp_cfg_data.chart_updateInterval = max(tmp_cfg_data.chart_updateInterval - 1, 0); break;
+        case 7: tmp_cfg_data.serial_printInterval = max(tmp_cfg_data.serial_printInterval - 1, 0); break;
+        case 8: tmp_cfg_data.chart_updateInterval = max(tmp_cfg_data.chart_updateInterval - 1, 0); break;
     }
 }
 

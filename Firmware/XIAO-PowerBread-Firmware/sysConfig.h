@@ -13,7 +13,8 @@ struct sysConfig_addr{
     uint8_t serial_enable=5;
     uint8_t serial_baudRate=6;
     uint8_t serial_mode=7;
-    uint8_t chart_updateInterval=8;
+    uint8_t serial_printInterval=8;
+    uint8_t chart_updateInterval=9;
 };
 
 struct sysConfig_data{
@@ -35,13 +36,16 @@ struct sysConfig_data{
     //serial enable: 0-disable, 1-enable
     uint8_t serial_enable = 1; 
 
-    //serial baud rate: 0-9600, 1-19200, 2-38400, 3-57600, 4-115200
-    uint8_t serial_baudRate=1; 
+    //serial baud rate: 0-115200, now only 115200 is supported
+    uint8_t serial_baudRate=0; 
 
-    //serial mode: 0-dafault mode
+    //serial mode: 0-dafault mode (human readable message), 1-arduino plotter mode
     uint8_t serial_mode=0; 
 
-    //data chart interval: default
+    //serial print interval: 0-1000ms, 1-500ms, 2-100ms, 3-50ms, 4-10ms
+    uint8_t serial_printInterval=0; 
+
+    //data chart interval: 0-default
     uint8_t chart_updateInterval=0; 
 };
 

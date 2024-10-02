@@ -242,29 +242,51 @@ void handleDataMonitorCountMode(const DualChannelData &sensorData) {
 void serialPrintTask(void *pvParameters) {
   (void)pvParameters;
   TickType_t xLastPrintTime = 0;
-  const TickType_t xPrintInterval = pdMS_TO_TICKS(1000);
+  const TickType_t xPrintIntervals[] = {
+    pdMS_TO_TICKS(1000),  // 0 - 1000ms
+    pdMS_TO_TICKS(500),   // 1 - 500ms
+    pdMS_TO_TICKS(100),   // 2 - 100ms
+    pdMS_TO_TICKS(50),    // 3 - 50ms
+    pdMS_TO_TICKS(10)     // 4 - 10ms
+  };
+
+  // Set these values once at the start of the task
+  const TickType_t xPrintInterval = xPrintIntervals[min(sysConfig.cfg_data.serial_printInterval, 4)];
+  const bool serialEnabled = sysConfig.cfg_data.serial_enable;
+  const uint8_t serialMode = sysConfig.cfg_data.serial_mode;
+
   while (1) {
     // Reset the watchdog timer
     Watchdog.reset();
 
     TickType_t xCurrentTime = xTaskGetTickCount();
+
     if ((xCurrentTime - xLastPrintTime) >= xPrintInterval) {
       if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(100)) == pdTRUE) {
         // Use the latest sensor data
         DualChannelData sensorData = latestSensorData;
         xSemaphoreGive(xSemaphore);
-        // Only print if Serial is available
-        if (Serial) {
-          Serial.printf("A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW\n",
-                        sensorData.channel0.busVoltage, sensorData.channel0.shuntVoltage * 1000, sensorData.channel0.busCurrent, sensorData.channel0.busPower,
-                        sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000, sensorData.channel1.busCurrent, sensorData.channel1.busPower);
+        
+        // Only print if Serial is available and serial_enable is true
+        if (Serial && serialEnabled) {
+          if (serialMode == 0) {
+            // Default mode (human readable message)
+            Serial.printf("A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW\n",
+                          sensorData.channel0.busVoltage, sensorData.channel0.shuntVoltage * 1000, sensorData.channel0.busCurrent, sensorData.channel0.busPower,
+                          sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000, sensorData.channel1.busCurrent, sensorData.channel1.busPower);
+          } else if (serialMode == 1) {
+            // Arduino plotter mode, no need to show shunt in plotter mode.
+            Serial.printf("V0:%.2f,I0:%.2f,P0:%.2f,V1:%.2f,I1:%.2f,P1:%.2f\n",
+                          sensorData.channel0.busVoltage, sensorData.channel0.busCurrent, sensorData.channel0.busPower,
+                          sensorData.channel1.busVoltage, sensorData.channel1.busCurrent, sensorData.channel1.busPower);
+          }
         }
 
         xLastPrintTime = xCurrentTime;
       }
       // If we couldn't acquire the semaphore, we'll try again next time
     }
-    vTaskDelay(pdMS_TO_TICKS(100));  // Increase delay to 100ms
+    vTaskDelay(pdMS_TO_TICKS(10));  // Short delay to prevent task starvation
   }
 }
 
@@ -445,13 +467,13 @@ void setup(void) {
         // Navigate menu
         if (dialStatus == 2) {
           cursor++;
-          if (cursor > 7) {
+          if (cursor > 8) {
             cursor = 0;
           }
         } else if (dialStatus == 1) {
           cursor--;
           if (cursor < 0) {
-            cursor = 7;
+            cursor = 8;
           }
         } else if (dialStatus == 3) {
           // Long press to exit configuration
@@ -492,6 +514,11 @@ void setup(void) {
   singleModeDisplayChannel = sysConfig.cfg_data.default_channel;
   float shuntResistorCHA = sysConfig.cfg_data.shuntResistorCHA / 1000.0f;
   float shuntResistorCHB = sysConfig.cfg_data.shuntResistorCHB / 1000.0f;
+  //Serial-enable is applied in the serialPrintTask
+  //Serial-baudRate is applied in the Serial.begin(), but now is only 115200
+  //Serial-mode is applied in the serialPrintTask
+  //Serial-printInterval is applied in the serialPrintTask
+  //chart_updateInterval is applied in the updateUITask:todo
 
 
   //Current sensor init
@@ -500,7 +527,6 @@ void setup(void) {
     while (1)
       ;  // Halt execution
   }
-
 
   //semaphore init
   xSemaphore = xSemaphoreCreateMutexStatic(&xMutexBuffer);

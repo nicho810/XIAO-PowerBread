@@ -34,9 +34,9 @@ void systemUI_sysConfig_init() {
     tft.setCursor(4, 2);
     tft.print("SysConfig V1");
 
-    const char* config_text[8] = {"Dft Mode", "Dft CH", "ShuntR A", "ShuntR B", "UART EN", "UART BR", "UART Mode", "Chart IT"};
+    const char* config_text[9] = {"Dft Mode", "Dft CH", "ShuntR A", "ShuntR B", "UART EN", "UART BR", "UART Mode", "UART IT", "Chart IT"};
     tft.setTextColor(color_Text, color_Background);
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
         tft.setCursor(0, 20 + i * 14);
         tft.print(config_text[i]);
     }
@@ -49,8 +49,8 @@ void systemUI_sysConfig_update(int cursor, bool isSelected, sysConfig_data tmp_c
     uint16_t color_sysConfig = color_ChannelA;  
 
     tft.setTextColor(color_Text, color_Background);
-    const char* config_value[8];
-    char buffer[8][10];  // Buffer to hold converted strings
+    const char* config_value[9];
+    char buffer[9][10];  // Buffer to hold converted strings
 
     // Convert uint8_t values to strings
     snprintf(buffer[0], 10, "%d", tmp_cfg_data.default_mode);
@@ -60,14 +60,15 @@ void systemUI_sysConfig_update(int cursor, bool isSelected, sysConfig_data tmp_c
     snprintf(buffer[4], 10, "%d", tmp_cfg_data.serial_enable);
     snprintf(buffer[5], 10, "%d", tmp_cfg_data.serial_baudRate);
     snprintf(buffer[6], 10, "%d", tmp_cfg_data.serial_mode);
-    snprintf(buffer[7], 10, "%d", tmp_cfg_data.chart_updateInterval);
+    snprintf(buffer[7], 10, "%d", tmp_cfg_data.serial_printInterval);
+    snprintf(buffer[8], 10, "%d", tmp_cfg_data.chart_updateInterval);
 
     // Assign converted strings to config_value array
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
         config_value[i] = buffer[i];
     }
 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
         // Clear the area before printing the new value
         tft.fillRect(59, 20 + i * 14, 23, 8, color_Background);
         tft.setCursor(59, 20 + i * 14);
