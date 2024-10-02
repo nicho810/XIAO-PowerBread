@@ -71,6 +71,8 @@
 | 1.1.0     | No  | Yes | Line chart mode to visualize power usage for each channel. | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.0) |
 | 1.1.1     | Yes👍  | Yes | support Data-Dashboard, Line-chart, current-Statistic，Setting | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.1) |
 
+### Documentation
+- [System Config Explanation](Docs/sysConfig.md)
 
 ### Libraries Used
 - [INA3221_RT Library](https://github.com/RobTillaart/INA3221_RT/tree/master)

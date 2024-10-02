@@ -13,8 +13,8 @@
 > **after exit the selection, the config still not saved, you need to long press the dial switch to save the config and exit the config mode.**
 
 ### Exit config mode
-- Long press the dial switch to save the config and exit the config mode.
-- if you want to exit the config mode without saving the config, you can directly reset the board or re-power the board.
+- Long press the dial switch to **save the config** and exit the config mode.
+- if you want to exit the config mode **without saving the config**, you can directly reset the board or re-power the board.
 
 
 ## System Configuration Parameters
