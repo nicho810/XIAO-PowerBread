@@ -1,9 +1,14 @@
 # XIAO PowerBread - A Breadboard Power Supply with Real-Time Monitoring
 
+English | [日本語](README_JP.md)
+
 **XIAO PowerBread** is an open-source hardware project designed to offer a reliable and efficient power solution for breadboard prototyping. Featuring built-in sensors, real-time monitoring, and the RP2040 microcontroller, PowerBread makes powering and developing electronics projects easier than ever.
 
 ![XIAO PowerBread](Docs/Images/pic_overview.png)
+> Easy installation and compact design
 
+![XIAO PowerBread](Docs/Images/pic_directPowerAndMonitoring.png)
+> Direct power and monitoring you breadboard projects
 
 ## Key Features
 
@@ -16,7 +21,15 @@
 7. **Compact Powerhouse**: This compact design delivers both 3.3V and 5V outputs, optimizing your breadboard space without compromising on power.
 8. **Multiple UI functions**: The UI can be switched between data monitoring, line chart, and statistic mode.
 
-![XIAO PowerBread](Docs/Images/pic_directPowerAndMonitoring.png)
+![function](Docs/Images/pic_functions.png)
+> Multiple UI functions
+
+![switchCH](Docs/Images/pic_switchCH.png)
+> Long press the dial to switch channels in chart and statistic mode
+
+![uiRotate](Docs/Images/pic_uiRotation.png)
+> Rotate the dial to adjust the UI for different viewing angles
+
 
 ## Hardware Specifications
 
@@ -33,7 +46,7 @@
 
 ### Hardware
 
-- **XIAO Board**: The XIAO RP2040 is recommended, though other XIAO boards should work as well.
+- **XIAO Board**: The XIAO RP2040 is recommended, though other XIAO boards should work as well.(not tested)
 - **XIAO PowerBread Board**: Clone or remix the design from this repository. Also you can get the hardware from [Tindie](https://www.tindie.com/products/35842/).
 - **Breadboard**: Fits standard breadboards for easy prototyping.
 - **Power Supply**: Use a standard USB power source.
@@ -42,15 +55,16 @@
 
 ### Software
 
-- **Arduino Code**: Modify or remix the project using the provided Arduino source code.
-  - This code is built on top of freeRTOS from the Arduino Pico SDK. It has 4 tasks:
-    - Task for reading current sensors (INA3221).
-    - Task for serial communication.
-    - Task for data update to LCD.
-    - Task for handling dial functions, such as changing the rotation of the UI.
+- **Remix the project**: Modify or remix the project using the provided Arduino source code.
+- **Directly use compiled firmware**: Currenly, the code only test on XIAO RP2040, it is recommended to use UF2 method to upload the firmware to XIAO RP2040.
 
-- **Bin File**: For XIAO RP2040 users, download the precompiled bin file and flash it via UF2 for quick setup.
-
+> UF2 upload method:
+> 1. Download the compiled firmware file from [Release page](https://github.com/nicho810/XIAO-PowerBread/releases)
+> 2. Connect XIAO to PC/MAC via USB (Make sure it is a 4 pin USB cable)
+> 3. press the B(Boot) button on XIAO and **holding it**, then press the R(Reset) button on XIAO at the same time. Then release all buttons
+> 4. You should able to see a USB drive Name:RPI-RP2 on you PC/MAC.
+> 5. Drag and drop the firmware file(*.uf2) to the RPI-RP2 drive, the file will be uploaded to XIAO.
+> 6. After a few seconds, the XIAO will reset and boot into the firmware.
 
 ### Planned Software Features
 - [x] Real-time current sensor data displayed on the LCD.
@@ -58,7 +72,7 @@
 - [x] Line chart mode to visualize power usage for each channel.
 - [x] Count mode to count average(second, minute, all time) and peak current consumption for each channel.
 - [x] Allow to save settings data to EEPROM.
-- [ ] USB-Serial mode for data transfer.
+- [ ] USB-Serial mode as a debug tool.
 - [ ] PWM output on IO0 and IO1.
 - [ ] ADC reading from IO0 and IO1.
 
@@ -73,6 +87,10 @@
 
 ### Documentation
 - [System Config Explanation](Docs/sysConfig.md)
+  - Default mode setting
+  - Shunt resistor setting (20mOhm, 50mOhm)
+  - Serial output setting (Human readable mode,  Arduino plotter mode)
+  - Line chart setting (Chart refresh rate)
 
 ### Libraries Used
 - [INA3221_RT Library](https://github.com/RobTillaart/INA3221_RT/tree/master)
@@ -80,6 +98,8 @@
 - [Adafruit ST7735 Library](https://github.com/adafruit/Adafruit-ST7735-Library)
 - [Arduino-Pico Core (4.0.x)](https://github.com/earlephilhower/arduino-pico)
 - [adafruit sleepydog](https://github.com/adafruit/Adafruit_SleepyDog)
+
+> Need to modify ST7735 library a bit to fit the different lcd module, check the source code for more details.
 
 ## Contributing
 
