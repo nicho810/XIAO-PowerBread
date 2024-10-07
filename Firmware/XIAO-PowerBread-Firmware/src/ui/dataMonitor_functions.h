@@ -2,8 +2,8 @@
 #define DATAMONITOR_FUNCTIONS_H
 
 #include <Adafruit_GFX.h>
-#include <Adafruit_ST7735.h>
-#include "INA3221Sensor.h"  // Add this include
+#include "../tft_driver/XPB_ST7735.h"
+#include "../INA3221Sensor.h"  // Add this include
 #include <SPI.h>
 #include <Fonts/FreeSansBold9pt7b.h>
 #include "ui_style.h"

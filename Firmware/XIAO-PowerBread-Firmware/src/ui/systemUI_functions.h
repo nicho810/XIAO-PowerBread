@@ -2,11 +2,11 @@
 #define SYSTEMUI_FUNCTIONS_H
 
 #include <Adafruit_GFX.h>
-#include <Adafruit_ST7735.h>
+#include "../tft_driver/XPB_ST7735.h"
 #include <SPI.h>
 #include <Fonts/FreeSansBold9pt7b.h>
 #include "ui_style.h"
-#include "sysConfig.h"
+#include "../sysConfig.h"
 
 extern Adafruit_ST7735 tft;
 
