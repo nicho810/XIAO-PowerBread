@@ -21,6 +21,11 @@
 #define TFT_SCLK D8
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
+//LED
+#define LED_RGB_R 17
+#define LED_RGB_G 16
+#define LED_RGB_B 25
+
 //Dial Switch
 #include "dialSwitch.h"
 
@@ -38,7 +43,7 @@ volatile int tft_Rotation = 2;  // default rotation.
 #include "dataMonitor_functions.h"
 #include "dataMonitorChart_functions.h"
 #include "dataMonitorCount_functions.h"
-#include "dataChart_functions.h"  //This mode is similar to dataMonitorChart, so disable it by default. Enable it if need a big chart.
+#include "dataChart_functions.h"  //This mode is similar to dataMonitorChart, so disable it by default.
 
 //Sys Config
 #include "sysConfig.h"
@@ -102,6 +107,24 @@ TaskHandle_t xSensorTaskHandle = NULL;
 //Watchdog
 #define WATCHDOG_TIMEOUT 5000  // 5 seconds
 
+//LED functions
+void XIAO_buildinLED_init() {
+  pinMode(LED_RGB_R, OUTPUT);
+  pinMode(LED_RGB_G, OUTPUT);
+  pinMode(LED_RGB_B, OUTPUT);
+  digitalWrite(LED_RGB_R, HIGH);
+  digitalWrite(LED_RGB_G, HIGH);
+  digitalWrite(LED_RGB_B, HIGH);
+}
+
+void XIAO_buildinLED_R(bool status) {
+  digitalWrite(LED_RGB_R, status);
+}
+
+void XIAO_buildinLED_R_blink(uint16_t interval) {
+    XIAO_buildinLED_R(1-digitalRead(LED_RGB_R));//toggle
+    delay(interval);
+}
 
 // Add the new sensor update task
 void sensorUpdateTask(void *pvParameters) {
@@ -415,6 +438,9 @@ void longPress_Handler(function_mode currentMode) {
 }
 
 void setup(void) {
+  //LED init
+  XIAO_buildinLED_init();
+
   //Dial init
   dial.init();
 
@@ -522,8 +548,9 @@ void setup(void) {
   //Current sensor init
   if (!inaSensor.begin(shuntResistorCHA, shuntResistorCHB)) {
     Serial.println("INA3221 initialization failed. Fix and Reboot");
-    while (1)
-      ;  // Halt execution
+    while (1){
+      XIAO_buildinLED_R_blink(100);
+    }
   }
 
   //semaphore init
