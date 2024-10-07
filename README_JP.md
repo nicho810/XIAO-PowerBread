@@ -82,7 +82,20 @@
 | 0.9.0     | はい | はい | LCDにリアルタイムの電流センサーデータを表示 | - |
 | 1.0.0     | はい | はい | 異なる視角に合わせてUIを調整するダイヤルホイール | [リリースページ](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.0.0) |
 | 1.1.0     | いいえ | はい | 各チャンネルの電力使用を視覚化するラインチャートモード | [リリースページ](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.0) |
-| 1.1.1     | はい👍 | はい | データダッシュボード、ラインチャート、電流統計、設定をサポート | [リリースページ](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.1) |
+| 1.1.1     | はい | はい | データダッシュボード、ラインチャート、電流統計、設定をサポート | [リリースページ](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.1) |
+| 1.1.2     | はい👍 | はい | デバッグ目的のLED点滅機能を導入 | [リリースページ](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.2) |
+
+### トラブルシューティング
+1. ディスプレイが反応しない
+   - 最新のファームウェアを使用していることを確認してください。最新のファームウェアには安定性のためのバグ修正が含まれています。
+   - XIAOボードのリセットボタンを押してリセットしてみてください。
+2. ディスプレイが動作しない
+   - XIAOの赤いLEDが点滅している場合、INA3221が正しく接続されていないことを意味します。I2Cピンの接続を確認してください。
+   - XIAOの赤いLEDが点滅していない場合、ディスプレイが正しく駆動されていないことを意味します。SPIピンの接続を確認してください。
+3. 電流値が正しくない
+   - シャント抵抗の値を確認し、sysConfigで正しく設定してください。（例：20mΩの場合は20、50mΩの場合は50） -> [システム設定の説明](Docs/sysConfig.md)
+4. 両方の電圧がディスプレイで0Vと表示される
+   - 電源スイッチを確認してください。下側にあるべきです。（上側がOFF、下側がON）
 
 ### ドキュメンテーション
 - [システム設定の説明](Docs/sysConfig.md)
@@ -98,7 +111,7 @@
 - [Arduino-Pico Core (4.0.x)](https://github.com/earlephilhower/arduino-pico)
 - [adafruit sleepydog](https://github.com/adafruit/Adafruit_SleepyDog)
 
-> 異なるLCDモジュールに合わせてST7735ライブラリを少し修正する必要があります。詳細はソースコー�����確認してください。
+> v1.1.2以降、このプロジェクトで使用されているLCDモジュールに適合するように修正されたAdafruit_ST7735ライブラリのバージョンが含まれています。
 
 ## 貢献
 
