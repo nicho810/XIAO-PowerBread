@@ -83,7 +83,8 @@ English | [日本語](README_JP.md)
 | 0.9.0     | Yes | Yes | Real-time current sensor data displayed on the LCD. | - |
 | 1.0.0     | Yes | Yes | Dial wheel to adjust the UI for different viewing angles. | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.0.0) |
 | 1.1.0     | No  | Yes | Line chart mode to visualize power usage for each channel. | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.0) |
-| 1.1.1     | Yes👍  | Yes | support Data-Dashboard, Line-chart, current-Statistic，Setting | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.1) |
+| 1.1.1     | Yes  | Yes | support Data-Dashboard, Line-chart, current-Statistic，Setting | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.1) |
+| 1.1.2     | Yes👍 | Yes | Introduces LED blink functionality for debugging purposes | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.2) |
 
 ### Documentation
 - [System Config Explanation](Docs/sysConfig.md)
@@ -92,14 +93,27 @@ English | [日本語](README_JP.md)
   - Serial output setting (Human readable mode,  Arduino plotter mode)
   - Line chart setting (Chart refresh rate)
 
+### Troubleshooting
+1. The display is not responding
+   - Pls make sure you are using the latest firmware, the latest firmware have some bug fix for the stability.
+   - Try to reset the XIAO by pressing the reset button on the XIAO board.
+2. The display is not working
+   - if the red LED on XIAO is blinking, it means the INA3221 is not connected correctly, pls check the I2C pin connection.
+   - if the red LED on XIAO is not blinking, it means the display is not driven properly, pls check the SPI pin connection.
+3. The current value is not correct
+   - Pls check the shunt resistor value, and set it correctly in the sysConfig. (e.g. 20 for 20mOhm, 50 for 50mOhm) -> [System Config Explanation](Docs/sysConfig.md)
+4. Both of the Volatage shows on display is 0V
+   - Pls check the power-on switch, it should be on the down side. (UP side is OFF, DOWN side is ON)
+
+
 ### Libraries Used
 - [INA3221_RT Library](https://github.com/RobTillaart/INA3221_RT/tree/master)
 - [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library)
-- [Adafruit ST7735 Library](https://github.com/adafruit/Adafruit-ST7735-Library)
+- [Adafruit ST7735 Library](https://github.com/adafruit/Adafruit-ST7735-Library) 
 - [Arduino-Pico Core (4.0.x)](https://github.com/earlephilhower/arduino-pico)
 - [adafruit sleepydog](https://github.com/adafruit/Adafruit_SleepyDog)
 
-> Need to modify ST7735 library a bit to fit the different lcd module, check the source code for more details.
+> Included a modified version of Adafruit_ST7735 library since v1.1.2 to fit the lcd module used on this project.
 
 ## Contributing
 
