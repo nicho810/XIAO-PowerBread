@@ -1,7 +1,8 @@
 #include <cstdint>
 //LCD init
 #include <Adafruit_GFX.h>     // Core graphics library
-#include <Adafruit_ST7735.h>  // Hardware-specific library for ST7735
+#include "src/tft_driver/XPB_ST7735.h"  // Hardware-specific library for ST7735
+// #include <Adafruit_ST7735.h>
 #include <SPI.h>
 #include <Fonts/FreeSansBold9pt7b.h>
 
@@ -21,8 +22,13 @@
 #define TFT_SCLK D8
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
+//LED
+#define LED_RGB_R 17
+#define LED_RGB_G 16
+#define LED_RGB_B 25
+
 //Dial Switch
-#include "dialSwitch.h"
+#include "src/dialSwitch.h"
 
 DialFunction dial;
 volatile int dialStatus = 0;  // 0: reset, 1: up, 2: down, 3: press, 4: long press
@@ -34,14 +40,14 @@ volatile int newRotation = 0;
 volatile int tft_Rotation = 2;  // default rotation.
 
 //UIs
-#include "systemUI_functions.h"
-#include "dataMonitor_functions.h"
-#include "dataMonitorChart_functions.h"
-#include "dataMonitorCount_functions.h"
-#include "dataChart_functions.h"  //This mode is similar to dataMonitorChart, so disable it by default. Enable it if need a big chart.
+#include "src/ui/systemUI_functions.h"
+#include "src/ui/dataMonitor_functions.h"
+#include "src/ui/dataMonitorChart_functions.h"
+#include "src/ui/dataMonitorCount_functions.h"
+#include "src/ui/dataChart_functions.h"  //This mode is similar to dataMonitorChart, so disable it by default.
 
 //Sys Config
-#include "sysConfig.h"
+#include "src/sysConfig.h"
 sysConfig sysConfig;
 sysConfig_data tmp_cfg_data;
 
@@ -62,7 +68,7 @@ uint8_t singleModeDisplayChannel = 0;
 
 
 //Current sensor
-#include "INA3221Sensor.h"
+#include "src/INA3221Sensor.h"
 INA3221Sensor inaSensor;
 
 DualChannelData latestSensorData;  // Add a global variable to store the latest sensor data
@@ -102,6 +108,24 @@ TaskHandle_t xSensorTaskHandle = NULL;
 //Watchdog
 #define WATCHDOG_TIMEOUT 5000  // 5 seconds
 
+//LED functions
+void XIAO_buildinLED_init() {
+  pinMode(LED_RGB_R, OUTPUT);
+  pinMode(LED_RGB_G, OUTPUT);
+  pinMode(LED_RGB_B, OUTPUT);
+  digitalWrite(LED_RGB_R, HIGH);
+  digitalWrite(LED_RGB_G, HIGH);
+  digitalWrite(LED_RGB_B, HIGH);
+}
+
+void XIAO_buildinLED_R(bool status) {
+  digitalWrite(LED_RGB_R, status);
+}
+
+void XIAO_buildinLED_R_blink(uint16_t interval) {
+    XIAO_buildinLED_R(1-digitalRead(LED_RGB_R));//toggle
+    delay(interval);
+}
 
 // Add the new sensor update task
 void sensorUpdateTask(void *pvParameters) {
@@ -415,6 +439,9 @@ void longPress_Handler(function_mode currentMode) {
 }
 
 void setup(void) {
+  //LED init
+  XIAO_buildinLED_init();
+
   //Dial init
   dial.init();
 
@@ -522,8 +549,9 @@ void setup(void) {
   //Current sensor init
   if (!inaSensor.begin(shuntResistorCHA, shuntResistorCHB)) {
     Serial.println("INA3221 initialization failed. Fix and Reboot");
-    while (1)
-      ;  // Halt execution
+    while (1){
+      XIAO_buildinLED_R_blink(100);
+    }
   }
 
   //semaphore init
