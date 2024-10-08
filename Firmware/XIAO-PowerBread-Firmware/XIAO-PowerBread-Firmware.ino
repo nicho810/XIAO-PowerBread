@@ -529,6 +529,10 @@ void setup(void) {
       Serial.println("Configuration saved");
     }
 
+    //print again to confirm the config is updated
+    Serial.println(sysConfig.debugPrintOnSerial());
+
+
     //show the config saved message
     systemUI_MSG_savedConfig();
     delay(2000);
