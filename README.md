@@ -84,7 +84,8 @@ English | [日本語](README_JP.md)
 | 1.0.0     | Yes | Yes | Dial wheel to adjust the UI for different viewing angles. | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.0.0) |
 | 1.1.0     | No  | Yes | Line chart mode to visualize power usage for each channel. | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.0) |
 | 1.1.1     | Yes  | Yes | support Data-Dashboard, Line-chart, current-Statistic，Setting | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.1) |
-| 1.1.2     | Yes👍 | Yes | Introduces LED blink functionality for debugging purposes | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.2) |
+| 1.1.2     | Yes | Yes | Introduces LED blink functionality for debugging purposes | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.2) |
+| 1.1.3     | Yes👍 | Yes | Add fixed-scale and auto-scale support for line-chart | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.3) |
 
 ### Documentation
 - [System Config Explanation](Docs/sysConfig.md)

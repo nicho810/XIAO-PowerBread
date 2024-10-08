@@ -6,10 +6,11 @@ std::unique_ptr<GFXcanvas16> smallChartCanvas;  // Change to GFXcanvas16
 
 extern DualChannelData oldSensorData;
 
-float chartScale = 100.0;
+float chartScale = 500.0; //default scale is 500mA
 
 static TickType_t xLastChartUpdateTime = 0;
 static TickType_t xChartUpdateInterval = pdMS_TO_TICKS(50); // Default to 50ms
+
 
 // Add this function to update the chart interval
 void dataMonitorChart_updateChartInterval(const sysConfig_data& cfg_data) {
@@ -26,7 +27,7 @@ void dataMonitorChart_updateChartInterval(const sysConfig_data& cfg_data) {
 void dataMonitorChart_changeRotation(const DualChannelData &sensorData, uint8_t channel, int rotation, const sysConfig_data &cfg_data) {
   tft.setRotation(rotation);
   dataMonitorChart_initUI(channel, rotation, cfg_data);
-  dataMonitorChart_updateData(sensorData, channel, rotation, 1);
+  dataMonitorChart_updateData(sensorData, channel, rotation, cfg_data, 1);
 }
 
 void dataMonitorChart_initUI(uint8_t channel, int rotation, const sysConfig_data& cfg_data) {
@@ -77,7 +78,7 @@ void dataMonitorChart_initUI(uint8_t channel, int rotation, const sysConfig_data
   smallChartCanvas->fillScreen(0); // Clear the canvas with black
 }
 
-void dataMonitorChart_updateData(const DualChannelData &sensorData, uint8_t ch, int rotation, uint8_t forceUpdate) {
+void dataMonitorChart_updateData(const DualChannelData &sensorData, uint8_t ch, int rotation, const sysConfig_data &cfg_data, uint8_t forceUpdate) {
   uint8_t dataBox_x = 0;
   uint8_t dataBox_y = 0;
   uint8_t chartBox_x = 0;
@@ -136,7 +137,7 @@ void dataMonitorChart_updateData(const DualChannelData &sensorData, uint8_t ch, 
   tft.setCursor(power_x + 59, power_y + offset_defaultFont);
   tft.print("mW");
 
-  // Update chart at a slower rate or when forced
+  // Update chart based on the update chart update interval
   TickType_t xCurrentTime = xTaskGetTickCount();
   if (forceUpdate == 1 || (xCurrentTime - xLastChartUpdateTime) >= xChartUpdateInterval) {
     xLastChartUpdateTime = xCurrentTime;
@@ -144,25 +145,32 @@ void dataMonitorChart_updateData(const DualChannelData &sensorData, uint8_t ch, 
     // ... (existing chart update code)
     if (!smallChartCanvas) return; // Safety check
 
-    //Adjust the max scale of the chart based on the current value
+    //update the chart max scale based on the cfg_data (chart_scaleMode and chart_scale)
     float current_maxScale = chartScale; // mA, default scale
-    if (busCurrent >= 1800) {
-      current_maxScale = 5000.0;
-    } else if (busCurrent >= 800) {
-      current_maxScale = 2000.0;
-    } else if (busCurrent >= 400) {
-      current_maxScale = 1000.0;
-    } else if (busCurrent > 80) {
-      current_maxScale = 500.0;
-    } else if (busCurrent <= 80) {
-      current_maxScale = 100.0;
+    if (cfg_data.chart_scaleMode == 0) { //fixed scale
+      current_maxScale = cfg_data.chart_scale * 100.0; //cfg_data.chart_scale is 0-255, 1 step is 100mA, so times 100.0 to get the max scale in mA
+      chartScale = current_maxScale;
+    } else if (cfg_data.chart_scaleMode == 1) { //auto scale based on the current value
+      if (busCurrent >= 1800) {
+        current_maxScale = 5000.0;
+      } else if (busCurrent >= 800) {
+        current_maxScale = 2000.0;
+      } else if (busCurrent >= 400) {
+        current_maxScale = 1000.0;
+      } else if (busCurrent > 80) {
+        current_maxScale = 500.0;
+      } else if (busCurrent <= 80) {
+        current_maxScale = 100.0;
+      }
+
+      //draw a V line to indicate the scale is changed
+      if (chartScale != current_maxScale) {
+        smallChartCanvas->drawFastVLine(smallChart_WIDTH - 1, 0, smallChart_HEIGHT, lineHighlightColor);
+        chartScale = current_maxScale;
+      }
     }
 
-    //draw a V line to indicate the scale is changed
-    if (chartScale != current_maxScale) {
-      smallChartCanvas->drawFastVLine(smallChart_WIDTH - 1, 0, smallChart_HEIGHT, lineHighlightColor);
-      chartScale = current_maxScale;
-    }
+
 
     // Calculate the height of the current bar    
     int16_t bar_height = (int16_t)((busCurrent / current_maxScale) * smallChart_HEIGHT);

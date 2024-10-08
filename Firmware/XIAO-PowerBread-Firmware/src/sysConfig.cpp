@@ -12,6 +12,8 @@ void sysConfig::saveConfig(sysConfig_data data) {
     EEPROM.write(cfg_addr.serial_mode, data.serial_mode);
     EEPROM.write(cfg_addr.serial_printInterval, data.serial_printInterval);
     EEPROM.write(cfg_addr.chart_updateInterval, data.chart_updateInterval);
+    EEPROM.write(cfg_addr.chart_scaleMode, data.chart_scaleMode); //start from 0x02
+    EEPROM.write(cfg_addr.chart_scale, data.chart_scale); //start from 0x02
 
     EEPROM.commit();
 }
@@ -28,6 +30,8 @@ void sysConfig::loadConfig() {
     cfg_data.serial_mode = EEPROM.read(cfg_addr.serial_mode);
     cfg_data.serial_printInterval = EEPROM.read(cfg_addr.serial_printInterval);
     cfg_data.chart_updateInterval = EEPROM.read(cfg_addr.chart_updateInterval);
+    cfg_data.chart_scaleMode = EEPROM.read(cfg_addr.chart_scaleMode); //start from 0x02
+    cfg_data.chart_scale = EEPROM.read(cfg_addr.chart_scale); //start from 0x02
 }
 
 
@@ -82,6 +86,8 @@ String sysConfig::debugPrintOnSerial() {
     output += "serial_mode: " + String(cfg_data.serial_mode) + "\n";
     output += "serial_printInterval: " + String(cfg_data.serial_printInterval) + "\n";
     output += "chart_updateInterval: " + String(cfg_data.chart_updateInterval) + "\n";
+    output += "chart_scaleMode: " + String(cfg_data.chart_scaleMode) + "\n";
+    output += "chart_scale: " + String(cfg_data.chart_scale) + "\n";
     return output;
 }
 
@@ -98,6 +104,8 @@ void incrementConfigValue(int cursor, sysConfig_data& tmp_cfg_data) {
         case 6: tmp_cfg_data.serial_mode = min(tmp_cfg_data.serial_mode + 1, 1); break;
         case 7: tmp_cfg_data.serial_printInterval = min(tmp_cfg_data.serial_printInterval + 1, 4); break;
         case 8: tmp_cfg_data.chart_updateInterval = min(tmp_cfg_data.chart_updateInterval + 1, 4); break;
+        case 9: tmp_cfg_data.chart_scaleMode = min(tmp_cfg_data.chart_scaleMode + 1, 1); break;
+        case 10: tmp_cfg_data.chart_scale = min(tmp_cfg_data.chart_scale + 1, 255); break;
     }
 }
 
@@ -112,6 +120,8 @@ void decrementConfigValue(int cursor, sysConfig_data& tmp_cfg_data) {
         case 6: tmp_cfg_data.serial_mode = max(tmp_cfg_data.serial_mode - 1, 0); break;
         case 7: tmp_cfg_data.serial_printInterval = max(tmp_cfg_data.serial_printInterval - 1, 0); break;
         case 8: tmp_cfg_data.chart_updateInterval = max(tmp_cfg_data.chart_updateInterval - 1, 0); break;
+        case 9: tmp_cfg_data.chart_scaleMode = max(tmp_cfg_data.chart_scaleMode - 1, 0); break;
+        case 10: tmp_cfg_data.chart_scale = max(tmp_cfg_data.chart_scale - 1, 1); break; //can't be 0, min is 1
     }
 }
 
