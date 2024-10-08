@@ -34,10 +34,10 @@ void systemUI_sysConfig_init() {
     tft.setCursor(14, 2);
     tft.print("SysConfig");
 
-    const char* config_text[9] = {"Dft Mode", "Dft CH", "ShuntR A", "ShuntR B", "UART EN", "UART BR", "UART Mode", "UART IT", "Chart IT"};
+    const char* config_text[11] = {"Dft Mode", "Dft CH", "ShuntR A", "ShuntR B", "UART EN", "UART BR", "UART Mode", "UART IT", "Chart IT", "Chart SM", "Chart S"};
     tft.setTextColor(color_Text, color_Background);
-    for (int i = 0; i < 9; i++) {
-        tft.setCursor(0, 20 + i * 14);
+    for (int i = 0; i < 11; i++) {
+        tft.setCursor(0, 20 + i * 12);
         tft.print(config_text[i]);
     }
 
@@ -49,8 +49,8 @@ void systemUI_sysConfig_update(int cursor, bool isSelected, sysConfig_data tmp_c
     uint16_t color_sysConfig = color_ChannelA;  
 
     tft.setTextColor(color_Text, color_Background);
-    const char* config_value[9];
-    char buffer[9][10];  // Buffer to hold converted strings
+    const char* config_value[11];
+    char buffer[11][10];  // Buffer to hold converted strings
 
     // Convert uint8_t values to strings
     snprintf(buffer[0], 10, "%d", tmp_cfg_data.default_mode);
@@ -62,34 +62,36 @@ void systemUI_sysConfig_update(int cursor, bool isSelected, sysConfig_data tmp_c
     snprintf(buffer[6], 10, "%d", tmp_cfg_data.serial_mode);
     snprintf(buffer[7], 10, "%d", tmp_cfg_data.serial_printInterval);
     snprintf(buffer[8], 10, "%d", tmp_cfg_data.chart_updateInterval);
+    snprintf(buffer[9], 10, "%d", tmp_cfg_data.chart_scaleMode);
+    snprintf(buffer[10], 10, "%d", tmp_cfg_data.chart_scale);
 
     // Assign converted strings to config_value array
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < 11; i++) {
         config_value[i] = buffer[i];
     }
 
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < 11; i++) {
         // Clear the area before printing the new value
-        tft.fillRect(59, 20 + i * 14, 23, 8, color_Background);
-        tft.setCursor(59, 20 + i * 14);
+        tft.fillRect(59, 20 + i * 12, 23, 8, color_Background);
+        tft.setCursor(59, 20 + i * 12);
         tft.print(config_value[i]);
     }
 
     // Clear only the last cursor position if it has changed
     if (lastCursor != cursor || lastIsSelected != isSelected) {
         if (lastCursor >= 0) {
-            tft.drawRoundRect(55, 18 + lastCursor * 14, 24, 12, 4, color_Background);
-            tft.drawRoundRect(54, 17 + lastCursor * 14, 26, 14, 4, color_Background);
+            tft.drawRoundRect(55, 18 + lastCursor * 12, 24, 12, 4, color_Background);
+            tft.drawRoundRect(54, 17 + lastCursor * 12, 26, 14, 4, color_Background);
         }
     }
 
     // Draw new cursor
     if (isSelected) {
-        tft.drawRoundRect(55, 18 + cursor * 14, 24, 12, 4, color_sysConfig);
-        tft.drawRoundRect(54, 17 + cursor * 14, 26, 14, 4, color_sysConfig);
+        tft.drawRoundRect(55, 18 + cursor * 12, 24, 12, 4, color_sysConfig);
+        tft.drawRoundRect(54, 17 + cursor * 12, 26, 14, 4, color_sysConfig);
     } else {
-        tft.drawRoundRect(55, 18 + cursor * 14, 24, 12, 4, color_Text);
-        tft.drawRoundRect(54, 17 + cursor * 14, 26, 14, 4, color_Text);
+        tft.drawRoundRect(55, 18 + cursor * 12, 24, 12, 4, color_Text);
+        tft.drawRoundRect(54, 17 + cursor * 12, 26, 14, 4, color_Text);
     }
 
     // Update last cursor position and selection state
