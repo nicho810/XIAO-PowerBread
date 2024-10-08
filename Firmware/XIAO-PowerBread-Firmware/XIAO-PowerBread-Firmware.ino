@@ -159,7 +159,7 @@ void sensorUpdateTask(void *pvParameters) {
 void updateUITask(void *pvParameters) {
   (void)pvParameters;
   TickType_t xLastWakeTime = xTaskGetTickCount();
-  const TickType_t xFrequency = pdMS_TO_TICKS(50);
+  const TickType_t xFrequency = pdMS_TO_TICKS(50); //50=50ms
 
   while (1) {
     // Reset the watchdog timer
