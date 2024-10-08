@@ -5,7 +5,7 @@
 #include <EEPROM.h>
 
 struct sysConfig_addr{
-    uint8_t cfg_version=0; //increment when the config struct is changed
+    uint8_t cfg_version=0;
     uint8_t default_mode=1;
     uint8_t default_channel=2;
     uint8_t shuntResistorCHA=3;
@@ -15,12 +15,18 @@ struct sysConfig_addr{
     uint8_t serial_mode=7;
     uint8_t serial_printInterval=8;
     uint8_t chart_updateInterval=9;
+    uint8_t chart_scaleMode=10;
+    uint8_t chart_scale=11;
 };
 
 struct sysConfig_data{
     //cfg_version: increment when the config struct is changed, 
     //if detect a lower version, will write the default config to EEPROM
-    uint8_t cfg_version=1;
+    //Usually the value of cfg_version is 0xFF(255), when first flash this firmware, it will be set to 0x00
+    //Update log:
+    //0x00 -> 0x01: first version
+    //0x01 -> 0x02: add chart_scaleMode and chart_scale
+    uint8_t cfg_version=2;
 
     //default mode: 0-dataMonitor, 1-dataMonitorChart, 2-dataMonitorCount
     uint8_t default_mode = 0; 
@@ -47,6 +53,13 @@ struct sysConfig_data{
 
     //data chart interval: 0-50ms(default), 1-100ms, 2-250ms, 3-500ms, 4-1000ms
     uint8_t chart_updateInterval=0; 
+
+    //chart scale mode: 0-fixed(default), 1-auto
+    uint8_t chart_scaleMode=0;
+
+    //chart scale: 5=500mA(default), 0-255, 1 step is 100mA
+    //only work when chart_scaleMode is 0
+    uint8_t chart_scale=5;
 };
 
 class sysConfig {

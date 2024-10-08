@@ -159,7 +159,7 @@ void sensorUpdateTask(void *pvParameters) {
 void updateUITask(void *pvParameters) {
   (void)pvParameters;
   TickType_t xLastWakeTime = xTaskGetTickCount();
-  const TickType_t xFrequency = pdMS_TO_TICKS(50);
+  const TickType_t xFrequency = pdMS_TO_TICKS(50); //50=50ms
 
   while (1) {
     // Reset the watchdog timer
@@ -209,7 +209,7 @@ void handleFunctionModeChange(const DualChannelData &sensorData) {
       break;
     case dataMonitorChart:
       dataMonitorChart_initUI(singleModeDisplayChannel, tft_Rotation, sysConfig.cfg_data);
-      dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation, 1);
+      dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation, sysConfig.cfg_data, 1);
       break;
     case dataMonitorCount:
       dataMonitorCount_initUI(singleModeDisplayChannel, tft_Rotation);
@@ -240,13 +240,13 @@ void handleDataMonitorChartMode(const DualChannelData &sensorData) {
   if (singleModeDisplayChannel_ChangeRequested) {
     singleModeDisplayChannel_ChangeRequested = false;
     dataMonitorChart_initUI(singleModeDisplayChannel, tft_Rotation, sysConfig.cfg_data);
-    dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation, 1);
+    dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation, sysConfig.cfg_data, 1);
   }
   if (rotationChangeRequested) {
     rotationChangeRequested = false;
     dataMonitorChart_changeRotation(sensorData, singleModeDisplayChannel, tft_Rotation, sysConfig.cfg_data);
   }
-  dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation);
+  dataMonitorChart_updateData(sensorData, singleModeDisplayChannel, tft_Rotation, sysConfig.cfg_data);
 }
 
 void handleDataMonitorCountMode(const DualChannelData &sensorData) {
@@ -492,13 +492,13 @@ void setup(void) {
         // Navigate menu
         if (dialStatus == 2) {
           cursor++;
-          if (cursor > 8) {
+          if (cursor > 10) {
             cursor = 0;
           }
         } else if (dialStatus == 1) {
           cursor--;
           if (cursor < 0) {
-            cursor = 8;
+            cursor = 10;
           }
         } else if (dialStatus == 3) {
           // Long press to exit configuration
@@ -528,6 +528,10 @@ void setup(void) {
       sysConfig.saveConfig(sysConfig.cfg_data);
       Serial.println("Configuration saved");
     }
+
+    //print again to confirm the config is updated
+    Serial.println(sysConfig.debugPrintOnSerial());
+
 
     //show the config saved message
     systemUI_MSG_savedConfig();

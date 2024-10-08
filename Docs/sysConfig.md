@@ -21,7 +21,7 @@
 
 | Parameter | UI text | Type | Address | Default | Range (min:max) | Description |
 |-----------|---------|------|---------|---------|-----------------|-------------|
-| cfg_version | N/A | uint8_t | 0 | 1 | N/A | Increment when the config struct is changed |
+| cfg_version | N/A | uint8_t | 0 | 2 | N/A | Increment when the config struct is changed |
 | default_mode | Dft Mode | uint8_t | 1 | 0 | 0:2 | Default operation mode (0: dataMonitor, 1: dataMonitorChart, 2: dataMonitorCount) |
 | default_channel | Dft CH | uint8_t | 2 | 0 | 0:1 | Default channel selection (0: CHA, 1: CHB) |
 | shuntResistorCHA | ShuntR A | uint8_t | 3 | 20 | 0:255 | Shunt resistor value for Channel A (default: 20mOhm, 20=20mOhm) |
@@ -31,6 +31,9 @@
 | serial_mode | UART Mode | uint8_t | 7 | 0 | 0:1 | Serial communication mode (0: default/human readable, 1: arduino plotter mode) |
 | serial_printInterval | UART IT | uint8_t | 8 | 0 | 0:4 | Interval for serial printing (0: 1000ms, 1: 500ms, 2: 100ms, 3: 50ms, 4: 10ms) |
 | chart_updateInterval | Chart IT | uint8_t | 9 | 0 | 0:4 | Interval for chart updates (0: 50ms, 1: 100ms, 2: 250ms, 3: 500ms, 4: 1000ms) |
+| chart_scaleMode | Scale Mode | uint8_t | 10 | 0 | 0:1 | Chart scale mode (0: fixed, 1: auto) |
+| chart_scale | Scale | uint8_t | 11 | 5 | 1:255 | Chart scale (5=500mA, 1 step is 100mA, only works when chart_scaleMode is 0) |
+
 
 
 > **The config value is saved on the EEPROM, but the RP2040 does not have an EEPROM; instead, it uses the spi-flash to emulate the EEPROM. Please avoid writing the config value too frequently, as this can reduce the flash memory's lifespan. In this project, we only use it to save the config, so it's not a problem.**
