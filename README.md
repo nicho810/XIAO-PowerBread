@@ -1,6 +1,6 @@
 # XIAO PowerBread - A Breadboard Power Supply with Real-Time Monitoring
 
-English | [日本語](README_JP.md)
+English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](README_JP.md)
 
 **XIAO PowerBread** is an open-source hardware project designed to offer a reliable and efficient power solution for breadboard prototyping. Featuring built-in sensors, real-time monitoring, and the RP2040 microcontroller, PowerBread makes powering and developing electronics projects easier than ever.
 
