@@ -1,6 +1,6 @@
 # XIAO PowerBread - リアルタイムモニタリング機能付きブレッドボード電源供給装置
 
-[English](README.md) | 日本語
+[English](README.md) | [Deutsch](README_DE.md) | [Français](README_FR.md) | 日本語
 
 **XIAO PowerBread**は、ブレッドボードプロトタイピング用の信頼性の高い効率的な電源ソリューションを提供するオープンソースハードウェアプロジェクトです。内蔵センサー、リアルタイムモニタリング、RP2040マイクロコントローラーを搭載し、PowerBreadは電子プロジェクトの電源供給と開発をこれまで以上に容易にします。
 
