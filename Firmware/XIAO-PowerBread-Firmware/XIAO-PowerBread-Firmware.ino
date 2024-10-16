@@ -1,7 +1,40 @@
+/*
+ * XIAO PowerBread - A Breadboard Power Supply with Real-Time Monitoring
+ * 
+ * This open-source project provides a reliable and efficient power solution 
+ * for breadboard prototyping, featuring built-in sensors, real-time monitoring, 
+ * and the RP2040 microcontroller.
+ * 
+ * Key Features:
+ * - Real-Time Monitoring
+ * - High-Current Output (up to 1.5A of 3.3V power)
+ * - Built-in LCD Display
+ * - Plug-and-Play Design
+ * - Open-Source and RP2040 Powered
+ * - Dual-Channel Voltage and Current Sensing
+ * - Compact Design with 3.3V and 5V outputs
+ * - Multiple UI functions
+ * 
+ * For more information, visit:
+ * https://github.com/nicho810/XIAO-PowerBread
+ * 
+ * This project uses the following libraries:
+ * - INA3221_RT Library: https://github.com/RobTillaart/INA3221_RT/tree/master
+ * - Adafruit GFX Library: https://github.com/adafruit/Adafruit-GFX-Library
+ * - Adafruit ST7735 Library: https://github.com/adafruit/Adafruit-ST7735-Library
+ * - Arduino-Pico Core (4.0.x): https://github.com/earlephilhower/arduino-pico
+ * - Adafruit SleepyDog Library: https://github.com/adafruit/Adafruit_SleepyDog
+ * Note: A modified version of Adafruit_ST7735 library is included since v1.1.2 to fit the LCD module used in this project.
+ * We are grateful to the developers and contributors of these libraries.
+ * 
+ * Licensed under the MIT License
+ */
+
+
 #include <cstdint>
 //LCD init
 #include <Adafruit_GFX.h>     // Core graphics library
-#include "src/tft_driver/XPB_ST7735.h"  // Hardware-specific library for ST7735
+#include "src/tft_driver/XPB_ST7735.h"  // Hardware-specific library for ST7735, modified from Adafruit_ST7735
 // #include <Adafruit_ST7735.h>
 #include <SPI.h>
 #include <Fonts/FreeSansBold9pt7b.h>

@@ -1,3 +1,9 @@
+// This class is based on the INA3221 library by Rob Tillaart
+// Author: Rob Tillaart
+// Purpose: demo polling 3 channels
+// URL: https://github.com/RobTillaart/INA3221_RT
+
+
 #ifndef INA3221SENSOR_H
 #define INA3221SENSOR_H
 
