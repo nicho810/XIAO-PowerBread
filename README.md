@@ -40,6 +40,8 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
 - **Display**: LCD screen for real-time power monitoring.
 - **PCB Dimensions**: Designed for seamless integration with standard breadboards while minimizing space usage.
 
+![power path](Docs/Images/pic_outputSwitch.png)
+
 ![XIAO PowerBread](Docs/Images/pic_hardwareSpec.png)
 
 ## Getting Started
