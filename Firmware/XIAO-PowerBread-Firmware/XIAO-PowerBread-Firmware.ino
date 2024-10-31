@@ -584,6 +584,9 @@ void setup(void) {
 
 
   //Current sensor init
+  pinMode(D4, INPUT_PULLUP); //SDA, set internal pull-up
+  pinMode(D5, INPUT_PULLUP); //SCL, set internal pull-up
+
   if (!inaSensor.begin(shuntResistorCHA, shuntResistorCHB)) {
     Serial.println("INA3221 initialization failed. Fix and Reboot");
     while (1){
