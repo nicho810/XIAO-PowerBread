@@ -20,12 +20,15 @@ struct sysConfig_addr{
 };
 
 struct sysConfig_data{
-    //cfg_version: increment when the config struct is changed, 
-    //if detect a lower version, will write the default config to EEPROM
-    //Usually the value of cfg_version is 0xFF(255), when first flash this firmware, it will be set to 0x00
-    //Update log:
-    //0x00 -> 0x01: first version
-    //0x01 -> 0x02: add chart_scaleMode and chart_scale
+    /* 
+    cfg_version tracks configuration structure changes
+    Version history:
+    - 0xFF (255): Default value in EEPROM
+    - 0x00: Initial value after first firmware flash
+    - 0x01: First version 
+    - 0x02: Added chart_scaleMode and chart_scale
+    When a lower version is detected, default config will be written to EEPROM
+    */
     uint8_t cfg_version=2;
 
     //default mode: 0-dataMonitor, 1-dataMonitorChart, 2-dataMonitorCount
@@ -34,10 +37,20 @@ struct sysConfig_data{
     //default channel: 0-CHA, 1-CHB
     uint8_t default_channel = 0; 
 
-    //shunt resistor: usually the shunt resistor should below 100mOhm,
-    //so we use 8bit to store the value, the max value is 255
-    uint8_t shuntResistorCHA = 20;
-    uint8_t shuntResistorCHB = 20;
+    /*
+    Shunt Resistor Configuration:
+    - Uses 8-bit storage (0-255 mΩ range) since shunt resistors are typically below 100mΩ
+    - Default: 50mΩ
+      - With INA3221: 0.8mA resolution, 3.6A max current
+    - Alternative: 20mΩ 
+      - With INA3221: 2mA resolution, 9A max current
+    
+    Note: Values are only written to EEPROM on first boot and persist across firmware updates.
+    Can be modified anytime in config mode - see documentation:
+    https://github.com/nicho810/XIAO-PowerBread/blob/main/Docs/sysConfig.md
+    */
+    uint8_t shuntResistorCHA = 50;
+    uint8_t shuntResistorCHB = 50;
 
     //serial enable: 0-disable, 1-enable
     uint8_t serial_enable = 1; 
