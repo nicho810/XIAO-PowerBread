@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <EEPROM.h>
+#include "../sysConfig_user.h"
 
 struct sysConfig_addr{
     uint8_t cfg_version=0;
@@ -32,10 +33,10 @@ struct sysConfig_data{
     uint8_t cfg_version=2;
 
     //default mode: 0-dataMonitor, 1-dataMonitorChart, 2-dataMonitorCount
-    uint8_t default_mode = 0; 
+    uint8_t default_mode = DEFAULT_MODE;
 
     //default channel: 0-CHA, 1-CHB
-    uint8_t default_channel = 0; 
+    uint8_t default_channel = DEFAULT_CHANNEL;
 
     /*
     Shunt Resistor Configuration:
@@ -49,30 +50,30 @@ struct sysConfig_data{
     Can be modified anytime in config mode - see documentation:
     https://github.com/nicho810/XIAO-PowerBread/blob/main/Docs/sysConfig.md
     */
-    uint8_t shuntResistorCHA = 50;
-    uint8_t shuntResistorCHB = 50;
+    uint8_t shuntResistorCHA = DEFAULT_SHUNT_CHA;
+    uint8_t shuntResistorCHB = DEFAULT_SHUNT_CHB;
 
     //serial enable: 0-disable, 1-enable
-    uint8_t serial_enable = 1; 
+    uint8_t serial_enable = DEFAULT_SERIAL_ENABLE;
 
     //serial baud rate: 0-115200, now only 115200 is supported
-    uint8_t serial_baudRate=0; 
+    uint8_t serial_baudRate = DEFAULT_SERIAL_BAUDRATE;
 
     //serial mode: 0-dafault mode (human readable message), 1-arduino plotter mode
-    uint8_t serial_mode=0; 
+    uint8_t serial_mode = DEFAULT_SERIAL_MODE;
 
     //serial print interval: 0-1000ms, 1-500ms, 2-100ms, 3-50ms, 4-10ms
-    uint8_t serial_printInterval=0; 
+    uint8_t serial_printInterval = DEFAULT_SERIAL_INTERVAL;
 
     //data chart interval: 0-50ms(default), 1-100ms, 2-250ms, 3-500ms, 4-1000ms
-    uint8_t chart_updateInterval=0; 
+    uint8_t chart_updateInterval = DEFAULT_CHART_INTERVAL;
 
     //chart scale mode: 0-fixed(default), 1-auto
-    uint8_t chart_scaleMode=0;
+    uint8_t chart_scaleMode = DEFAULT_CHART_SCALE_MODE;
 
     //chart scale: 5=500mA(default), 0-255, 1 step is 100mA
     //only work when chart_scaleMode is 0
-    uint8_t chart_scale=5;
+    uint8_t chart_scale = DEFAULT_CHART_SCALE;
 };
 
 class sysConfig {

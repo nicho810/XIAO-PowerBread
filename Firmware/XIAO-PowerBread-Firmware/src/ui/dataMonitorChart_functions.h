@@ -1,16 +1,14 @@
 #ifndef DATAMONITORCHART_FUNCTIONS_H
 #define DATAMONITORCHART_FUNCTIONS_H
 
-#include <Adafruit_GFX.h>
+
 #include "../tft_driver/XPB_ST7735.h"
-#include <SPI.h>
+#include <Adafruit_GFX.h>
 #include <Fonts/FreeSansBold9pt7b.h>
 #include "../INA3221Sensor.h"  // Add this line to include the DualChannelData type
 #include "ui_style.h"
-#include <memory>
-#include <FreeRTOS.h>
-#include <task.h>
 #include "../sysConfig.h"
+#include <memory>
 
 extern Adafruit_ST7735 tft;
 

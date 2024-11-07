@@ -22,7 +22,7 @@
  * - INA3221_RT Library: https://github.com/RobTillaart/INA3221_RT/tree/master
  * - Adafruit GFX Library: https://github.com/adafruit/Adafruit-GFX-Library
  * - Adafruit ST7735 Library: https://github.com/adafruit/Adafruit-ST7735-Library
- * - Arduino-Pico Core (4.0.x): https://github.com/earlephilhower/arduino-pico
+ * - Arduino-Pico Core: https://github.com/earlephilhower/arduino-pico
  * - Adafruit SleepyDog Library: https://github.com/adafruit/Adafruit_SleepyDog
  * Note: A modified version of Adafruit_ST7735 library is included since v1.1.2 to fit the LCD module used in this project.
  * We are grateful to the developers and contributors of these libraries.
@@ -30,8 +30,11 @@
  * Licensed under the MIT License
  */
 
+//Board definition
+// #define SEEED_XIAO_RP2040
+// #define SEEED_XIAO_RP2350
+#define SEEED_XIAO_C3
 
-#include <cstdint>
 //LCD init
 #include <Adafruit_GFX.h>     // Core graphics library
 #include "src/tft_driver/XPB_ST7735.h"  // Hardware-specific library for ST7735, modified from Adafruit_ST7735
@@ -40,11 +43,17 @@
 #include <Fonts/FreeSansBold9pt7b.h>
 
 //RTOS
+#if defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
 #include <FreeRTOS.h>
 #include <task.h>
 #include <semphr.h>
+#elif defined(SEEED_XIAO_C3)
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
+#endif
 
-// Add watchdog include
+// Watchdog include
 #include <Adafruit_SleepyDog.h>
 
 //LCD
@@ -306,8 +315,14 @@ void serialPrintTask(void *pvParameters) {
     pdMS_TO_TICKS(10)     // 4 - 10ms
   };
 
+  // Safely clamp the interval value between 0 and 4
+  uint8_t intervalIndex = sysConfig.cfg_data.serial_printInterval;
+  if (intervalIndex > 4) {
+    intervalIndex = 4;
+  }
+  const TickType_t xPrintInterval = xPrintIntervals[intervalIndex];
+
   // Set these values once at the start of the task
-  const TickType_t xPrintInterval = xPrintIntervals[min(sysConfig.cfg_data.serial_printInterval, 4)];
   const bool serialEnabled = sysConfig.cfg_data.serial_enable;
   const uint8_t serialMode = sysConfig.cfg_data.serial_mode;
 
