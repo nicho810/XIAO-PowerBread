@@ -1,6 +1,20 @@
 #ifndef DATAMONITORCHART_FUNCTIONS_H
 #define DATAMONITORCHART_FUNCTIONS_H
 
+#include "../../boardConfig.h"
+
+// Include FreeRTOS headers
+#if defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
+    #include <FreeRTOS.h>
+    #include <task.h>
+    #include <timers.h>
+    #include <semphr.h>
+#elif defined(SEEED_XIAO_C3)
+    #include "freertos/FreeRTOS.h"
+    #include "freertos/task.h"
+    #include "freertos/timers.h"
+    #include "freertos/semphr.h"
+#endif
 
 #include "../tft_driver/XPB_ST7735.h"
 #include <Adafruit_GFX.h>

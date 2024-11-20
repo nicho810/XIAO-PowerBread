@@ -30,10 +30,7 @@
  * Licensed under the MIT License
  */
 
-//Board definition
-// #define SEEED_XIAO_RP2040
-// #define SEEED_XIAO_RP2350
-#define SEEED_XIAO_C3
+#include "boardConfig.h"
 
 //LCD init
 #include <Adafruit_GFX.h>     // Core graphics library
