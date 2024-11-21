@@ -2,15 +2,14 @@
  * XIAO PowerBread - A Breadboard Power Supply with Real-Time Monitoring
  * 
  * This open-source project provides a reliable and efficient power solution 
- * for breadboard prototyping, featuring built-in sensors, real-time monitoring, 
- * and the RP2040 microcontroller.
+ * for breadboard prototyping, featuring built-in sensors, real-time monitoring.
  * 
  * Key Features:
  * - Real-Time Monitoring
  * - High-Current Output (up to 1.5A of 3.3V power)
  * - Built-in LCD Display
  * - Plug-and-Play Design
- * - Open-Source and RP2040 Powered
+ * - Open-Source and Seeed XIAO Powered
  * - Dual-Channel Voltage and Current Sensing
  * - Compact Design with 3.3V and 5V outputs
  * - Multiple UI functions
@@ -22,7 +21,8 @@
  * - INA3221_RT Library: https://github.com/RobTillaart/INA3221_RT/tree/master
  * - Adafruit GFX Library: https://github.com/adafruit/Adafruit-GFX-Library
  * - Adafruit ST7735 Library: https://github.com/adafruit/Adafruit-ST7735-Library
- * - Arduino-Pico Core (4.0.x): https://github.com/earlephilhower/arduino-pico
+ * - Arduino-Pico Core: https://github.com/earlephilhower/arduino-pico
+ * - Arduino-ESP32: https://github.com/espressif/arduino-esp32
  * - Adafruit SleepyDog Library: https://github.com/adafruit/Adafruit_SleepyDog
  * Note: A modified version of Adafruit_ST7735 library is included since v1.1.2 to fit the LCD module used in this project.
  * We are grateful to the developers and contributors of these libraries.
@@ -30,8 +30,11 @@
  * Licensed under the MIT License
  */
 
+//=================================================================
+// IMPORTANT: Make sure to define the board type in boardConfig.h !!!
+//=================================================================
+#include "boardConfig.h"
 
-#include <cstdint>
 //LCD init
 #include <Adafruit_GFX.h>     // Core graphics library
 #include "src/tft_driver/XPB_ST7735.h"  // Hardware-specific library for ST7735, modified from Adafruit_ST7735
@@ -40,12 +43,22 @@
 #include <Fonts/FreeSansBold9pt7b.h>
 
 //RTOS
+#if defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
 #include <FreeRTOS.h>
 #include <task.h>
 #include <semphr.h>
+#elif defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_S3) || defined(SEEED_XIAO_C6)
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
+#endif
 
-// Add watchdog include
-#include <Adafruit_SleepyDog.h>
+// Watchdog include
+#if defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_S3) || defined(SEEED_XIAO_C6)
+    // No watchdog library needed for ESP32-based boards (S3, C3, C6)
+#else
+    #include <Adafruit_SleepyDog.h>
+#endif
 
 //LCD
 #define TFT_CS -1  //CS is always connected to ground in this project.
@@ -114,19 +127,27 @@ double sumS[2] = { 0 }, sumM[2] = { 0 }, sumA[2] = { 0 };
 unsigned long countS[2] = { 0 }, countM[2] = { 0 };
 
 //Tasks
-#define STACK_SIZE_UI 2048
+#if defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_S3) || defined(SEEED_XIAO_C6)
+    #define STACK_SIZE_UI 4096
+    #define STACK_SIZE_SERIAL 4096
+    #define STACK_SIZE_DIAL 2048
+    #define STACK_SIZE_SENSOR 2048
+#else
+    #define STACK_SIZE_UI 2048
+    #define STACK_SIZE_SERIAL 1024
+    #define STACK_SIZE_DIAL 1024
+    #define STACK_SIZE_SENSOR 1024
+#endif
+
 StaticTask_t xTaskBuffer_UI;
 StackType_t xStack_UI[STACK_SIZE_UI];
 
-#define STACK_SIZE_SERIAL 1024
 StaticTask_t xTaskBuffer_Serial;
 StackType_t xStack_Serial[STACK_SIZE_SERIAL];
 
-#define STACK_SIZE_DIAL 1024
 StaticTask_t xTaskBuffer_Dial;
 StackType_t xStack_Dial[STACK_SIZE_DIAL];
 
-#define STACK_SIZE_SENSOR 1024
 StaticTask_t xTaskBuffer_Sensor;
 StackType_t xStack_Sensor[STACK_SIZE_SENSOR];
 
@@ -141,24 +162,6 @@ TaskHandle_t xSensorTaskHandle = NULL;
 //Watchdog
 #define WATCHDOG_TIMEOUT 5000  // 5 seconds
 
-//LED functions
-void XIAO_buildinLED_init() {
-  pinMode(LED_RGB_R, OUTPUT);
-  pinMode(LED_RGB_G, OUTPUT);
-  pinMode(LED_RGB_B, OUTPUT);
-  digitalWrite(LED_RGB_R, HIGH);
-  digitalWrite(LED_RGB_G, HIGH);
-  digitalWrite(LED_RGB_B, HIGH);
-}
-
-void XIAO_buildinLED_R(bool status) {
-  digitalWrite(LED_RGB_R, status);
-}
-
-void XIAO_buildinLED_R_blink(uint16_t interval) {
-    XIAO_buildinLED_R(1-digitalRead(LED_RGB_R));//toggle
-    delay(interval);
-}
 
 // Add the new sensor update task
 void sensorUpdateTask(void *pvParameters) {
@@ -169,8 +172,9 @@ void sensorUpdateTask(void *pvParameters) {
   while (1) {
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
-    // Reset the watchdog timer
-    Watchdog.reset();
+    #if !defined(SEEED_XIAO_C3) && !defined(SEEED_XIAO_S3) && !defined(SEEED_XIAO_C6)
+        Watchdog.reset();
+    #endif
 
     if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE) {
       // Read sensor data
@@ -195,8 +199,9 @@ void updateUITask(void *pvParameters) {
   const TickType_t xFrequency = pdMS_TO_TICKS(50); //50=50ms
 
   while (1) {
-    // Reset the watchdog timer
-    Watchdog.reset();
+    #if !defined(SEEED_XIAO_C3) && !defined(SEEED_XIAO_S3) && !defined(SEEED_XIAO_C6)
+        Watchdog.reset();
+    #endif
 
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
@@ -296,54 +301,56 @@ void handleDataMonitorCountMode(const DualChannelData &sensorData) {
 }
 
 void serialPrintTask(void *pvParameters) {
-  (void)pvParameters;
-  TickType_t xLastPrintTime = 0;
-  const TickType_t xPrintIntervals[] = {
-    pdMS_TO_TICKS(1000),  // 0 - 1000ms
-    pdMS_TO_TICKS(500),   // 1 - 500ms
-    pdMS_TO_TICKS(100),   // 2 - 100ms
-    pdMS_TO_TICKS(50),    // 3 - 50ms
-    pdMS_TO_TICKS(10)     // 4 - 10ms
-  };
+    (void)pvParameters;
+    TickType_t xLastPrintTime = 0;
+    const TickType_t xPrintIntervals[] = {
+        pdMS_TO_TICKS(1000),  // 0 - 1000ms
+        pdMS_TO_TICKS(500),   // 1 - 500ms
+        pdMS_TO_TICKS(100),   // 2 - 100ms
+        pdMS_TO_TICKS(50),    // 3 - 50ms
+        pdMS_TO_TICKS(10)     // 4 - 10ms
+    };
 
-  // Set these values once at the start of the task
-  const TickType_t xPrintInterval = xPrintIntervals[min(sysConfig.cfg_data.serial_printInterval, 4)];
-  const bool serialEnabled = sysConfig.cfg_data.serial_enable;
-  const uint8_t serialMode = sysConfig.cfg_data.serial_mode;
+    uint8_t intervalIndex = min(sysConfig.cfg_data.serial_printInterval, (uint8_t)4);
+    const TickType_t xPrintInterval = xPrintIntervals[intervalIndex];
+    const bool serialEnabled = sysConfig.cfg_data.serial_enable;
+    const uint8_t serialMode = sysConfig.cfg_data.serial_mode;
 
-  while (1) {
-    // Reset the watchdog timer
-    Watchdog.reset();
+    while (1) {
+        #if !defined(SEEED_XIAO_C3) && !defined(SEEED_XIAO_S3) && !defined(SEEED_XIAO_C6)
+            Watchdog.reset();
+        #endif
 
-    TickType_t xCurrentTime = xTaskGetTickCount();
+        vTaskDelay(pdMS_TO_TICKS(10));  // Give other tasks a chance to run
 
-    if ((xCurrentTime - xLastPrintTime) >= xPrintInterval) {
-      if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(100)) == pdTRUE) {
-        // Use the latest sensor data
-        DualChannelData sensorData = latestSensorData;
-        xSemaphoreGive(xSemaphore);
-        
-        // Only print if Serial is available and serial_enable is true
-        if (Serial && serialEnabled) {
-          if (serialMode == 0) {
-            // Default mode (human readable message)
-            Serial.printf("A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW\n",
-                          sensorData.channel0.busVoltage, sensorData.channel0.shuntVoltage * 1000, sensorData.channel0.busCurrent, sensorData.channel0.busPower,
-                          sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000, sensorData.channel1.busCurrent, sensorData.channel1.busPower);
-          } else if (serialMode == 1) {
-            // Arduino plotter mode, no need to show shunt in plotter mode.
-            Serial.printf("V0:%.2f,I0:%.2f,P0:%.2f,V1:%.2f,I1:%.2f,P1:%.2f\n",
-                          sensorData.channel0.busVoltage, sensorData.channel0.busCurrent, sensorData.channel0.busPower,
-                          sensorData.channel1.busVoltage, sensorData.channel1.busCurrent, sensorData.channel1.busPower);
-          }
+        TickType_t xCurrentTime = xTaskGetTickCount();
+        if ((xCurrentTime - xLastPrintTime) >= xPrintInterval) {
+            if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(100)) == pdTRUE) {
+                DualChannelData sensorData = latestSensorData;
+                xSemaphoreGive(xSemaphore);
+                
+                if (Serial && serialEnabled) {
+                    char buffer[150];  // Pre-allocate buffer for string formatting
+                    if (serialMode == 0) {
+                        snprintf(buffer, sizeof(buffer), 
+                            "A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW\n",
+                            sensorData.channel0.busVoltage, sensorData.channel0.shuntVoltage * 1000,
+                            sensorData.channel0.busCurrent, sensorData.channel0.busPower,
+                            sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000,
+                            sensorData.channel1.busCurrent, sensorData.channel1.busPower);
+                    } else {
+                        snprintf(buffer, sizeof(buffer),
+                            "V0:%.2f,I0:%.2f,P0:%.2f,V1:%.2f,I1:%.2f,P1:%.2f\n",
+                            sensorData.channel0.busVoltage, sensorData.channel0.busCurrent,
+                            sensorData.channel0.busPower, sensorData.channel1.busVoltage,
+                            sensorData.channel1.busCurrent, sensorData.channel1.busPower);
+                    }
+                    Serial.print(buffer);
+                }
+                xLastPrintTime = xCurrentTime;
+            }
         }
-
-        xLastPrintTime = xCurrentTime;
-      }
-      // If we couldn't acquire the semaphore, we'll try again next time
     }
-    vTaskDelay(pdMS_TO_TICKS(10));  // Short delay to prevent task starvation
-  }
 }
 
 void dialReadTask(void *pvParameters) {
@@ -356,8 +363,9 @@ void dialReadTask(void *pvParameters) {
   bool shortPressHandled = false;
 
   while (1) {
-    // Reset the watchdog timer
-    Watchdog.reset();
+    #if !defined(SEEED_XIAO_C3) && !defined(SEEED_XIAO_S3) && !defined(SEEED_XIAO_C6)
+        Watchdog.reset();
+    #endif
 
     TickType_t xCurrentTime = xTaskGetTickCount();
     if ((xCurrentTime - xLastReadTime) >= xReadInterval) {
@@ -472,13 +480,14 @@ void longPress_Handler(function_mode currentMode) {
 }
 
 void setup(void) {
-  //LED init
-  XIAO_buildinLED_init();
-
   //Dial init
   dial.init();
 
   // LCD init
+  #if defined(SEEED_XIAO_S3) || defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_C6)
+    SPI.begin(TFT_SCLK, -1, TFT_MOSI, TFT_CS);
+  #endif
+
   tft.setSPISpeed(24000000);      //24MHz
   tft.initR(INITR_GREENTAB);      // Init ST7735S 0.96inch display (160*80), Also need to modify the _colstart = 24 and _rowstart = 0 in Adafruit_ST7735.cpp>initR(uint8_t)
   tft.setRotation(tft_Rotation);  //Rotate the LCD 180 degree (0-3)
@@ -587,12 +596,19 @@ void setup(void) {
   pinMode(D4, INPUT_PULLUP); //SDA, set internal pull-up
   pinMode(D5, INPUT_PULLUP); //SCL, set internal pull-up
 
+
   if (!inaSensor.begin(shuntResistorCHA, shuntResistorCHB)) {
-    Serial.println("INA3221 initialization failed. Fix and Reboot");
     while (1){
-      XIAO_buildinLED_R_blink(100);
+      // Print error message
+      Serial.println("INA3221 initialization failed. Please check the wiring and try again.");
+      delay(1000);
+
+      // Since not all XIAO boards have built-in LED, so we don't use LED blink here.
+      // Need to find another way to indicate the error besides Serial print. Maybe LCD screen?
+      // Todo: Add LCD error message
     }
   }
+
 
   //semaphore init
   xSemaphore = xSemaphoreCreateMutexStatic(&xMutexBuffer);
@@ -602,52 +618,26 @@ void setup(void) {
       ;
   }
 
-  // Initialize and start the watchdog
-  int countdownMS = Watchdog.enable(WATCHDOG_TIMEOUT);
-  Serial.print("Watchdog enabled with ");
-  Serial.print(countdownMS);
-  Serial.println("ms timeout");
+  // Watchdog only for RP2040 & RP2350
+  #if !defined(SEEED_XIAO_C3) && !defined(SEEED_XIAO_S3) && !defined(SEEED_XIAO_C6)
+      int countdownMS = Watchdog.enable(WATCHDOG_TIMEOUT);
+      Serial.print("Watchdog enabled with ");
+      Serial.print(countdownMS);
+      Serial.println("ms timeout");
+  #endif
 
+  // Create tasks (no watchdog references)
+  xSensorTaskHandle = xTaskCreateStatic(sensorUpdateTask, "Sensor_Update", 
+      STACK_SIZE_SENSOR, NULL, 4, xStack_Sensor, &xTaskBuffer_Sensor);
 
-  //Create sensor tasks
-  // Serial.println("Creating Sensor Task");
-  xSensorTaskHandle = xTaskCreateStatic(sensorUpdateTask, "Sensor_Update", STACK_SIZE_SENSOR, NULL, 4, xStack_Sensor, &xTaskBuffer_Sensor);
-  if (xSensorTaskHandle == NULL) {
-    Serial.println("Sensor Task creation failed");
-    while (1)
-      ;
-  }
-  Serial.println("Sensor Task created successfully");
+  xUITaskHandle = xTaskCreateStatic(updateUITask, "UI_Update", 
+      STACK_SIZE_UI, NULL, 3, xStack_UI, &xTaskBuffer_UI);
 
-  //Create UI tasks
-  // Serial.println("Creating UI Task");
-  xUITaskHandle = xTaskCreateStatic(updateUITask, "UI_Update", STACK_SIZE_UI, NULL, 3, xStack_UI, &xTaskBuffer_UI);
-  if (xUITaskHandle == NULL) {
-    Serial.println("UI Task creation failed");
-    while (1)
-      ;
-  }
-  Serial.println("UI Task created successfully");
+  xDialTaskHandle = xTaskCreateStatic(dialReadTask, "Dial_Read", 
+      STACK_SIZE_DIAL, NULL, 2, xStack_Dial, &xTaskBuffer_Dial);
 
-  //Create dial tasks
-  // Serial.println("Creating Dial Task");
-  xDialTaskHandle = xTaskCreateStatic(dialReadTask, "Dial_Read", STACK_SIZE_DIAL, NULL, 2, xStack_Dial, &xTaskBuffer_Dial);
-  if (xDialTaskHandle == NULL) {
-    Serial.println("Dial Task creation failed");
-    while (1)
-      ;
-  }
-  Serial.println("Dial Task created successfully");
-
-  // Create serial tasks
-  // Serial.println("Creating Serial Task");
-  xSerialTaskHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print", STACK_SIZE_SERIAL, NULL, 1, xStack_Serial, &xTaskBuffer_Serial);
-  if (xSerialTaskHandle == NULL) {
-    Serial.println("Serial Task creation failed");
-    while (1)
-      ;
-  }
-  Serial.println("Serial Task created successfully");
+  xSerialTaskHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print", 
+      STACK_SIZE_SERIAL, NULL, 1, xStack_Serial, &xTaskBuffer_Serial);
 
   Serial.println("-----------[Boot info end]------------");
 
