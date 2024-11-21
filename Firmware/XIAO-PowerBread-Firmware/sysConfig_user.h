@@ -3,6 +3,9 @@
 
 /* Default configuration values */
 
+//Important Note: This default configuration value only write to EEPROM once when the first boot.
+//After that, the configuration value will be read from EEPROM.
+
 /* Operating modes:
  * 0-dataMonitor: Basic data monitoring
  * 1-dataMonitorChart: Data monitoring with chart visualization
