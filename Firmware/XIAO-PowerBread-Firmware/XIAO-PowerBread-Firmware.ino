@@ -2,15 +2,14 @@
  * XIAO PowerBread - A Breadboard Power Supply with Real-Time Monitoring
  * 
  * This open-source project provides a reliable and efficient power solution 
- * for breadboard prototyping, featuring built-in sensors, real-time monitoring, 
- * and the RP2040 microcontroller.
+ * for breadboard prototyping, featuring built-in sensors, real-time monitoring.
  * 
  * Key Features:
  * - Real-Time Monitoring
  * - High-Current Output (up to 1.5A of 3.3V power)
  * - Built-in LCD Display
  * - Plug-and-Play Design
- * - Open-Source and RP2040 Powered
+ * - Open-Source and Seeed XIAO Powered
  * - Dual-Channel Voltage and Current Sensing
  * - Compact Design with 3.3V and 5V outputs
  * - Multiple UI functions
@@ -52,17 +51,17 @@
 
 // Watchdog include
 #if defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_S3)
-    // Remove watchdog includes for ESP32
+    // Remove watchdog includes for ESP32-S3 and ESP32-C3
 #else
     #include <Adafruit_SleepyDog.h>
 #endif
 
 //LCD
 #define TFT_CS -1  //CS is always connected to ground in this project.
-#define TFT_RST 3
-#define TFT_DC 9
-#define TFT_MOSI 10
-#define TFT_SCLK 8
+#define TFT_RST D3
+#define TFT_DC D9
+#define TFT_MOSI D10
+#define TFT_SCLK D8
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
 //LED
@@ -502,6 +501,9 @@ void setup(void) {
   dial.init();
 
   // LCD init
+  #if defined(SEEED_XIAO_S3)
+    SPI.begin(TFT_SCLK, -1, TFT_MOSI, TFT_CS);
+  #endif
   tft.setSPISpeed(24000000);      //24MHz
   tft.initR(INITR_GREENTAB);      // Init ST7735S 0.96inch display (160*80), Also need to modify the _colstart = 24 and _rowstart = 0 in Adafruit_ST7735.cpp>initR(uint8_t)
   tft.setRotation(tft_Rotation);  //Rotate the LCD 180 degree (0-3)
