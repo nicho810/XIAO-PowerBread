@@ -2,6 +2,7 @@
 #define dialSwitch_h
 
 #include <Arduino.h>
+#include "../boardConfig.h"
 
 
 // extern volatile int dialStatus;

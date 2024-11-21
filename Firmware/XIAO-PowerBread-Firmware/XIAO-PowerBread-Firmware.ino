@@ -22,6 +22,7 @@
  * - Adafruit GFX Library: https://github.com/adafruit/Adafruit-GFX-Library
  * - Adafruit ST7735 Library: https://github.com/adafruit/Adafruit-ST7735-Library
  * - Arduino-Pico Core: https://github.com/earlephilhower/arduino-pico
+ * - Arduino-ESP32: https://github.com/espressif/arduino-esp32
  * - Adafruit SleepyDog Library: https://github.com/adafruit/Adafruit_SleepyDog
  * Note: A modified version of Adafruit_ST7735 library is included since v1.1.2 to fit the LCD module used in this project.
  * We are grateful to the developers and contributors of these libraries.
@@ -29,6 +30,9 @@
  * Licensed under the MIT License
  */
 
+//=================================================================
+// IMPORTANT: Make sure to define the board type in boardConfig.h !!!
+//=================================================================
 #include "boardConfig.h"
 
 //LCD init
@@ -51,7 +55,7 @@
 
 // Watchdog include
 #if defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_S3) || defined(SEEED_XIAO_C6)
-    // Remove watchdog includes for ESP32-S3 and ESP32-C3
+    // No watchdog library needed for ESP32-based boards (S3, C3, C6)
 #else
     #include <Adafruit_SleepyDog.h>
 #endif
@@ -158,24 +162,6 @@ TaskHandle_t xSensorTaskHandle = NULL;
 //Watchdog
 #define WATCHDOG_TIMEOUT 5000  // 5 seconds
 
-//LED functions
-void XIAO_buildinLED_init() {
-  pinMode(LED_RGB_R, OUTPUT);
-  pinMode(LED_RGB_G, OUTPUT);
-  pinMode(LED_RGB_B, OUTPUT);
-  digitalWrite(LED_RGB_R, HIGH);
-  digitalWrite(LED_RGB_G, HIGH);
-  digitalWrite(LED_RGB_B, HIGH);
-}
-
-void XIAO_buildinLED_R(bool status) {
-  digitalWrite(LED_RGB_R, status);
-}
-
-void XIAO_buildinLED_R_blink(uint16_t interval) {
-    XIAO_buildinLED_R(1-digitalRead(LED_RGB_R));//toggle
-    delay(interval);
-}
 
 // Add the new sensor update task
 void sensorUpdateTask(void *pvParameters) {
@@ -494,16 +480,6 @@ void longPress_Handler(function_mode currentMode) {
 }
 
 void setup(void) {
-
-  Serial.begin(115200);
-  for (int i = 0; i < 5; i++) {
-    Serial.println("Hello");
-    delay(1000);
-  }
-
-  //LED init
-  // XIAO_buildinLED_init();
-
   //Dial init
   dial.init();
 
@@ -511,6 +487,7 @@ void setup(void) {
   #if defined(SEEED_XIAO_S3) || defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_C6)
     SPI.begin(TFT_SCLK, -1, TFT_MOSI, TFT_CS);
   #endif
+
   tft.setSPISpeed(24000000);      //24MHz
   tft.initR(INITR_GREENTAB);      // Init ST7735S 0.96inch display (160*80), Also need to modify the _colstart = 24 and _rowstart = 0 in Adafruit_ST7735.cpp>initR(uint8_t)
   tft.setRotation(tft_Rotation);  //Rotate the LCD 180 degree (0-3)
@@ -621,9 +598,14 @@ void setup(void) {
 
 
   if (!inaSensor.begin(shuntResistorCHA, shuntResistorCHB)) {
-    Serial.println("INA3221 initialization failed. Fix and Reboot");
     while (1){
-      XIAO_buildinLED_R_blink(100);
+      // Print error message
+      Serial.println("INA3221 initialization failed. Please check the wiring and try again.");
+      delay(1000);
+
+      // Since not all XIAO boards have built-in LED, so we don't use LED blink here.
+      // Need to find another way to indicate the error besides Serial print. Maybe LCD screen?
+      // Todo: Add LCD error message
     }
   }
 
@@ -636,7 +618,7 @@ void setup(void) {
       ;
   }
 
-  // Watchdog only for RP2040
+  // Watchdog only for RP2040 & RP2350
   #if !defined(SEEED_XIAO_C3) && !defined(SEEED_XIAO_S3) && !defined(SEEED_XIAO_C6)
       int countdownMS = Watchdog.enable(WATCHDOG_TIMEOUT);
       Serial.print("Watchdog enabled with ");
