@@ -43,14 +43,14 @@
 #include <FreeRTOS.h>
 #include <task.h>
 #include <semphr.h>
-#elif defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_S3)
+#elif defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_S3) || defined(SEEED_XIAO_C6)
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #endif
 
 // Watchdog include
-#if defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_S3)
+#if defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_S3) || defined(SEEED_XIAO_C6)
     // Remove watchdog includes for ESP32-S3 and ESP32-C3
 #else
     #include <Adafruit_SleepyDog.h>
@@ -123,7 +123,7 @@ double sumS[2] = { 0 }, sumM[2] = { 0 }, sumA[2] = { 0 };
 unsigned long countS[2] = { 0 }, countM[2] = { 0 };
 
 //Tasks
-#if defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_S3)
+#if defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_S3) || defined(SEEED_XIAO_C6)
     #define STACK_SIZE_UI 4096
     #define STACK_SIZE_SERIAL 4096
     #define STACK_SIZE_DIAL 2048
@@ -186,7 +186,7 @@ void sensorUpdateTask(void *pvParameters) {
   while (1) {
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
-    #if !defined(SEEED_XIAO_C3) && !defined(SEEED_XIAO_S3)
+    #if !defined(SEEED_XIAO_C3) && !defined(SEEED_XIAO_S3) && !defined(SEEED_XIAO_C6)
         Watchdog.reset();
     #endif
 
@@ -213,7 +213,7 @@ void updateUITask(void *pvParameters) {
   const TickType_t xFrequency = pdMS_TO_TICKS(50); //50=50ms
 
   while (1) {
-    #if !defined(SEEED_XIAO_C3) && !defined(SEEED_XIAO_S3)
+    #if !defined(SEEED_XIAO_C3) && !defined(SEEED_XIAO_S3) && !defined(SEEED_XIAO_C6)
         Watchdog.reset();
     #endif
 
@@ -331,7 +331,7 @@ void serialPrintTask(void *pvParameters) {
     const uint8_t serialMode = sysConfig.cfg_data.serial_mode;
 
     while (1) {
-        #if !defined(SEEED_XIAO_C3) && !defined(SEEED_XIAO_S3)
+        #if !defined(SEEED_XIAO_C3) && !defined(SEEED_XIAO_S3) && !defined(SEEED_XIAO_C6)
             Watchdog.reset();
         #endif
 
@@ -377,7 +377,7 @@ void dialReadTask(void *pvParameters) {
   bool shortPressHandled = false;
 
   while (1) {
-    #if !defined(SEEED_XIAO_C3) && !defined(SEEED_XIAO_S3)
+    #if !defined(SEEED_XIAO_C3) && !defined(SEEED_XIAO_S3) && !defined(SEEED_XIAO_C6)
         Watchdog.reset();
     #endif
 
@@ -494,14 +494,21 @@ void longPress_Handler(function_mode currentMode) {
 }
 
 void setup(void) {
+
+  Serial.begin(115200);
+  for (int i = 0; i < 5; i++) {
+    Serial.println("Hello");
+    delay(1000);
+  }
+
   //LED init
-  XIAO_buildinLED_init();
+  // XIAO_buildinLED_init();
 
   //Dial init
   dial.init();
 
   // LCD init
-  #if defined(SEEED_XIAO_S3)
+  #if defined(SEEED_XIAO_S3) || defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_C6)
     SPI.begin(TFT_SCLK, -1, TFT_MOSI, TFT_CS);
   #endif
   tft.setSPISpeed(24000000);      //24MHz
@@ -630,7 +637,7 @@ void setup(void) {
   }
 
   // Watchdog only for RP2040
-  #if !defined(SEEED_XIAO_C3) && !defined(SEEED_XIAO_S3)
+  #if !defined(SEEED_XIAO_C3) && !defined(SEEED_XIAO_S3) && !defined(SEEED_XIAO_C6)
       int countdownMS = Watchdog.enable(WATCHDOG_TIMEOUT);
       Serial.print("Watchdog enabled with ");
       Serial.print(countdownMS);
