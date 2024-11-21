@@ -48,7 +48,7 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
 
 ### Hardware
 
-- **XIAO Board**: The XIAO RP2040 is recommended, though other XIAO boards should work as well.(not tested)
+- **XIAO Board**: The XIAO RP2040 is recommended, also you can use: XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3, XIAO ESP32-C6. (Make sure to flash the firmware compatible with your board type)
 - **XIAO PowerBread Board**: Clone or remix the design from this repository. Also you can get the hardware from [Tindie](https://www.tindie.com/products/35842/).
 - **Breadboard**: Fits standard breadboards for easy prototyping.
 - **Power Supply**: Use a standard USB power source.
@@ -88,6 +88,7 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
 | 1.1.1     | Yes  | Yes | support Data-Dashboard, Line-chart, current-Statistic，Setting | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.1) |
 | 1.1.2     | Yes | Yes | Introduces LED blink functionality for debugging purposes | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.2) |
 | 1.1.3     | Yes👍 | Yes | Add fixed-scale and auto-scale support for line-chart | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.3) |
+| 1.1.4     | Yes👍 | Yes | Add support for XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3, XIAO ESP32-C6 | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.4) |
 
 ### Documentation
 - [System Config Explanation](Docs/sysConfig.md)
@@ -101,8 +102,7 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
    - Pls make sure you are using the latest firmware, the latest firmware have some bug fix for the stability.
    - Try to reset the XIAO by pressing the reset button on the XIAO board.
 2. The display is not working
-   - if the red LED on XIAO is blinking, it means the INA3221 is not connected correctly, pls check the I2C pin connection.
-   - if the red LED on XIAO is not blinking, it means the display is not driven properly, pls check the SPI pin connection.
+   - Please check the I2C and SPI pin connections, and ensure the XIAO is properly soldered the pins.
 3. The current value is not correct
    - Pls check the shunt resistor value, and set it correctly in the sysConfig. (e.g. 20 for 20mOhm, 50 for 50mOhm) -> [System Config Explanation](Docs/sysConfig.md)
 4. Both of the Volatage shows on display is 0V
@@ -113,7 +113,8 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
 - [INA3221_RT Library](https://github.com/RobTillaart/INA3221_RT/tree/master)
 - [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library)
 - [Adafruit ST7735 Library](https://github.com/adafruit/Adafruit-ST7735-Library) 
-- [Arduino-Pico Core (4.0.x)](https://github.com/earlephilhower/arduino-pico)
+- [Arduino-Pico Core (4.x.x)](https://github.com/earlephilhower/arduino-pico)
+- [Arduino-ESP32 Core (3.x.x)](https://github.com/espressif/arduino-esp32)
 - [adafruit sleepydog](https://github.com/adafruit/Adafruit_SleepyDog)
 
 > Included a modified version of Adafruit_ST7735 library since v1.1.2 to fit the lcd module used on this project.

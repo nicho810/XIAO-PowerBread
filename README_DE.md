@@ -39,13 +39,15 @@
 - **Display**: LCD-Bildschirm für Echtzeit-Stromüberwachung.
 - **PCB-Abmessungen**: Entwickelt für nahtlose Integration mit Standard-Steckbrettern bei minimaler Platznutzung.
 
+![Stromweg](Docs/Images/pic_outputSwitch.png)
+
 ![XIAO PowerBread](Docs/Images/pic_hardwareSpec.png)
 
 ## Erste Schritte
 
 ### Hardware
 
-- **XIAO-Board**: Das XIAO RP2040 wird empfohlen, obwohl andere XIAO-Boards ebenfalls funktionieren sollten (nicht getestet).
+- **XIAO-Board**: Das XIAO RP2040 wird empfohlen, Sie können auch verwenden: XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3, XIAO ESP32-C6. (Stellen Sie sicher, dass Sie die mit Ihrem Board-Typ kompatible Firmware flashen)
 - **XIAO PowerBread-Board**: Klonen oder remixen Sie das Design aus diesem Repository. Sie können die Hardware auch von [Tindie](https://www.tindie.com/products/35842/) erhalten.
 - **Steckbrett**: Passt auf Standard-Steckbretter für einfaches Prototyping.
 - **Stromversorgung**: Verwenden Sie eine Standard-USB-Stromquelle.
@@ -103,7 +105,17 @@
 3. Der Stromwert ist nicht korrekt
    - Bitte überprüfen Sie den Shunt-Widerstandswert und stellen Sie ihn in der Systemkonfiguration korrekt ein. (z.B. 20 für 20mOhm, 50 für 50mOhm) -> [Erklärung der Systemkonfiguration](Docs/sysConfig.md)
 4. Beide Spannungen, die auf dem Display angezeigt werden, sind 0V
-   - Bitte überprüfen Sie den Shunt-Widerstandswert und stellen Sie ihn in der Systemkonfiguration korrekt ein. (z.B. 20 für 20mOhm, 50 für 50mOhm) -> [Erklärung der Systemkonfiguration](Docs/sysConfig.md)
+   - Bitte überprüfen Sie den Ein/Aus-Schalter, er sollte auf der unteren Seite sein. (OBEN ist AUS, UNTEN ist EIN)
+
+### Verwendete Bibliotheken
+- [INA3221_RT Library](https://github.com/RobTillaart/INA3221_RT/tree/master)
+- [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library)
+- [Adafruit ST7735 Library](https://github.com/adafruit/Adafruit-ST7735-Library) 
+- [Arduino-Pico Core (4.x.x)](https://github.com/earlephilhower/arduino-pico)
+- [Arduino-ESP32 Core (3.x.x)](https://github.com/espressif/arduino-esp32)
+- [adafruit sleepydog](https://github.com/adafruit/Adafruit_SleepyDog)
+
+> Eine modifizierte Version der Adafruit_ST7735-Bibliothek ist seit v1.1.2 enthalten, um zum LCD-Modul dieses Projekts zu passen.
 
 ## Mitwirken
 

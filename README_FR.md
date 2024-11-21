@@ -41,11 +41,13 @@
 
 ![XIAO PowerBread](Docs/Images/pic_hardwareSpec.png)
 
+![chemin d'alimentation](Docs/Images/pic_outputSwitch.png)
+
 ## Pour commencer
 
 ### Matériel
 
-- **Carte XIAO** : Le XIAO RP2040 est recommandé, bien que d'autres cartes XIAO devraient également fonctionner (non testé).
+- **Carte XIAO** : Le XIAO RP2040 est recommandé, vous pouvez également utiliser : XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3, XIAO ESP32-C6. (Assurez-vous de flasher le firmware compatible avec votre type de carte)
 - **Carte XIAO PowerBread** : Clonez ou remixez la conception à partir de ce dépôt. Vous pouvez également obtenir le matériel sur [Tindie](https://www.tindie.com/products/35842/).
 - **Plaque d'essai** : S'adapte aux plaques d'essai standard pour un prototypage facile.
 - **Alimentation** : Utilisez une source d'alimentation USB standard.
@@ -85,6 +87,7 @@
 | 1.1.1   | Oui    | Oui           | Prise en charge du tableau de bord de données, du graphique linéaire, des statistiques de courant, des paramètres | [Page des versions](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.1) |
 | 1.1.2   | Oui    | Oui           | Introduit la fonctionnalité de clignotement LED à des fins de débogage | [Page des versions](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.2) |
 | 1.1.3   | Oui👍   | Oui           | Ajout du support d'échelle fixe et d'échelle automatique pour le graphique linéaire | [Page des versions](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.3) |
+| 1.1.4   | Oui👍   | Oui           | Ajout du support pour XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3, XIAO ESP32-C6 | [Page des versions](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.4) |
 
 ### Documentation
 - [Explication de la configuration du système](Docs/sysConfig.md)
@@ -97,9 +100,8 @@
 1. L'écran ne répond pas
    - Assurez-vous d'utiliser le dernier firmware, le dernier firmware contient des corrections de bugs pour la stabilité.
    - Essayez de réinitialiser le XIAO en appuyant sur le bouton de réinitialisation de la carte XIAO.
-2. L'��cran ne fonctionne pas
-   - Si la LED rouge du XIAO clignote, cela signifie que l'INA3221 n'est pas correctement connecté, vérifiez la connexion des broches I2C.
-   - Si la LED rouge du XIAO ne clignote pas, cela signifie que l'écran n'est pas correctement piloté, vérifiez la connexion des broches SPI.
+2. L'écran ne fonctionne pas
+   - Veuillez vérifier les connexions des broches I2C et SPI, et assurez-vous que le XIAO est correctement soudé aux broches.
 3. La valeur du courant n'est pas correcte
    - Vérifiez la valeur de la résistance shunt et définissez-la correctement dans la configuration du système. (par exemple, 20 pour 20mOhm, 50 pour 50mOhm) -> [Explication de la configuration du système](Docs/sysConfig.md)
 4. Les deux tensions affichées sur l'écran sont de 0V
@@ -111,6 +113,7 @@
 - [Bibliothèque Adafruit ST7735](https://github.com/adafruit/Adafruit-ST7735-Library) 
 - [Arduino-Pico Core (4.0.x)](https://github.com/earlephilhower/arduino-pico)
 - [adafruit sleepydog](https://github.com/adafruit/Adafruit_SleepyDog)
+- [Arduino-ESP32 Core (3.x.x)](https://github.com/espressif/arduino-esp32)
 
 > Une version modifiée de la bibliothèque Adafruit_ST7735 est incluse depuis la v1.1.2 pour s'adapter au module LCD utilisé dans ce projet.
 

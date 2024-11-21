@@ -13,7 +13,7 @@
 ## 主な特徴
 
 1. **リアルタイムモニタリング**: マルチメーター不要で重要な電源メトリクスを一目で確認。内蔵ディスプレイにリアルタイムの電圧、電流、電力データを表示。
-2. **高電流出力**: 最大1.5Aの3.3V電源を供給。ほとんどのブレッドボ��ドベースの電子プロジェクトに最適。
+2. **高電流出力**: 最大1.5Aの3.3V電源を供給。ほとんどのブレッドボードベースの電子プロジェクトに最適。
 3. **内蔵LCDディスプレイ**: リアルタイムフィードバックで常に情報を把握。重要な電源データが内蔵LCDに明確に表示されます。
 4. **プラグアンドプレイ設計**: 標準的なブレッドボードと互換性があり、追加設定なしで簡単に接続、電源投入、プロトタイピングが可能。
 5. **オープンソースとRP2040搭載**: RP2040を搭載したオープンソース設計により、USB-シリアル通信やPWM制御などの将来の拡張に柔軟性を提供。
@@ -25,7 +25,7 @@
 > 複数のUI機能
 
 ![switchCH](Docs/Images/pic_switchCH.png)
-> ダイヤルを長押しして、チャートモードと統計モードでチャ���ネルを切り替え
+> ダイヤルを長押しして、チャートモードと統計モードでチャネルを切り替え
 
 ![uiRotate](Docs/Images/pic_uiRotation.png)
 > ダイヤルを回転させて、異なる視角に合わせてUIを調整
@@ -45,7 +45,7 @@
 
 ### ハードウェア
 
-- **XIAOボード**: XIAO RP2040を推奨。他のXIAOボードも動作するはずです（未テスト）。
+- **XIAOボード**: XIAO RP2040を推奨。また、以下のボードも使用可能: XIAO RP2350、XIAO ESP32-C3、XIAO ESP32-S3、XIAO ESP32-C6。（お使いのボードタイプに対応したファームウェアを必ずフラッシュしてください）
 - **XIAO PowerBreadボード**: このリポジトリからデザインをクローンまたはリミックス。また、[Tindie](https://www.tindie.com/products/35842/)からハードウェアを入手することもできます。
 - **ブレッドボード**: 簡単なプロトタイピングのため、標準的なブレッドボードに適合。
 - **電源**: 標準的なUSB電源を使用。
@@ -85,6 +85,7 @@
 | 1.1.1     | はい | はい | データダッシュボード、ラインチャート、電流統計、設定をサポート | [リリースページ](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.1) |
 | 1.1.2     | はい | はい | デバッグ目的のLED点滅機能を導入 | [リリースページ](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.2) |
 | 1.1.3     | はい👍 | はい | ラインチャートの固定スケールと自動スケールのサポートを追加 | [リリースページ](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.3) |
+| 1.1.4     | はい👍 | はい | XIAO RP2350、XIAO ESP32-C3、XIAO ESP32-S3、XIAO ESP32-C6のサポートを追加 | [リリースページ](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.4) |
 
 ### トラブルシューティング
 1. ディスプレイが反応しない
@@ -103,13 +104,14 @@
   - デフォルトモード設定
   - シャント抵抗設定（20mΩ、50mΩ）
   - シリアル出力設定（人間可読モード、Arduinoプロッターモード）
-  - ラインチャート設定���チャート更新レート）
+  - ラインチャート設定（チャート更新レート）
 
 ### 使用ライブラリ
 - [INA3221_RT ライブラリ](https://github.com/RobTillaart/INA3221_RT/tree/master)
 - [Adafruit GFX ライブラリ](https://github.com/adafruit/Adafruit-GFX-Library)
 - [Adafruit ST7735 ライブラリ](https://github.com/adafruit/Adafruit-ST7735-Library)
 - [Arduino-Pico Core (4.0.x)](https://github.com/earlephilhower/arduino-pico)
+- [Arduino-ESP32 Core (3.x.x)](https://github.com/espressif/arduino-esp32)
 - [adafruit sleepydog](https://github.com/adafruit/Adafruit_SleepyDog)
 
 > v1.1.2以降、このプロジェクトで使用されているLCDモジュールに適合するように修正されたAdafruit_ST7735ライブラリのバージョンが含まれています。
