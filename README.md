@@ -58,7 +58,9 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
 ### Software
 
 - **Remix the project**: Modify or remix the project using the provided Arduino source code.
-- **Directly use compiled firmware**: Currenly, the code only test on XIAO RP2040, it is recommended to use UF2 method to upload the firmware to XIAO RP2040.
+- **Directly use compiled firmware**: 
+  - For XIAO ESP32 series, it is recommended to use web based flash tool: https://powerbread-flasher.ioatlas.com/， check this tutorial for more details: [Flash Firmware for XIAO - ESP32 series](Docs/flash-firmware-for-esp32-series.md)
+  - For XIAO RP2040/RP2350, it is recommended to use UF2 method to upload the firmware.
 
 > UF2 upload method:
 > 1. Download the compiled firmware file from [Release page](https://github.com/nicho810/XIAO-PowerBread/releases)

@@ -57,7 +57,9 @@
 ### Software
 
 - **Projekt remixen**: Modifizieren oder remixen Sie das Projekt mit dem bereitgestellten Arduino-Quellcode.
-- **Direkte Verwendung der kompilierten Firmware**: Derzeit wird der Code nur auf XIAO RP2040 getestet, es wird empfohlen, die UF2-Methode zu verwenden, um die Firmware auf XIAO RP2040 hochzuladen.
+- **Direkte Verwendung der kompilierten Firmware**: 
+  - Für XIAO ESP32-Serien wird das webbasierte Flash-Tool empfohlen: https://powerbread-flasher.ioatlas.com/, weitere Details finden Sie in dieser Anleitung: [Firmware-Flash für XIAO - ESP32-Serien](Docs/flash-firmware-for-esp32-series.md)
+  - Für XIAO RP2040/RP2350 wird empfohlen, die UF2-Methode zum Hochladen der Firmware zu verwenden.
 
 > UF2-Upload-Methode:
 > 1. Laden Sie die kompilierte Firmware-Datei von der [Release-Seite](https://github.com/nicho810/XIAO-PowerBread/releases) herunter
