@@ -24,12 +24,21 @@
 
 #include "XPB_ST77xx.h"
 #include <limits.h>
+#include "../../boardConfig.h"
+
+// Conditional compilation for different Arduino boards
+// Skip including Arduino core files for:
+// - STM32 Feather
+// - Arduino UNO R4 WiFi
+// - Arduino UNO R4 Minima
+// - Seeed XIAO RA4M1 (which uses its own HAL)
 #if !defined(ARDUINO_STM32_FEATHER) && !defined(ARDUINO_UNOR4_WIFI)
-#if !defined(ARDUINO_UNOR4_MINIMA)
+#if !defined(ARDUINO_UNOR4_MINIMA) && !defined(SEEED_XIAO_RA4M1)
 #include "pins_arduino.h"
 #include "wiring_private.h"
 #endif
 #endif
+
 #include <SPI.h>
 
 #define SPI_DEFAULT_FREQ 32000000 ///< Default SPI data clock frequency
@@ -90,21 +99,24 @@ Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, SPIClass *spiClass,
     @param  addr  Flash memory array with commands and data to send
 */
 /**************************************************************************/
-void Adafruit_ST77xx::displayInit(const uint8_t *addr) {
+void Adafruit_ST77xx::displayInit(const uint8_t *addr)
+{
 
   uint8_t numCommands, cmd, numArgs;
   uint16_t ms;
 
   numCommands = pgm_read_byte(addr++); // Number of commands to follow
-  while (numCommands--) {              // For each command...
-    cmd = pgm_read_byte(addr++);       // Read command
-    numArgs = pgm_read_byte(addr++);   // Number of args to follow
-    ms = numArgs & ST_CMD_DELAY;       // If hibit set, delay follows args
-    numArgs &= ~ST_CMD_DELAY;          // Mask out delay bit
+  while (numCommands--)
+  {                                  // For each command...
+    cmd = pgm_read_byte(addr++);     // Read command
+    numArgs = pgm_read_byte(addr++); // Number of args to follow
+    ms = numArgs & ST_CMD_DELAY;     // If hibit set, delay follows args
+    numArgs &= ~ST_CMD_DELAY;        // Mask out delay bit
     sendCommand(cmd, addr, numArgs);
     addr += numArgs;
 
-    if (ms) {
+    if (ms)
+    {
       ms = pgm_read_byte(addr++); // Read post-command delay time (ms)
       if (ms == 255)
         ms = 500; // If 255, delay for 500 ms
@@ -120,8 +132,10 @@ void Adafruit_ST77xx::displayInit(const uint8_t *addr) {
     @param  freq  Desired SPI clock frequency
 */
 /**************************************************************************/
-void Adafruit_ST77xx::begin(uint32_t freq) {
-  if (!freq) {
+void Adafruit_ST77xx::begin(uint32_t freq)
+{
+  if (!freq)
+  {
     freq = SPI_DEFAULT_FREQ;
   }
   _freq = freq;
@@ -138,10 +152,12 @@ void Adafruit_ST77xx::begin(uint32_t freq) {
     @param  cmdList  Flash memory array with commands and data to send
 */
 /**************************************************************************/
-void Adafruit_ST77xx::commonInit(const uint8_t *cmdList) {
+void Adafruit_ST77xx::commonInit(const uint8_t *cmdList)
+{
   begin();
 
-  if (cmdList) {
+  if (cmdList)
+  {
     displayInit(cmdList);
   }
 }
@@ -156,7 +172,8 @@ void Adafruit_ST77xx::commonInit(const uint8_t *cmdList) {
 */
 /**************************************************************************/
 void Adafruit_ST77xx::setAddrWindow(uint16_t x, uint16_t y, uint16_t w,
-                                    uint16_t h) {
+                                    uint16_t h)
+{
   x += _xstart;
   y += _ystart;
   uint32_t xa = ((uint32_t)x << 16) | (x + w - 1);
@@ -177,12 +194,14 @@ void Adafruit_ST77xx::setAddrWindow(uint16_t x, uint16_t y, uint16_t w,
     @param  m  The index for rotation, from 0-3 inclusive
 */
 /**************************************************************************/
-void Adafruit_ST77xx::setRotation(uint8_t m) {
+void Adafruit_ST77xx::setRotation(uint8_t m)
+{
   uint8_t madctl = 0;
 
   rotation = m % 4; // can't be higher than 3
 
-  switch (rotation) {
+  switch (rotation)
+  {
   case 0:
     madctl = ST77XX_MADCTL_MX | ST77XX_MADCTL_MY | ST77XX_MADCTL_RGB;
     _xstart = _colstart;
@@ -215,7 +234,8 @@ void Adafruit_ST77xx::setRotation(uint8_t m) {
     @param  row  The offset from 0 for the row address
 */
 /**************************************************************************/
-void Adafruit_ST77xx::setColRowStart(int8_t col, int8_t row) {
+void Adafruit_ST77xx::setColRowStart(int8_t col, int8_t row)
+{
   _colstart = col;
   _rowstart = row;
 }
@@ -226,7 +246,8 @@ void Adafruit_ST77xx::setColRowStart(int8_t col, int8_t row) {
  @param  enable True if you want the display ON, false OFF
  */
 /**************************************************************************/
-void Adafruit_ST77xx::enableDisplay(boolean enable) {
+void Adafruit_ST77xx::enableDisplay(boolean enable)
+{
   sendCommand(enable ? ST77XX_DISPON : ST77XX_DISPOFF);
 }
 
@@ -236,7 +257,8 @@ void Adafruit_ST77xx::enableDisplay(boolean enable) {
  @param  enable True if you want the TE pin ON, false OFF
  */
 /**************************************************************************/
-void Adafruit_ST77xx::enableTearing(boolean enable) {
+void Adafruit_ST77xx::enableTearing(boolean enable)
+{
   sendCommand(enable ? ST77XX_TEON : ST77XX_TEOFF);
 }
 
@@ -246,7 +268,8 @@ void Adafruit_ST77xx::enableTearing(boolean enable) {
  @param  enable True if you want sleep mode ON, false OFF
  */
 /**************************************************************************/
-void Adafruit_ST77xx::enableSleep(boolean enable) {
+void Adafruit_ST77xx::enableSleep(boolean enable)
+{
   sendCommand(enable ? ST77XX_SLPIN : ST77XX_SLPOUT);
 }
 

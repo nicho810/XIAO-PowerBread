@@ -51,10 +51,13 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
+#elif defined(SEEED_XIAO_RA4M1)
+#define ARDUINO_UNOR4_MINIMA
+#include <Arduino_FreeRTOS.h>
 #endif
 
 // Watchdog include
-#if defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_S3) || defined(SEEED_XIAO_C6)
+#if defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_S3) || defined(SEEED_XIAO_C6) || defined(SEEED_XIAO_RA4M1)
     // No watchdog library needed for ESP32-based boards (S3, C3, C6)
 #else
     #include <Adafruit_SleepyDog.h>
