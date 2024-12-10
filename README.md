@@ -2,7 +2,7 @@
 
 English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](README_JP.md)
 
-**XIAO PowerBread** is an open-source hardware project designed to offer a reliable and efficient power solution for breadboard prototyping. Featuring built-in sensors, real-time monitoring, and the RP2040 microcontroller, PowerBread makes powering and developing electronics projects easier than ever.
+**XIAO PowerBread** is an open-source hardware project designed to offer a reliable and efficient power solution for breadboard prototyping. Featuring built-in sensors, real-time monitoring, and compatibility with [Seeed Studio XIAO microcontrollers](https://www.seeedstudio.com/xiao-series-page), PowerBread makes powering and developing electronics projects easier than ever.
 
 ![XIAO PowerBread](Docs/Images/pic_overview.png)
 > Easy installation and compact design
@@ -16,7 +16,7 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
 2. **High-Current Output**: Deliver up to 1.5A of 3.3V power, ideal for most breadboard-based electronics projects.
 3. **Built-in LCD Display**: Stay informed with real-time feedback—critical power data is displayed clearly on the integrated LCD.
 4. **Plug-and-Play Design**: Compatible with standard breadboards, simply plug in, power up, and start prototyping without extra setup.
-5. **Open-Source and RP2040 Powered**: Powered by the RP2040, this open-source design provides flexibility for future extensions like USB-serial communication and PWM control.
+5. **Open-Source and Seeed Studio XIAO Compatibility**: Compatible with almost all XIAO Dev Boards (the support for XIAO SAMD21 and XIAO RA4M1 is still on the way), this open-source design provides flexibility for future extensions like USB-serial communication and PWM control.
 6. **Dual-Channel Voltage and Current Sensing**: Equipped with the INA3221 sensor for dual-channel voltage and current monitoring—know what’s happening with every aspect of your power supply.
 7. **Compact Powerhouse**: This compact design delivers both 3.3V and 5V outputs, optimizing your breadboard space without compromising on power.
 8. **Multiple UI functions**: The UI can be switched between data monitoring, line chart, and statistic mode.
@@ -33,7 +33,7 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
 
 ## Hardware Specifications
 
-- **Input Voltage**: Powered via USB-C through the XIAO.
+- **Input Voltage**: Powered via USB-C through the Seeed Studio XIAO.
 - **Output Voltages**: Provides 5V and 3.3V outputs, with a maximum current of 1.5A for the 3.3V rail.
 - **Current Sensing**: The built-in INA3221 sensor measures voltage, current, and power for real-time display.
 - **Microcontroller**: Driven by the RP2040, handling sensor data, display control, and enabling future features like USB-serial communication and PWM generation.
@@ -48,7 +48,7 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
 
 ### Hardware
 
-- **XIAO Board**: The XIAO RP2040 is recommended, also you can use: XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3, XIAO ESP32-C6. (Make sure to flash the firmware compatible with your board type)
+- **XIAO Board**: The [XIAO RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html) is highly recommended, also you can use: [XIAO RP2350](https://www.seeedstudio.com/Seeed-XIAO-RP2350-p-5944.html), [XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html), [XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html), [XIAO ESP32-C6](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C6-p-5884.html). (Make sure to flash the firmware compatible with your board type)
 - **XIAO PowerBread Board**: Clone or remix the design from this repository. Also you can get the hardware from [Tindie](https://www.tindie.com/products/35842/).
 - **Breadboard**: Fits standard breadboards for easy prototyping.
 - **Power Supply**: Use a standard USB power source.
