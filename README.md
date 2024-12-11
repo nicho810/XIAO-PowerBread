@@ -77,6 +77,8 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
   </table>
 </div>
 
+**Note**: When purchasing from Seeed Studio, remember to also order a compatible XIAO board, as it's required but sold separately.
+
 ### Software
 
 - **Remix the project**: Modify or remix the project using the provided Arduino source code.
