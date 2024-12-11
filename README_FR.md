@@ -58,14 +58,14 @@
   <table>
     <tr>
       <td align="center">
-        <a href="https://www.seeedstudio.com/XIAO-PowerBread-p-6318.html">
+        <a href="https://www.seeedstudio.com/XIAO-PowerBread-p-6318.html" target="_blank">
           <img src="Docs/Images/seeed-logo.png" width="200"><br>
           <b>Seeed Studio</b><br>
           Obtenez le kit et la carte XIAO
         </a>
       </td>
       <td align="center">
-        <a href="https://www.tindie.com/products/35842/">
+        <a href="https://www.tindie.com/products/35842/" target="_blank">
           <img src="Docs/Images/tindie-logo.png" width="200"><br>
           <b>Tindie</b><br>
           Obtenez le matériel entièrement assemblé

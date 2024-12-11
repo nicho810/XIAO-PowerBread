@@ -60,14 +60,14 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
   <table>
     <tr>
       <td align="center">
-        <a href="https://www.seeedstudio.com/XIAO-PowerBread-p-6318.html">
+        <a href="https://www.seeedstudio.com/XIAO-PowerBread-p-6318.html" target="_blank">
           <img src="Docs/Images/seeed-logo.png" width="200"><br>
           <b>Seeed Studio</b><br>
           Get the Kit and XIAO board
         </a>
       </td>
       <td align="center">
-        <a href="https://www.tindie.com/products/35842/">
+        <a href="https://www.tindie.com/products/35842/" target="_blank">
           <img src="Docs/Images/tindie-logo.png" width="200"><br>
           <b>Tindie</b><br>
           Get the fully assembled hardware

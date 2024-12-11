@@ -52,7 +52,26 @@
 - **Steckbrett**: Passt auf Standard-Steckbretter für einfaches Prototyping.
 - **Stromversorgung**: Verwenden Sie eine Standard-USB-Stromquelle.
 
-<a href="https://www.tindie.com/stores/nicho810d/?ref=offsite_badges&utm_source=sellers_nicho810&utm_medium=badges&utm_campaign=badge_large"><img src="https://d2ss6ovg47m0r5.cloudfront.net/badges/tindie-larges.png" alt="Ich verkaufe auf Tindie" width="200" height="104"></a>
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <a href="https://www.seeedstudio.com/XIAO-PowerBread-p-6318.html" target="_blank">
+          <img src="Docs/Images/seeed-logo.png" width="200"><br>
+          <b>Seeed Studio</b><br>
+          Kit und XIAO-Board erhalten
+        </a>
+      </td>
+      <td align="center">
+        <a href="https://www.tindie.com/products/35842/" target="_blank">
+          <img src="Docs/Images/tindie-logo.png" width="200"><br>
+          <b>Tindie</b><br>
+          Vollständig montierte Hardware erhalten
+        </a>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ### Software
 
