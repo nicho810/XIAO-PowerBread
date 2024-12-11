@@ -49,26 +49,54 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
 ### Hardware
 
 - **XIAO Board**: The [XIAO RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html) is highly recommended, also you can use: [XIAO RP2350](https://www.seeedstudio.com/Seeed-XIAO-RP2350-p-5944.html), [XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html), [XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html), [XIAO ESP32-C6](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C6-p-5884.html). (Make sure to flash the firmware compatible with your board type)
-- **XIAO PowerBread Board**: Clone or remix the design from this repository. Also you can get the hardware from [Tindie](https://www.tindie.com/products/35842/).
+- **XIAO PowerBread Board**: Clone or remix the design from this repository. Also you can get the hardware from [Seeed Studio](https://www.seeedstudio.com/XIAO-PowerBread-p-6318.html) or [Tindie](https://www.tindie.com/products/35842/).
 - **Breadboard**: Fits standard breadboards for easy prototyping.
 - **Power Supply**: Use a standard USB power source.
 
-<a href="https://www.tindie.com/stores/nicho810d/?ref=offsite_badges&utm_source=sellers_nicho810&utm_medium=badges&utm_campaign=badge_large"><img src="https://d2ss6ovg47m0r5.cloudfront.net/badges/tindie-larges.png" alt="I sell on Tindie" width="200" height="104"></a>
+
+### Get the Hardware
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <a href="https://www.seeedstudio.com/XIAO-PowerBread-p-6318.html">
+          <img src="Docs/Images/seeed-logo.png" width="200"><br>
+          <b>Seeed Studio</b><br>
+          Get the Kit and XIAO board
+        </a>
+      </td>
+      <td align="center">
+        <a href="https://www.tindie.com/products/35842/">
+          <img src="Docs/Images/tindie-logo.png" width="200"><br>
+          <b>Tindie</b><br>
+          Get the fully assembled hardware
+        </a>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ### Software
 
 - **Remix the project**: Modify or remix the project using the provided Arduino source code.
 - **Directly use compiled firmware**: 
-  - For XIAO ESP32 series, it is recommended to use web based flash tool: https://powerbread-flasher.ioatlas.com/， check this tutorial for more details: [Flash Firmware for XIAO - ESP32 series](Docs/flash-firmware-for-esp32-series.md)
-  - For XIAO RP2040/RP2350, it is recommended to use UF2 method to upload the firmware.
+  - For XIAO ESP32 series
+    - Web based flash tool: https://powerbread-flasher.ioatlas.com
+    - Tutorial: [Flash Firmware for XIAO - ESP32 series](Docs/flash-firmware-for-esp32-series.md)
+  - For XIAO RP2040/RP2350
+    - Flash tool: Use the UF2 method to upload the firmware:
+      1. Download the firmware file (*.uf2) from the [Release page](https://github.com/nicho810/XIAO-PowerBread/releases)
+      2. Connect XIAO to your computer via USB cable (must be a 4-pin data cable)
+      3. Enter bootloader mode:
+         - Press and hold the BOOT button (B)
+         - While holding BOOT, press and release the RESET button (R)
+         - Release the BOOT button
+      4. A new USB drive named "RPI-RP2" will appear on your computer
+      5. Drag and drop the .uf2 firmware file onto the RPI-RP2 drive
+      6. The XIAO will automatically reset and start running the new firmware
 
-> UF2 upload method:
-> 1. Download the compiled firmware file from [Release page](https://github.com/nicho810/XIAO-PowerBread/releases)
-> 2. Connect XIAO to PC/MAC via USB (Make sure it is a 4 pin USB cable)
-> 3. press the B(Boot) button on XIAO and **holding it**, then press the R(Reset) button on XIAO at the same time. Then release all buttons
-> 4. You should able to see a USB drive Name:RPI-RP2 on you PC/MAC.
-> 5. Drag and drop the firmware file(*.uf2) to the RPI-RP2 drive, the file will be uploaded to XIAO.
-> 6. After a few seconds, the XIAO will reset and boot into the firmware.
+
 
 ### Planned Software Features
 - [x] Real-time current sensor data displayed on the LCD.
@@ -76,9 +104,10 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
 - [x] Line chart mode to visualize power usage for each channel.
 - [x] Count mode to count average(second, minute, all time) and peak current consumption for each channel.
 - [x] Allow to save settings data to EEPROM.
-- [ ] USB-Serial mode as a debug tool.
+- [ ] USB to Serial mode as a debug tool.
 - [ ] PWM output on IO0 and IO1.
 - [ ] ADC reading from IO0 and IO1.
+- [ ] Web based UI for data monitoring.
 
 ### Firmware Releases
 

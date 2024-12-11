@@ -2,7 +2,7 @@
 
 [English](README.md) | [Deutsch](README_DE.md) | [Français](README_FR.md) | 日本語
 
-**XIAO PowerBread**は、ブレッドボードプロトタイピング用の信頼性の高い効率的な電源ソリューションを提供するオープンソースハードウェアプロジェクトです。内蔵センサー、リアルタイムモニタリング、RP2040マイクロコントローラーを搭載し、PowerBreadは電子プロジェクトの電源供給と開発をこれまで以上に容易にします。
+**XIAO PowerBread**は、ブレッドボードプロトタイピング用の信頼性の高い効率的な電源ソリューションを提供するオープンソースハードウェアプロジェクトです。内蔵センサー、リアルタイムモニタリング、[Seeed Studio XIAOマイクロコントローラー](https://www.seeedstudio.com/xiao-series-page)との互換性を備え、PowerBreadは電子プロジェクトの電源供給と開発をこれまで以上に容易にします。
 
 ![XIAO PowerBread](Docs/Images/pic_overview.png)
 > 簡単な設置とコンパクトな設計
@@ -16,7 +16,7 @@
 2. **高電流出力**: 最大1.5Aの3.3V電源を供給。ほとんどのブレッドボードベースの電子プロジェクトに最適。
 3. **内蔵LCDディスプレイ**: リアルタイムフィードバックで常に情報を把握。重要な電源データが内蔵LCDに明確に表示されます。
 4. **プラグアンドプレイ設計**: 標準的なブレッドボードと互換性があり、追加設定なしで簡単に接続、電源投入、プロトタイピングが可能。
-5. **オープンソースとRP2040搭載**: RP2040を搭載したオープンソース設計により、USB-シリアル通信やPWM制御などの将来の拡張に柔軟性を提供。
+5. **オープンソースとSeeed Studio XIAO互換**: ほぼすべてのXIAO開発ボードと互換性があります（XIAO SAMD21とXIAO RA4M1のサポートは開発中）。このオープンソース設計により、USB-シリアル通信やPWM制御などの将来の拡張に柔軟性を提供。
 6. **デュアルチャンネル電圧・電流センシング**: INA3221センサーを搭載し、デュアルチャンネルの電圧・電流モニタリングが可能。電源供給のあらゆる側面を把握できます。
 7. **コンパクトなパワーハウス**: このコンパクトな設計で3.3Vと5Vの出力を提供し、電力を犠牲にすることなくブレッドボードのスペースを最適化。
 8. **複数のUI機能**: UIはデータモニタリング、ラインチャート、統計モードの間で切り替え可能。
@@ -45,27 +45,54 @@
 
 ### ハードウェア
 
-- **XIAOボード**: XIAO RP2040を推奨。また、以下のボードも使用可能: XIAO RP2350、XIAO ESP32-C3、XIAO ESP32-S3、XIAO ESP32-C6。（お使いのボードタイプに対応したファームウェアを必ずフラッシュしてください）
-- **XIAO PowerBreadボード**: このリポジトリからデザインをクローンまたはリミックス。また、[Tindie](https://www.tindie.com/products/35842/)からハードウェアを入手することもできます。
-- **ブレッドボード**: 簡単なプロトタイピングのため、標準的なブレッドボードに適合。
+- **XIAOボード**: [XIAO RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html)を強く推奨します。また以下のボードも使用可能です：[XIAO RP2350](https://www.seeedstudio.com/Seeed-XIAO-RP2350-p-5944.html)、[XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html)、[XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html)、[XIAO ESP32-C6](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C6-p-5884.html)。（お使いのボードタイプに対応したファームウェアを必ずフラッシュしてください）
+- **XIAO PowerBreadボード**: このリポジトリからデザインをクローンまたはリミックスできます。また、[Seeed Studio](https://www.seeedstudio.com/XIAO-PowerBread-p-6318.html)や[Tindie](https://www.tindie.com/products/35842/)からハードウェアを入手することもできます。
+- **ブレッドボード**: 標準的なブレッドボードに対応し、簡単なプロトタイピングが可能。
 - **電源**: 標準的なUSB電源を使用。
 
-<a href="https://www.tindie.com/stores/nicho810d/?ref=offsite_badges&utm_source=sellers_nicho810&utm_medium=badges&utm_campaign=badge_large"><img src="https://d2ss6ovg47m0r5.cloudfront.net/badges/tindie-larges.png" alt="I sell on Tindie" width="200" height="104"></a>
+### ハードウェアの入手
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <a href="https://www.seeedstudio.com/XIAO-PowerBread-p-6318.html">
+          <img src="Docs/Images/seeed-logo.png" width="200"><br>
+          <b>Seeed Studio</b><br>
+          キットとXIAOボードの入手
+        </a>
+      </td>
+      <td align="center">
+        <a href="https://www.tindie.com/products/35842/">
+          <img src="Docs/Images/tindie-logo.png" width="200"><br>
+          <b>Tindie</b><br>
+          完全組み立て済みハードウェアの入手
+        </a>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ### ソフトウェア
 
 - **プロジェクトのリミックス**: 提供されているArduinoソースコードを使用してプロジェクトを変更またはリミックス。
 - **コンパイル済みファームウェアを直接使用**: 
-  - XIAO ESP32シリーズの場合、ウェブベースのフラッシュツールの使用を推奨します: https://powerbread-flasher.ioatlas.com/ 、詳細は[XIAO - ESP32シリーズ向けファームウェアのフラッシュ](Docs/flash-firmware-for-esp32-series.md)をご覧ください。
-  - XIAO RP2040/RP2350の場合、UF2方式でのファームウェアアップロードを推奨します。
+  - XIAO ESP32シリーズの場合
+    - ウェブベースのフラッシュツール: https://powerbread-flasher.ioatlas.com
+    - チュートリアル: [XIAO - ESP32シリーズ向けファームウェアのフラッシュ](Docs/flash-firmware-for-esp32-series.md)
+  - XIAO RP2040/RP2350の場合
+    - フラッシュツール: UF2方式でファームウェアをアップロード:
+      1. [リリースページ](https://github.com/nicho810/XIAO-PowerBread/releases)からファームウェアファイル(*.uf2)をダウンロード
+      2. XIAOをUSB経由でPCに接続（4ピンデータケーブルを使用）
+      3. ブートローダーモードに入る:
+         - BOOTボタン(B)を押し続ける
+         - BOOTを押したまま、RESETボタン(R)を押して離す
+         - BOOTボタンを離す
+      4. "RPI-RP2"という名前の新しいUSBドライブがPCに表示される
+      5. .uf2ファームウェアファイルをRPI-RP2ドライブにドラッグ＆ドロップ
+      6. XIAOは自動的にリセットされ、新しいファームウェアで起動する
 
-> UF2アップロード方法:
-> 1. [リリースページ](https://github.com/nicho810/XIAO-PowerBread/releases)からコンパイル済みファームウェアファイルをダウンロード
-> 2. XIAOをUSB経由でPC/MACに接続（4ピンUSBケーブルであることを確認）
-> 3. XIAOのB(Boot)ボタンを押し**続けながら**、同時にXIAOのR(Reset)ボタンを押します。その後、すべてのボタンを離します
-> 4. PC/MACにRPI-RP2という名前のUSBドライブが表示されるはずです
-> 5. ファームウェアファイル(*.uf2)をRPI-RP2ドライブにドラッグ＆ドロップすると、ファイルがXIAOにアップロードされます
-> 6. 数秒後、XIAOはリセットされ、ファームウェアで起動します
+![power path](Docs/Images/pic_outputSwitch.png)
 
 ### 計画中のソフトウェア機能
 - [x] LCDにリアルタイムの電流センサーデータを表示
@@ -76,6 +103,7 @@
 - [ ] デバッグツールとしてのUSB-シリアルモード
 - [ ] IO0とIO1でのPWM出力
 - [ ] IO0とIO1からのADC読み取り
+- [ ] データモニタリング用のウェブベースUI
 
 ### ファームウェアリリース
 

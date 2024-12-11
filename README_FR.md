@@ -2,7 +2,7 @@
 
 [English](README.md) | [Deutsch](README_DE.md) | Français | [日本語](README_JP.md)
 
-**XIAO PowerBread** est un projet de matériel open-source conçu pour offrir une solution d'alimentation fiable et efficace pour le prototypage sur plaque d'essai. Doté de capteurs intégrés, d'une surveillance en temps réel et du microcontrôleur RP2040, PowerBread facilite plus que jamais l'alimentation et le développement de projets électroniques.
+**XIAO PowerBread** est un projet de matériel open-source conçu pour offrir une solution d'alimentation fiable et efficace pour le prototypage sur plaque d'essai. Doté de capteurs intégrés, d'une surveillance en temps réel et de la compatibilité avec les microcontrôleurs [Seeed Studio XIAO](https://www.seeedstudio.com/xiao-series-page), PowerBread facilite plus que jamais l'alimentation et le développement de projets électroniques.
 
 ![XIAO PowerBread](Docs/Images/pic_overview.png)
 > Installation facile et conception compacte
@@ -16,7 +16,7 @@
 2. **Sortie à courant élevé** : Fournit jusqu'à 1,5A de puissance en 3,3V, idéal pour la plupart des projets électroniques sur plaque d'essai.
 3. **Écran LCD intégré** : Restez informé avec un retour en temps réel - les données d'alimentation critiques sont clairement affichées sur l'écran LCD intégré.
 4. **Conception plug-and-play** : Compatible avec les plaques d'essai standard, il suffit de brancher, d'alimenter et de commencer à prototyper sans configuration supplémentaire.
-5. **Open-source et alimenté par RP2040** : Alimenté par le RP2040, cette conception open-source offre une flexibilité pour les extensions futures comme la communication USB-série et le contrôle PWM.
+5. **Open-source et compatibilité Seeed Studio XIAO** : Compatible avec presque toutes les cartes de développement XIAO (le support pour XIAO SAMD21 et XIAO RA4M1 est en cours), cette conception open-source offre une flexibilité pour les extensions futures comme la communication USB-série et le contrôle PWM.
 6. **Détection de tension et de courant à double canal** : Équipé du capteur INA3221 pour la surveillance de la tension et du courant à double canal - connaissez tous les aspects de votre alimentation.
 7. **Centrale électrique compacte** : Cette conception compacte fournit des sorties 3,3V et 5V, optimisant l'espace de votre plaque d'essai sans compromettre la puissance.
 8. **Fonctions d'interface utilisateur multiples** : L'interface peut basculer entre la surveillance des données, le graphique linéaire et le mode statistique.
@@ -32,27 +32,48 @@
 
 ## Spécifications matérielles
 
-- **Tension d'entrée** : Alimenté via USB-C à travers le XIAO.
+- **Tension d'entrée** : Alimenté via USB-C à travers le Seeed Studio XIAO.
 - **Tensions de sortie** : Fournit des sorties 5V et 3,3V, avec un courant maximum de 1,5A pour le rail 3,3V.
 - **Détection de courant** : Le capteur INA3221 intégré mesure la tension, le courant et la puissance pour un affichage en temps réel.
 - **Microcontrôleur** : Piloté par le RP2040, gérant les données des capteurs, le contrôle de l'affichage et permettant des fonctionnalités futures comme la communication USB-série et la génération PWM.
 - **Affichage** : Écran LCD pour la surveillance de l'alimentation en temps réel.
 - **Dimensions du PCB** : Conçu pour une intégration parfaite avec les plaques d'essai standard tout en minimisant l'utilisation de l'espace.
 
-![XIAO PowerBread](Docs/Images/pic_hardwareSpec.png)
-
 ![chemin d'alimentation](Docs/Images/pic_outputSwitch.png)
+
+![XIAO PowerBread](Docs/Images/pic_hardwareSpec.png)
 
 ## Pour commencer
 
 ### Matériel
 
-- **Carte XIAO** : Le XIAO RP2040 est recommandé, vous pouvez également utiliser : XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3, XIAO ESP32-C6. (Assurez-vous de flasher le firmware compatible avec votre type de carte)
-- **Carte XIAO PowerBread** : Clonez ou remixez la conception à partir de ce dépôt. Vous pouvez également obtenir le matériel sur [Tindie](https://www.tindie.com/products/35842/).
+- **Carte XIAO** : Le [XIAO RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html) est recommandé, vous pouvez également utiliser : [XIAO RP2350](https://www.seeedstudio.com/Seeed-XIAO-RP2350-p-5944.html), [XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html), [XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html), [XIAO ESP32-C6](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C6-p-5884.html). (Assurez-vous de flasher le firmware compatible avec votre type de carte)
+- **Carte XIAO PowerBread** : Clonez ou remixez la conception à partir de ce dépôt. Vous pouvez également obtenir le matériel sur [Seeed Studio](https://www.seeedstudio.com/XIAO-PowerBread-p-6318.html) ou [Tindie](https://www.tindie.com/products/35842/).
 - **Plaque d'essai** : S'adapte aux plaques d'essai standard pour un prototypage facile.
 - **Alimentation** : Utilisez une source d'alimentation USB standard.
 
-<a href="https://www.tindie.com/stores/nicho810d/?ref=offsite_badges&utm_source=sellers_nicho810&utm_medium=badges&utm_campaign=badge_large"><img src="https://d2ss6ovg47m0r5.cloudfront.net/badges/tindie-larges.png" alt="Je vends sur Tindie" width="200" height="104"></a>
+### Obtenez le matériel
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <a href="https://www.seeedstudio.com/XIAO-PowerBread-p-6318.html">
+          <img src="Docs/Images/seeed-logo.png" width="200"><br>
+          <b>Seeed Studio</b><br>
+          Obtenez le kit et la carte XIAO
+        </a>
+      </td>
+      <td align="center">
+        <a href="https://www.tindie.com/products/35842/">
+          <img src="Docs/Images/tindie-logo.png" width="200"><br>
+          <b>Tindie</b><br>
+          Obtenez le matériel entièrement assemblé
+        </a>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ### Logiciel
 
@@ -78,6 +99,7 @@
 - [ ] Mode USB-Série comme outil de débogage.
 - [ ] Sortie PWM sur IO0 et IO1.
 - [ ] Lecture ADC depuis IO0 et IO1.
+- [ ] Interface utilisateur web pour la surveillance des données.
 
 ### Versions du firmware
 
