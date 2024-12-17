@@ -8,7 +8,7 @@
 INA3221Sensor::INA3221Sensor(uint8_t address)
   : ina(address, &Wire1) {}
 
-bool INA3221Sensor::begin(float shuntResistorCHA=0.020, float shuntResistorCHB=0.020) {
+bool INA3221Sensor::begin(float shuntResistorCHA=0.050, float shuntResistorCHB=0.050) {
   Wire1.setSDA(6);
   Wire1.setSCL(7);
   Wire1.setClock(400000); // Set I2C to 400KHz
