@@ -3,6 +3,7 @@
 
 #include <cstdint>
 
+
 const uint16_t color_Background = 0x0000;
 const uint16_t color_Text = 0xFFFF;
 const uint16_t color_ChannelA = 0x055B;
@@ -16,6 +17,7 @@ extern int chA_x;
 extern int chA_y;
 extern int chB_x;
 extern int chB_y;
+
 
 
 #endif // UI_STYLE_H

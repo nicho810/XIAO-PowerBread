@@ -82,6 +82,7 @@ Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST); // The size of t
 static lv_disp_draw_buf_t draw_buf;
 const int buf1_size = screen_width * 8; // Define buffer size
 static lv_color_t buf1[buf1_size];      // Note: Increase buffer size if needed to improve performance or use double buffering.
+
 static lv_obj_t *counter_label;         // Counter label
 static int counter = 0;                 // Counter variable
 
@@ -109,7 +110,7 @@ void my_touchpad_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *data)
 
 // UIs
 #include "ui_style.h"
-
+#include "lvgl_ui.h"
 // Dial Switch
 #include "dialSwitch.h"
 DialFunction dial;
@@ -191,16 +192,16 @@ void sensorUpdateTask(void *pvParameters)
             // Update latestSensorData
             latestSensorData = newSensorData;
 
-            //lvgl test
-            counter++;
-            char buf[32];
-            snprintf(buf, sizeof(buf), "Count: %d", counter);
-            lv_label_set_text(counter_label, buf);
-            lv_obj_invalidate(counter_label);
+            // //lvgl test
+            // counter++;
+            // char buf[32];
+            // snprintf(buf, sizeof(buf), "Count: %d", counter);
+            // lv_label_set_text(counter_label, buf);
+            // lv_obj_invalidate(counter_label);
             
-            // Force a display update
-            lv_disp_t * disp = lv_disp_get_default();
-            lv_refr_now(disp);
+            // // Force a display update
+            // lv_disp_t * disp = lv_disp_get_default();
+            // lv_refr_now(disp);
 
             xSemaphoreGive(xSemaphore);
         }
@@ -397,13 +398,6 @@ void setup(void)
     disp_drv.full_refresh = 0; // Disable full refresh
     lv_disp_drv_register(&disp_drv);
 
-    // Set up label with optimized settings
-    counter_label = lv_label_create(lv_scr_act());
-    lv_label_set_text(counter_label, "0");
-    lv_obj_align(counter_label, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_set_style_text_font(counter_label, &lv_font_montserrat_12, 0);
-    lv_obj_set_style_text_color(counter_label, lv_color_make(255, 0, 0), LV_PART_MAIN);
-
     // Set background color
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(lv_scr_act(), LV_OPA_COVER, LV_PART_MAIN);
@@ -433,8 +427,18 @@ void setup(void)
     xSerialTaskHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print",
                                           STACK_SIZE_SERIAL, NULL, 1, xStack_Serial, &xTaskBuffer_Serial);
 
-    
     Serial.println("-----------[Boot info end]------------");
+
+    //Call the init LVGL UI
+    // lvgl_ui_t1();
+    if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE) {
+        lv_obj_clean(lv_scr_act());
+        // create_button_widget();
+        dataMonitor_initUI(tft_Rotation);
+        lv_disp_t * disp = lv_disp_get_default();
+        lv_refr_now(disp);
+        xSemaphoreGive(lvglMutex);
+    }
 
     // Start the scheduler
     // vTaskStartScheduler(); //no need to call this, it will cause a crash
