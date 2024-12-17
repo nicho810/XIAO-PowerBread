@@ -172,16 +172,11 @@ void sensorUpdateTask(void *pvParameters)
 {
     (void)pvParameters;
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    const TickType_t xFrequency = pdMS_TO_TICKS(20); // Update every 20ms
+    const TickType_t xFrequency = pdMS_TO_TICKS(100); // Update every 100ms
 
     while (1)
     {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
-
-        // #if defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
-        //     Watchdog.reset();
-        // #endif
-
         if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE)
         {
             // Read sensor data
@@ -195,6 +190,17 @@ void sensorUpdateTask(void *pvParameters)
 
             // Update latestSensorData
             latestSensorData = newSensorData;
+
+            //lvgl test
+            counter++;
+            char buf[32];
+            snprintf(buf, sizeof(buf), "Count: %d", counter);
+            lv_label_set_text(counter_label, buf);
+            lv_obj_invalidate(counter_label);
+            
+            // Force a display update
+            lv_disp_t * disp = lv_disp_get_default();
+            lv_refr_now(disp);
 
             xSemaphoreGive(xSemaphore);
         }
