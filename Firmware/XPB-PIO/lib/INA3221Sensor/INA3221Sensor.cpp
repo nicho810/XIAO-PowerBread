@@ -6,13 +6,13 @@
 #include "INA3221Sensor.h"
 
 INA3221Sensor::INA3221Sensor(uint8_t address)
-  : ina(address) {}
+  : ina(address, &Wire1) {}
 
 bool INA3221Sensor::begin(float shuntResistorCHA=0.020, float shuntResistorCHB=0.020) {
-  Wire.setSDA(6);
-  Wire.setSCL(7);
-  Wire.setClock(400000); // Set I2C to 400KHz
-  Wire.begin();
+  Wire1.setSDA(6);
+  Wire1.setSCL(7);
+  Wire1.setClock(400000); // Set I2C to 400KHz
+  Wire1.begin();
   if (!ina.begin()) {
     Serial.println("could not connect. Fix and Reboot");
     return false;

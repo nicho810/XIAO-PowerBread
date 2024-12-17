@@ -498,6 +498,11 @@ void setup(void) {
   #if defined(SEEED_XIAO_S3) || defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_C6)
     SPI.begin(TFT_SCLK, -1, TFT_MOSI, TFT_CS);
   #endif
+  #if defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
+    SPI.setMOSI(TFT_MOSI);
+    SPI.setSCK(TFT_SCLK);
+    SPI.begin();
+  #endif
 
   tft.setSPISpeed(24000000);      //24MHz
   tft.initR(INITR_GREENTAB);      // Init ST7735S 0.96inch display (160*80), Also need to modify the _colstart = 24 and _rowstart = 0 in Adafruit_ST7735.cpp>initR(uint8_t)
@@ -602,10 +607,6 @@ void setup(void) {
   //Serial-printInterval is applied in the serialPrintTask
   //chart_updateInterval is applied in the dataMonitorChart_updateChartInterval()
 
-
-  //Current sensor init
-  // pinMode(D4, INPUT_PULLUP); //SDA, set internal pull-up
-  // pinMode(D5, INPUT_PULLUP); //SCL, set internal pull-up
 
 
   if (!inaSensor.begin(shuntResistorCHA, shuntResistorCHB)) {
