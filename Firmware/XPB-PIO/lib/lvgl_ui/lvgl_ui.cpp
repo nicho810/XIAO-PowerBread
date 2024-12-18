@@ -1,6 +1,6 @@
 #include "lvgl_ui.h"
 #include "xpb_color_palette.h"
-// #include "inter_bold_18px_basicLatin.h"
+
 
 void create_button_widget()
 {
@@ -50,6 +50,78 @@ void dataMonitorCount_initUI(int rotation, uint8_t channel)
         dataCount_avgA = widget_DataCount_create(0, pos_y_of_avgS + 40, "AvgA", xpb_color_ChannelB, xpb_color_ChannelB_dark);
         dataCount_peak = widget_DataCount_create(0, pos_y_of_avgS + 60, "Peak", xpb_color_ChannelB, xpb_color_ChannelB_dark);
     }
+}
+
+lv_obj_t *dataMonitorChart_initUI(int rotation, uint8_t channel)
+{
+    // Create main container
+    lv_obj_t *ui_container = lv_obj_create(lv_scr_act());
+    lv_obj_clear_flag(ui_container, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_size(ui_container, 80, 160);  // Adjust size as needed
+    lv_obj_center(ui_container);
+    lv_obj_set_style_bg_color(ui_container, xpb_color_Background, LV_PART_MAIN);
+    lv_obj_set_style_border_width(ui_container, 0, LV_PART_MAIN); // no border
+
+    lv_obj_t *dataChart_X = NULL;
+    lv_obj_t *dataMonitor_X = NULL;
+    if (channel == 1)
+    {
+        dataMonitor_X = widget_DataMonitor_create(0, -41, "Channel A", xpb_color_ChannelA);
+        dataChart_X = widget_DataChart_create(0, 41, xpb_color_ChannelA, xpb_color_ChannelA_dark);
+        // Set parent to ui_container
+        lv_obj_set_parent(dataMonitor_X, ui_container);
+        lv_obj_set_parent(dataChart_X, ui_container);
+    }
+    else if (channel == 2)
+    {
+        dataMonitor_X = widget_DataMonitor_create(0, -41, "Channel B", xpb_color_ChannelB);
+        dataChart_X = widget_DataChart_create(0, 41, xpb_color_ChannelB, xpb_color_ChannelB_dark);
+        // Set parent to ui_container
+        lv_obj_set_parent(dataMonitor_X, ui_container);
+        lv_obj_set_parent(dataChart_X, ui_container);
+    }
+
+    return ui_container;
+}
+
+lv_obj_t *widget_DataChart_create(uint16_t x, uint16_t y, lv_color_t color, lv_color_t color_dark)
+{
+    // Create a container
+    lv_obj_t *container = lv_obj_create(lv_scr_act());
+    lv_obj_clear_flag(container, LV_OBJ_FLAG_SCROLLABLE); // Disable container scrolling
+    lv_obj_set_size(container, 78, 78);
+    lv_obj_align(container, LV_ALIGN_CENTER, x, y);
+    lv_obj_set_style_radius(container, 5, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(container, xpb_color_Background, LV_PART_MAIN); // Black background
+    lv_obj_set_style_border_width(container, 1, LV_PART_MAIN);                // 2px border width
+    lv_obj_set_style_border_color(container, color, LV_PART_MAIN);            // Red border color
+
+    // Create a chart
+    lv_obj_t *chart = lv_chart_create(container);
+    
+    // Basic chart setup
+    lv_obj_set_size(chart, 78, 78);                    // Set chart size slightly smaller than container
+    lv_obj_align(chart, LV_ALIGN_CENTER, 0, 0);        // Center in container
+    lv_chart_set_type(chart, LV_CHART_TYPE_LINE);      // Set as line chart
+    lv_obj_set_style_border_width(chart, 1, LV_PART_MAIN); //border width
+    lv_obj_set_style_border_color(chart, color, LV_PART_MAIN); //border color
+    lv_obj_set_style_radius(chart, 4, LV_PART_MAIN);    // Set chart corner radius
+    
+    // Configure chart properties
+    lv_chart_set_point_count(chart, 100);              // Number of data points
+    lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, 30);  // Y-axis range
+    lv_chart_set_div_line_count(chart, 6, 0);          // Grid line count
+    lv_obj_set_style_line_color(chart, xpb_color_GridLines, LV_PART_MAIN); //grid line color
+    
+    // Add and style a data series
+    lv_chart_series_t *series = lv_chart_add_series(chart, color, LV_CHART_AXIS_PRIMARY_Y);
+    
+    // Style modifications
+    lv_obj_set_style_line_width(chart, 2, LV_PART_ITEMS);    // Line thickness
+    lv_obj_set_style_bg_color(chart, color_dark, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(chart, LV_OPA_10, LV_PART_MAIN); // 10% opacity
+
+    return container;
 }
 
 lv_obj_t *widget_DataCount_create(uint16_t x, uint16_t y, const char *title, lv_color_t color, lv_color_t color_dark)
@@ -185,3 +257,4 @@ lv_obj_t *widget_DataMonitor_create(uint16_t x, uint16_t y, const char *title_te
 
     return container;
 }
+

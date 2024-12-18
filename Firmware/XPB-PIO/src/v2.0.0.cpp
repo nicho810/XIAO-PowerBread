@@ -80,11 +80,12 @@ Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST); // The size of t
 
 // LVGL declaration
 static lv_disp_draw_buf_t draw_buf;
-const int buf1_size = screen_width * 8; // Define buffer size
-static lv_color_t buf1[buf1_size];      // Note: Increase buffer size if needed to improve performance or use double buffering.
+const int buf1_size = screen_width * 160;  // Size for each buffer
+static lv_color_t buf1[buf1_size];
+static lv_color_t buf2[buf1_size];        // Add second buffer
 
-static lv_obj_t *counter_label;         // Counter label
-static int counter = 0;                 // Counter variable
+static lv_obj_t *ui_container = NULL;  // Global container for the chart UI
+
 
 // Display flushing function
 void xpb_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -111,6 +112,8 @@ void my_touchpad_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *data)
 // UIs
 #include "ui_style.h"
 #include "lvgl_ui.h"
+#include "lvgl_ui_updateFunc.h"
+
 // Dial Switch
 #include "dialSwitch.h"
 DialFunction dial;
@@ -173,7 +176,7 @@ void sensorUpdateTask(void *pvParameters)
 {
     (void)pvParameters;
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    const TickType_t xFrequency = pdMS_TO_TICKS(100); // Update every 100ms
+    const TickType_t xFrequency = pdMS_TO_TICKS(10); // Decrease from 20ms to 10ms
 
     while (1)
     {
@@ -192,18 +195,31 @@ void sensorUpdateTask(void *pvParameters)
             // Update latestSensorData
             latestSensorData = newSensorData;
 
-            // //lvgl test
-            // counter++;
-            // char buf[32];
-            // snprintf(buf, sizeof(buf), "Count: %d", counter);
-            // lv_label_set_text(counter_label, buf);
-            // lv_obj_invalidate(counter_label);
-            
-            // // Force a display update
-            // lv_disp_t * disp = lv_disp_get_default();
-            // lv_refr_now(disp);
+            // Take the mutex before updating the chart
+            if (xSemaphoreTake(lvglMutex, 0) == pdTRUE) {  // Use 0 timeout for non-blocking
+                if (ui_container != NULL && 
+                    (newSensorData.channel0.isDirty || newSensorData.channel1.isDirty)) {
+                    // Combine all UI updates into a single invalidation cycle
+                    lv_obj_invalidate(ui_container);
+                    
+                    lv_obj_t *monitorContainer = lv_obj_get_child(ui_container, 0);
+                    if (monitorContainer != NULL) {
+                        update_monitor_data(monitorContainer,1, latestSensorData);
+                    }
+
+                    lv_obj_t *chartContainer = lv_obj_get_child(ui_container, 1);
+                    if (chartContainer != NULL) {
+                        update_chart_data(chartContainer, latestSensorData.channel0.busCurrent);
+                    }
+                    
+                    lv_disp_t * disp = lv_disp_get_default();
+                    lv_refr_now(disp);
+                }
+                xSemaphoreGive(lvglMutex);
+            }
 
             xSemaphoreGive(xSemaphore);
+            vTaskDelay(pdMS_TO_TICKS(1));
         }
     }
 }
@@ -218,7 +234,7 @@ void lvglTask(void *parameter)
             lv_timer_handler();
             xSemaphoreGive(lvglMutex);
         }
-        vTaskDelay(pdMS_TO_TICKS(5));
+        vTaskDelay(pdMS_TO_TICKS(2));
     }
 }
 
@@ -377,7 +393,7 @@ void setup(void)
     }
 
     // LCD Init
-    tft.setSPISpeed(24000000); // 24MHz
+    tft.setSPISpeed(40000000);  // 40Mhz is the max speed for this display
     tft.initR(INITR_GREENTAB);
     tft.setRotation(tft_Rotation);
     tft.fillScreen(color_Background);
@@ -385,17 +401,18 @@ void setup(void)
     // LVGL Init
     lv_init();
 
-    // Initialize the display buffer with single buffering
-    lv_disp_draw_buf_init(&draw_buf, buf1, NULL, buf1_size);
+    // Initialize the display buffer with dual buffering
+    lv_disp_draw_buf_init(&draw_buf, buf1, buf2, buf1_size);
 
-    // Initialize display driver
+    // Initialize display driver with optimized settings
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
     disp_drv.hor_res = screen_width;
     disp_drv.ver_res = screen_height;
     disp_drv.flush_cb = xpb_disp_flush;
     disp_drv.draw_buf = &draw_buf;
-    disp_drv.full_refresh = 0; // Disable full refresh
+    disp_drv.full_refresh = 0;  // Enable partial updates for better performance
+    disp_drv.direct_mode = 0;   // Direct mode is not supported
     lv_disp_drv_register(&disp_drv);
 
     // Set background color
@@ -416,7 +433,7 @@ void setup(void)
 
     // Create tasks (no watchdog references)
     xSensorTaskHandle = xTaskCreateStatic(sensorUpdateTask, "Sensor_Update",
-                                          STACK_SIZE_SENSOR, NULL, 4, xStack_Sensor, &xTaskBuffer_Sensor);
+                                          STACK_SIZE_SENSOR, NULL, 3, xStack_Sensor, &xTaskBuffer_Sensor);
 
     xLvglTaskHandle = xTaskCreateStatic(lvglTask, "UI_Update",
                                       STACK_SIZE_UI, NULL, 3, xStack_UI, &xTaskBuffer_UI);
@@ -425,7 +442,7 @@ void setup(void)
                                         STACK_SIZE_DIAL, NULL, 2, xStack_Dial, &xTaskBuffer_Dial);
 
     xSerialTaskHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print",
-                                          STACK_SIZE_SERIAL, NULL, 1, xStack_Serial, &xTaskBuffer_Serial);
+                                          STACK_SIZE_SERIAL, NULL, 2, xStack_Serial, &xTaskBuffer_Serial);
 
     Serial.println("-----------[Boot info end]------------");
 
@@ -435,7 +452,8 @@ void setup(void)
         lv_obj_clean(lv_scr_act());
         // create_button_widget();
         // dataMonitor_initUI(tft_Rotation);
-        dataMonitorCount_initUI(tft_Rotation, 1);
+        // dataMonitorCount_initUI(tft_Rotation, 2);
+        ui_container = dataMonitorChart_initUI(tft_Rotation, 2);
         lv_disp_t * disp = lv_disp_get_default();
         lv_refr_now(disp);
         xSemaphoreGive(lvglMutex);
