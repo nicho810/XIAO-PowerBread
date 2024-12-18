@@ -434,7 +434,8 @@ void setup(void)
     if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE) {
         lv_obj_clean(lv_scr_act());
         // create_button_widget();
-        dataMonitor_initUI(tft_Rotation);
+        // dataMonitor_initUI(tft_Rotation);
+        dataMonitorCount_initUI(tft_Rotation, 1);
         lv_disp_t * disp = lv_disp_get_default();
         lv_refr_now(disp);
         xSemaphoreGive(lvglMutex);

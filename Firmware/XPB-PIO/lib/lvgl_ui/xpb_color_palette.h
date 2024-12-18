@@ -3,8 +3,8 @@
 
 #include "lvgl.h"
 
-lv_color_t xpb_color_Background = lv_color_hex(0x0000);
-lv_color_t xpb_color_Text = lv_color_hex(0xFFFF);
+lv_color_t xpb_color_Background = lv_color_hex(0x000000);
+lv_color_t xpb_color_Text = lv_color_hex(0xFFFFFF);
 lv_color_t xpb_color_ChannelA = lv_color_hex(0x00A7DC);
 lv_color_t xpb_color_ChannelB = lv_color_hex(0xFF75E9);
 lv_color_t xpb_color_GridLines = lv_color_hex(0x9B9CA4);

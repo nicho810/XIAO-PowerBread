@@ -7,7 +7,8 @@
 void lvgl_ui_t1();
 void create_button_widget();
 void dataMonitor_initUI(int rotation);
-
-
+void dataMonitorCount_initUI(int rotation, uint8_t channel);
+lv_obj_t* widget_DataMonitor_create(uint16_t x, uint16_t y, const char* title, lv_color_t color);
+lv_obj_t* widget_DataCount_create(uint16_t x, uint16_t y, lv_color_t color);
 
 #endif
