@@ -285,7 +285,7 @@ void serialPrintTask(void *pvParameters)
     };
 
     // uint8_t intervalIndex = min(sysConfig.cfg_data.serial_printInterval, (uint8_t)4);
-    uint8_t intervalIndex = 1;
+    uint8_t intervalIndex = 0;
     const TickType_t xPrintInterval = xPrintIntervals[intervalIndex];
     // const bool serialEnabled = sysConfig.cfg_data.serial_enable;
     const bool serialEnabled = true;
@@ -294,7 +294,7 @@ void serialPrintTask(void *pvParameters)
 
     while (1)
     {
-        vTaskDelay(pdMS_TO_TICKS(10)); // Give other tasks a chance to run
+        vTaskDelay(pdMS_TO_TICKS(50)); // Give other tasks a chance to run
         TickType_t xCurrentTime = xTaskGetTickCount();
         if ((xCurrentTime - xLastPrintTime) >= xPrintInterval)
         {
@@ -336,9 +336,9 @@ void dialReadTask(void *pvParameters)
 {
     (void)pvParameters;
     TickType_t xLastReadTime = 0;
-    const TickType_t xReadInterval = pdMS_TO_TICKS(50); // Read every 50ms
+    const TickType_t xReadInterval = pdMS_TO_TICKS(100); // Read every 100ms
     TickType_t pressStartTime = 0;
-    const TickType_t longPressThreshold = pdMS_TO_TICKS(500); // 0.5 second
+    const TickType_t longPressThreshold = pdMS_TO_TICKS(50); // 0.5 second
     bool longPressDetected = false;
     bool shortPressHandled = false;
 
@@ -395,6 +395,8 @@ void dialReadTask(void *pvParameters)
 
 void setup(void)
 {
+    //LED for debug
+    
     // SPI Init
     #if defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
     SPI.setMOSI(TFT_MOSI);

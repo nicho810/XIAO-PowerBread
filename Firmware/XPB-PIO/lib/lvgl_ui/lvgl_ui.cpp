@@ -163,21 +163,21 @@ lv_obj_t *widget_DataCount_create(uint16_t x, uint16_t y, const char *title, lv_
 
     // Create a title label in center-left corner
     lv_obj_t *title_label = lv_label_create(container);
-    lv_obj_set_style_text_font(title_label, &inter_bold_8px_basicLatin, LV_PART_MAIN);
+    lv_obj_set_style_text_font(title_label, &inter_bold_8px_basicLatin_2b, LV_PART_MAIN);
     lv_obj_set_style_text_color(title_label, xpb_color_Text, LV_PART_MAIN);
     lv_label_set_text(title_label, title);
     lv_obj_align(title_label, LV_ALIGN_LEFT_MID, -10, -1);
 
     // Create a value label in center-left corner
     lv_obj_t *value_label = lv_label_create(container);
-    lv_obj_set_style_text_font(value_label, &inter_bold_8px_basicLatin, LV_PART_MAIN);
+    lv_obj_set_style_text_font(value_label, &inter_bold_8px_basicLatin_2b, LV_PART_MAIN);
     lv_obj_set_style_text_color(value_label, xpb_color_Text, LV_PART_MAIN);
     lv_label_set_text(value_label, "0.000");
     lv_obj_align(value_label, LV_ALIGN_LEFT_MID, 20, 0);
 
     // Create a unit label in center-right corner
     lv_obj_t *unit_label = lv_label_create(container);
-    lv_obj_set_style_text_font(unit_label, &inter_bold_8px_basicLatin, LV_PART_MAIN);
+    lv_obj_set_style_text_font(unit_label, &inter_bold_8px_basicLatin_2b, LV_PART_MAIN);
     lv_obj_set_style_text_color(unit_label, xpb_color_Text, LV_PART_MAIN);
     lv_label_set_text(unit_label, "mA");
     lv_obj_align(unit_label, LV_ALIGN_RIGHT_MID, 10, 0);
@@ -224,49 +224,49 @@ lv_obj_t *widget_DataMonitor_create(uint16_t x, uint16_t y, const char *title_te
 
     // Create a title on the container
     lv_obj_t *title = lv_label_create(container);
-    lv_obj_set_style_text_font(title, &inter_bold_8px_basicLatin, LV_PART_MAIN);
+    lv_obj_set_style_text_font(title, &inter_bold_8px_basicLatin_2b, LV_PART_MAIN);
     lv_obj_set_style_text_color(title, xpb_color_Text, LV_PART_MAIN); // White tex
     lv_label_set_text(title, title_text);
     lv_obj_align(title, LV_ALIGN_LEFT_MID, -10, -34);
 
     // Create a Voltage label on the container
     lv_obj_t *voltage_value = lv_label_create(container);
-    lv_obj_set_style_text_font(voltage_value, &inter_extraBold_18px_basicLatin, LV_PART_MAIN);
+    lv_obj_set_style_text_font(voltage_value, &inter_extraBold_18px_basicLatin_1b, LV_PART_MAIN);
     lv_obj_set_style_text_color(voltage_value, xpb_color_Text, LV_PART_MAIN); // White tex
     lv_label_set_text(voltage_value, "0.000");
     lv_obj_align(voltage_value, LV_ALIGN_LEFT_MID, pos_x_of_Voltage_lable, pos_y_of_Voltage_lable);
 
     // Create a Voltage unit label on the container
     lv_obj_t *voltage_unit = lv_label_create(container);
-    lv_obj_set_style_text_font(voltage_unit, &inter_bold_8px_basicLatin, LV_PART_MAIN);
+    lv_obj_set_style_text_font(voltage_unit, &inter_bold_8px_basicLatin_2b, LV_PART_MAIN);
     lv_obj_set_style_text_color(voltage_unit, xpb_color_Text, LV_PART_MAIN);
     lv_label_set_text(voltage_unit, "V");
     lv_obj_align(voltage_unit, LV_ALIGN_RIGHT_MID, pos_x_of_Voltage_unit, pos_y_of_Voltage_unit);
 
     // Create a Current label on the container
     lv_obj_t *current_value = lv_label_create(container);
-    lv_obj_set_style_text_font(current_value, &inter_extraBold_18px_basicLatin, LV_PART_MAIN);
+    lv_obj_set_style_text_font(current_value, &inter_extraBold_18px_basicLatin_1b, LV_PART_MAIN);
     lv_obj_set_style_text_color(current_value, xpb_color_Text, LV_PART_MAIN); // White tex
     lv_label_set_text(current_value, "0.000");
     lv_obj_align(current_value, LV_ALIGN_LEFT_MID, pos_x_of_Current_lable, pos_y_of_Current_lable);
 
     // Create a Current unit label on the container
     lv_obj_t *current_unit = lv_label_create(container);
-    lv_obj_set_style_text_font(current_unit, &inter_bold_8px_basicLatin, LV_PART_MAIN);
+    lv_obj_set_style_text_font(current_unit, &inter_bold_8px_basicLatin_2b, LV_PART_MAIN);
     lv_obj_set_style_text_color(current_unit, xpb_color_Text, LV_PART_MAIN);
     lv_label_set_text(current_unit, "mA");
     lv_obj_align(current_unit, LV_ALIGN_RIGHT_MID, pos_x_of_Current_unit, pos_y_of_Current_unit);
 
     // Create a Power label on the container
     lv_obj_t *power_value = lv_label_create(container);
-    lv_obj_set_style_text_font(power_value, &inter_extraBold_18px_basicLatin, LV_PART_MAIN);
+    lv_obj_set_style_text_font(power_value, &inter_extraBold_18px_basicLatin_1b, LV_PART_MAIN);
     lv_obj_set_style_text_color(power_value, xpb_color_Text, LV_PART_MAIN); // White tex
     lv_label_set_text(power_value, "0.000");
     lv_obj_align(power_value, LV_ALIGN_LEFT_MID, pos_x_of_Power_lable, pos_y_of_Power_lable);
 
     // Create a Power unit label on the container
     lv_obj_t *power_unit = lv_label_create(container);
-    lv_obj_set_style_text_font(power_unit, &inter_bold_8px_basicLatin, LV_PART_MAIN);
+    lv_obj_set_style_text_font(power_unit, &inter_bold_8px_basicLatin_2b, LV_PART_MAIN);
     lv_obj_set_style_text_color(power_unit, xpb_color_Text, LV_PART_MAIN);
     lv_label_set_text(power_unit, "mW");
     lv_obj_align(power_unit, LV_ALIGN_RIGHT_MID, pos_x_of_Power_unit, pos_y_of_Power_unit);

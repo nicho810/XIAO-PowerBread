@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Size: 18 px
  * Bpp: 2
- * Opts: --bpp 2 --size 18 --no-compress --font Inter_18pt-ExtraBold.ttf --range 32-127 --format lvgl -o inter_extraBold_18px_basicLatin.c
+ * Opts: --bpp 2 --size 18 --no-compress --font Inter_18pt-ExtraBold.ttf --range 32-127 --format lvgl -o inter_extraBold_18px_basicLatin_2b.c
  ******************************************************************************/
 
 #ifdef LV_LVGL_H_INCLUDE_SIMPLE
@@ -10,11 +10,11 @@
 #include "lvgl/lvgl.h"
 #endif
 
-#ifndef INTER_EXTRABOLD_18PX_BASICLATIN
-#define INTER_EXTRABOLD_18PX_BASICLATIN 1
+#ifndef INTER_EXTRABOLD_18PX_BASICLATIN_2B
+#define INTER_EXTRABOLD_18PX_BASICLATIN_2B 1
 #endif
 
-#if INTER_EXTRABOLD_18PX_BASICLATIN
+#if INTER_EXTRABOLD_18PX_BASICLATIN_2B
 
 /*-----------------
  *    BITMAPS
@@ -1003,9 +1003,9 @@ static lv_font_fmt_txt_dsc_t font_dsc = {
 
 /*Initialize a public general font descriptor*/
 #if LVGL_VERSION_MAJOR >= 8
-const lv_font_t inter_extraBold_18px_basicLatin = {
+const lv_font_t inter_extraBold_18px_basicLatin_2b = {
 #else
-lv_font_t inter_extraBold_18px_basicLatin = {
+lv_font_t inter_extraBold_18px_basicLatin_2b = {
 #endif
     .get_glyph_dsc = lv_font_get_glyph_dsc_fmt_txt,    /*Function pointer to get glyph's data*/
     .get_glyph_bitmap = lv_font_get_bitmap_fmt_txt,    /*Function pointer to get glyph's bitmap*/
@@ -1027,5 +1027,5 @@ lv_font_t inter_extraBold_18px_basicLatin = {
 
 
 
-#endif /*#if INTER_EXTRABOLD_18PX_BASICLATIN*/
+#endif /*#if INTER_EXTRABOLD_18PX_BASICLATIN_2B*/
 
