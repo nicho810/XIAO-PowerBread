@@ -2,7 +2,7 @@
 #include "sysConfig.h"
 
 
-void SysConfig::saveConfig(sysConfig_data data) {
+void SysConfig::saveConfig_to_EEPROM(sysConfig_data data) {
     EEPROM.write(cfg_addr.default_mode, data.default_mode);
     EEPROM.write(cfg_addr.default_channel, data.default_channel);
     EEPROM.write(cfg_addr.shuntResistorCHA, data.shuntResistorCHA);
@@ -18,7 +18,7 @@ void SysConfig::saveConfig(sysConfig_data data) {
     EEPROM.commit();
 }
 
-void SysConfig::loadConfig() {
+void SysConfig::loadConfig_from_EEPROM() {
     //load config from EEPROM
     cfg_data.cfg_version = EEPROM.read(cfg_addr.cfg_version);
     cfg_data.default_mode = EEPROM.read(cfg_addr.default_mode);
@@ -35,18 +35,18 @@ void SysConfig::loadConfig() {
 }
 
 
-void SysConfig::begin() {
+void SysConfig::begin_EEPROM() {
     EEPROM.begin(cfg_size);
 }
 
-void SysConfig::init(int force_write) {
+void SysConfig::init_EEPROM(int force_write) {
     //if force_write is true, will write default config to EEPROM
     if (force_write) {
         Serial.println("Force write default config to EEPROM");
         //update cfg_version
         EEPROM.write(cfg_addr.cfg_version, cfg_data.cfg_version);
         //write default config to EEPROM
-        saveConfig(cfg_data);
+        saveConfig_to_EEPROM(cfg_data);
     }
     else{
         //read cfg_version
@@ -57,7 +57,7 @@ void SysConfig::init(int force_write) {
             //update cfg_version
             EEPROM.write(cfg_addr.cfg_version, cfg_data.cfg_version);
             //write default config to EEPROM
-            saveConfig(cfg_data);
+            saveConfig_to_EEPROM(cfg_data);
         }
         else if (current_cfg_version < cfg_data.cfg_version) {
             //detect a lower version, write default config to EEPROM
@@ -65,16 +65,16 @@ void SysConfig::init(int force_write) {
             //update cfg_version
             EEPROM.write(cfg_addr.cfg_version, cfg_data.cfg_version);
             //write default config to EEPROM
-            saveConfig(cfg_data);
+            saveConfig_to_EEPROM(cfg_data);
         } else {
             //load config from EEPROM
             Serial.println("Loading config from EEPROM");
-            loadConfig();
+            loadConfig_from_EEPROM();
         }
     }
 }
 
-String SysConfig::debugPrintOnSerial() {
+String SysConfig::output_all_config_data_in_String() {
     String output = "\n";
     output += "cfg_version: " + String(cfg_data.cfg_version) + "\n";
     output += "default_mode: " + String(cfg_data.default_mode) + "\n";
@@ -123,5 +123,9 @@ void decrementConfigValue(int cursor, sysConfig_data& tmp_cfg_data) {
         case 9: tmp_cfg_data.chart_scaleMode = max(tmp_cfg_data.chart_scaleMode - 1, 0); break;
         case 10: tmp_cfg_data.chart_scale = max(tmp_cfg_data.chart_scale - 1, 1); break; //can't be 0, min is 1
     }
+}
+
+void SysConfig::loadConfig_from(sysConfig_data input_cfg_data) {
+    cfg_data = input_cfg_data;
 }
 

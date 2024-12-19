@@ -2,39 +2,45 @@
 #include "xpb_color_palette.h"
 
 
-void create_button_widget()
+lv_obj_t*  dataMonitor_initUI(int rotation)
 {
-    // Create a button
-    lv_obj_t *btn = lv_btn_create(lv_scr_act());
-    lv_obj_set_size(btn, 120, 50);
-    lv_obj_align(btn, LV_ALIGN_CENTER, 0, 50);
+    // Create main container
+    lv_obj_t *ui_container = lv_obj_create(lv_scr_act());
+    lv_obj_clear_flag(ui_container, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_size(ui_container, 80, 160);  // Adjust size as needed
+    lv_obj_center(ui_container);
+    lv_obj_set_style_bg_color(ui_container, xpb_color_Background, LV_PART_MAIN);
+    lv_obj_set_style_border_width(ui_container, 0, LV_PART_MAIN); // no border
 
-    // Add button style
-    lv_obj_set_style_bg_color(btn, lv_color_make(100, 100, 100), LV_PART_MAIN); // Add background color
-    lv_obj_set_style_bg_opa(btn, LV_OPA_COVER, LV_PART_MAIN);                   // Make background fully opaque
-
-    // Create a label on the button
-    lv_obj_t *btn_label = lv_label_create(btn);
-    lv_label_set_text(btn_label, "Button");
-    lv_obj_set_style_text_color(btn_label, lv_color_make(255, 255, 255), LV_PART_MAIN); // White text
-    lv_obj_center(btn_label);
-}
-
-void dataMonitor_initUI(int rotation)
-{
+    // Create widget
     lv_obj_t *dataMonitor_A = widget_DataMonitor_create(0, 41, "Channel A", xpb_color_ChannelA);
     lv_obj_t *dataMonitor_B = widget_DataMonitor_create(0, -41, "Channel B", xpb_color_ChannelB);
+
+    // Set parent to ui_container
+    lv_obj_set_parent(dataMonitor_A, ui_container);
+    lv_obj_set_parent(dataMonitor_B, ui_container);
+
+    return ui_container;
 }
 
-void dataMonitorCount_initUI(int rotation, uint8_t channel)
+lv_obj_t*  dataMonitorCount_initUI(int rotation, uint8_t channel)
 {
+    // Create main container
+    lv_obj_t *ui_container = lv_obj_create(lv_scr_act());
+    lv_obj_clear_flag(ui_container, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_size(ui_container, 80, 160);  // Adjust size as needed
+    lv_obj_center(ui_container);
+    lv_obj_set_style_bg_color(ui_container, xpb_color_Background, LV_PART_MAIN);
+    lv_obj_set_style_border_width(ui_container, 0, LV_PART_MAIN); // no border
+
+    //create widgets
     lv_obj_t *dataMonitor_X;
     lv_obj_t *dataCount_avgS;
     lv_obj_t *dataCount_avgM;
     lv_obj_t *dataCount_avgA;
     lv_obj_t *dataCount_peak;
     uint16_t pos_y_of_avgS = 10;
-    if (channel == 1)
+    if (channel == 0)
     {
         dataMonitor_X = widget_DataMonitor_create(0, -41, "Channel A", xpb_color_ChannelA);
         dataCount_avgS = widget_DataCount_create(0, pos_y_of_avgS, "AvgS", xpb_color_ChannelA, xpb_color_ChannelA_dark);
@@ -42,7 +48,7 @@ void dataMonitorCount_initUI(int rotation, uint8_t channel)
         dataCount_avgA = widget_DataCount_create(0, pos_y_of_avgS + 40, "AvgA", xpb_color_ChannelA, xpb_color_ChannelA_dark);
         dataCount_peak = widget_DataCount_create(0, pos_y_of_avgS + 60, "Peak", xpb_color_ChannelA, xpb_color_ChannelA_dark);
     }
-    else if (channel == 2)
+    else if (channel == 1)
     {
         dataMonitor_X = widget_DataMonitor_create(0, -41, "Channel B", xpb_color_ChannelB);
         dataCount_avgS = widget_DataCount_create(0, pos_y_of_avgS, "AvgS", xpb_color_ChannelB, xpb_color_ChannelB_dark);
@@ -50,6 +56,15 @@ void dataMonitorCount_initUI(int rotation, uint8_t channel)
         dataCount_avgA = widget_DataCount_create(0, pos_y_of_avgS + 40, "AvgA", xpb_color_ChannelB, xpb_color_ChannelB_dark);
         dataCount_peak = widget_DataCount_create(0, pos_y_of_avgS + 60, "Peak", xpb_color_ChannelB, xpb_color_ChannelB_dark);
     }
+
+    //set parent to ui_container
+    lv_obj_set_parent(dataMonitor_X, ui_container);
+    lv_obj_set_parent(dataCount_avgS, ui_container);
+    lv_obj_set_parent(dataCount_avgM, ui_container);
+    lv_obj_set_parent(dataCount_avgA, ui_container);
+    lv_obj_set_parent(dataCount_peak, ui_container);
+
+    return ui_container;
 }
 
 lv_obj_t *dataMonitorChart_initUI(int rotation, uint8_t channel)
@@ -62,9 +77,10 @@ lv_obj_t *dataMonitorChart_initUI(int rotation, uint8_t channel)
     lv_obj_set_style_bg_color(ui_container, xpb_color_Background, LV_PART_MAIN);
     lv_obj_set_style_border_width(ui_container, 0, LV_PART_MAIN); // no border
 
+    // Create widget
     lv_obj_t *dataChart_X = NULL;
     lv_obj_t *dataMonitor_X = NULL;
-    if (channel == 1)
+    if (channel == 0)
     {
         dataMonitor_X = widget_DataMonitor_create(0, -41, "Channel A", xpb_color_ChannelA);
         dataChart_X = widget_DataChart_create(0, 41, xpb_color_ChannelA, xpb_color_ChannelA_dark);
@@ -72,7 +88,7 @@ lv_obj_t *dataMonitorChart_initUI(int rotation, uint8_t channel)
         lv_obj_set_parent(dataMonitor_X, ui_container);
         lv_obj_set_parent(dataChart_X, ui_container);
     }
-    else if (channel == 2)
+    else if (channel == 1)
     {
         dataMonitor_X = widget_DataMonitor_create(0, -41, "Channel B", xpb_color_ChannelB);
         dataChart_X = widget_DataChart_create(0, 41, xpb_color_ChannelB, xpb_color_ChannelB_dark);
@@ -109,7 +125,7 @@ lv_obj_t *widget_DataChart_create(uint16_t x, uint16_t y, lv_color_t color, lv_c
     
     // Configure chart properties
     lv_chart_set_point_count(chart, 100);              // Number of data points
-    lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, 30);  // Y-axis range
+    lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, 10);  // Y-axis range
     lv_chart_set_div_line_count(chart, 6, 0);          // Grid line count
     lv_obj_set_style_line_color(chart, xpb_color_GridLines, LV_PART_MAIN); //grid line color
     

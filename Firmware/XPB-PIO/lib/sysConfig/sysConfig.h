@@ -81,14 +81,14 @@ class SysConfig {
         uint16_t cfg_size=128; //each addr is 8bit(0-255), addr start from 0
         sysConfig_addr cfg_addr;
         sysConfig_data cfg_data;
-        void begin();
-        void init(int force_write=0);
-        void saveConfig(sysConfig_data data);
-        void loadConfig();
-        String debugPrintOnSerial();
+        void begin_EEPROM();
+        void init_EEPROM(int force_write=0);
+        void saveConfig_to_EEPROM(sysConfig_data data);
+        void loadConfig_from_EEPROM();
+        void loadConfig_from(sysConfig_data input_cfg_data);
+        void incrementConfigValue(int cursor, sysConfig_data& cfg_data);
+        void decrementConfigValue(int cursor, sysConfig_data& cfg_data);
+        String output_all_config_data_in_String();
 };
-
-void incrementConfigValue(int cursor, sysConfig_data& cfg_data);
-void decrementConfigValue(int cursor, sysConfig_data& cfg_data);
 
 #endif

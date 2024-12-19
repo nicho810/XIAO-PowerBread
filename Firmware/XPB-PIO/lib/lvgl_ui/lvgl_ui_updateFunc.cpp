@@ -2,87 +2,56 @@
 
 void update_chart_data(lv_obj_t *chart_container, int32_t new_value)
 {
-    if (!chart_container) {
-        Serial.println("Error: chart_container is NULL");
-        return;
-    }
+    if (!chart_container) return;
 
-    // Get the chart object directly (it's the only child of the container)
+    // Get chart directly - it's the first child
     lv_obj_t *chart = lv_obj_get_child(chart_container, 0);
-    if (!chart || !lv_obj_check_type(chart, &lv_chart_class)) {
-        Serial.println("Error: Chart not found in container");
-        return;
-    }
+    if (!chart) return;
 
-    // Get the first series
+    // Get series directly - we know there's only one
     lv_chart_series_t *series = lv_chart_get_series_next(chart, NULL);
-    if (!series) {
-        Serial.println("Error: No series found in chart");
-        return;
-    }
+    if (!series) return;
     
     lv_chart_set_next_value(chart, series, new_value);
     lv_chart_refresh(chart);
-
-    // Serial.print("Successfully set chart data to: ");
-    // Serial.println(new_value);
 }
 
 void update_monitor_data(lv_obj_t *monitor_container, uint8_t channel, DualChannelData newSensorData)
 {
-    if (!monitor_container) {
-        Serial.println("Error: monitor_container is NULL");
-        return;
-    }
+    if (!monitor_container) return;
 
-    // Find the value labels (they are the 3rd, 5th, and 7th children)
+    static char str_buf[8];  // Single buffer for all string conversions
+    float voltage, current, power;
+
+    // Direct value assignment without branching
+    voltage = (channel == 0) ? newSensorData.channel0.busVoltage : newSensorData.channel1.busVoltage;
+    current = (channel == 0) ? newSensorData.channel0.busCurrent : newSensorData.channel1.busCurrent;
+    power = (channel == 0) ? newSensorData.channel0.busPower : newSensorData.channel1.busPower;
+
+    // Get all labels at once
     lv_obj_t *voltage_label = lv_obj_get_child(monitor_container, 2);
     lv_obj_t *current_label = lv_obj_get_child(monitor_container, 4);
     lv_obj_t *power_label = lv_obj_get_child(monitor_container, 6);
 
-    if (!voltage_label || !current_label || !power_label) {
-        Serial.println("Error: Labels not found in monitor container");
-        return;
-    }
+    if (!voltage_label || !current_label || !power_label) return;
 
-    // Format values with adaptive decimal places
-    char voltage_str[8], current_str[8], power_str[8];
-    float voltage, current, power;
+    // Format and update voltage (fixed 3 decimal places)
+    snprintf(str_buf, sizeof(str_buf), "%0.3f", voltage);
+    lv_label_set_text(voltage_label, str_buf);
 
-    // Get the values based on channel
-    if (channel == 0) {
-        voltage = newSensorData.channel0.busVoltage;
-        current = newSensorData.channel0.busCurrent;
-        power = newSensorData.channel0.busPower;
-    } else if (channel == 1) {
-        voltage = newSensorData.channel1.busVoltage;
-        current = newSensorData.channel1.busCurrent;
-        power = newSensorData.channel1.busPower;
-    }
+    // Format and update current (fixed 3 decimal places)
+    snprintf(str_buf, sizeof(str_buf), "%0.3f", current);
+    lv_label_set_text(current_label, str_buf);
 
-    // Format each value with adaptive decimal places
-    if (voltage >= 100)       snprintf(voltage_str, sizeof(voltage_str), "%.1f", voltage);
-    else if (voltage >= 10)   snprintf(voltage_str, sizeof(voltage_str), "%.2f", voltage);
-    else                      snprintf(voltage_str, sizeof(voltage_str), "%.3f", voltage);
-
-    if (current >= 100)       snprintf(current_str, sizeof(current_str), "%.1f", current);
-    else if (current >= 10)   snprintf(current_str, sizeof(current_str), "%.2f", current);
-    else                      snprintf(current_str, sizeof(current_str), "%.3f", current);
-
-    if (power >= 100)         snprintf(power_str, sizeof(power_str), "%.1f", power);
-    else if (power >= 10)     snprintf(power_str, sizeof(power_str), "%.2f", power);
-    else                      snprintf(power_str, sizeof(power_str), "%.3f", power);
-
-    // Update the labels
-    lv_label_set_text(voltage_label, voltage_str);
-    lv_label_set_text(current_label, current_str);
-    lv_label_set_text(power_label, power_str);
-
-    //debug
-    // Serial.printf("Update Monitor Data: Channel %d, Voltage: %s, Current: %s, Power: %s\n", channel, voltage_str, current_str, power_str);
+    // Format and update power (fixed 3 decimal places)
+    snprintf(str_buf, sizeof(str_buf), "%0.3f", power);
+    lv_label_set_text(power_label, str_buf);
 }
 
 void update_count_data(lv_obj_t *count_container, uint8_t channel, DualChannelData newSensorData)
 {
-    //todo
+    // Implementation will be added when needed
+    (void)count_container;
+    (void)channel;
+    (void)newSensorData;
 }
