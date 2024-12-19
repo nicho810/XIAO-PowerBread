@@ -1,4 +1,16 @@
 #include "lvgl_ui_updateFunc.h"
+#include "INA3221Sensor.h"
+
+static void format_value(char* buf, size_t buf_size, float value) {
+    int32_t val100 = (int32_t)(value * 100.0f);
+    if (val100 >= 10000) {
+        snprintf(buf, buf_size, "%0.1f", value);
+    } else if (val100 >= 1000) {
+        snprintf(buf, buf_size, "%0.2f", value);
+    } else {
+        snprintf(buf, buf_size, "%0.3f", value);
+    }
+}
 
 void update_chart_data(lv_obj_t *chart_container, int32_t new_value)
 {
@@ -21,30 +33,23 @@ void update_monitor_data(lv_obj_t *monitor_container, uint8_t channel, DualChann
     if (!monitor_container) return;
 
     static char str_buf[8];  // Single buffer for all string conversions
-    float voltage, current, power;
+    
+    const INAData* data = channel ? &newSensorData.channel1 : &newSensorData.channel0;
 
-    // Direct value assignment without branching
-    voltage = (channel == 0) ? newSensorData.channel0.busVoltage : newSensorData.channel1.busVoltage;
-    current = (channel == 0) ? newSensorData.channel0.busCurrent : newSensorData.channel1.busCurrent;
-    power = (channel == 0) ? newSensorData.channel0.busPower : newSensorData.channel1.busPower;
-
-    // Get all labels at once
-    lv_obj_t *voltage_label = lv_obj_get_child(monitor_container, 2);
-    lv_obj_t *current_label = lv_obj_get_child(monitor_container, 4);
-    lv_obj_t *power_label = lv_obj_get_child(monitor_container, 6);
+    // Direct child access using indices
+    lv_obj_t* voltage_label = lv_obj_get_child(monitor_container, 2);
+    lv_obj_t* current_label = lv_obj_get_child(monitor_container, 4);
+    lv_obj_t* power_label = lv_obj_get_child(monitor_container, 6);
 
     if (!voltage_label || !current_label || !power_label) return;
-
-    // Format and update voltage (fixed 3 decimal places)
-    snprintf(str_buf, sizeof(str_buf), "%0.3f", voltage);
+    
+    format_value(str_buf, sizeof(str_buf), data->busVoltage);
     lv_label_set_text(voltage_label, str_buf);
 
-    // Format and update current (fixed 3 decimal places)
-    snprintf(str_buf, sizeof(str_buf), "%0.3f", current);
+    format_value(str_buf, sizeof(str_buf), data->busCurrent);
     lv_label_set_text(current_label, str_buf);
 
-    // Format and update power (fixed 3 decimal places)
-    snprintf(str_buf, sizeof(str_buf), "%0.3f", power);
+    format_value(str_buf, sizeof(str_buf), data->busPower);
     lv_label_set_text(power_label, str_buf);
 }
 

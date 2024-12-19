@@ -195,25 +195,30 @@ void sensorUpdateTask(void *pvParameters)
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(10);
 
+    // Add threshold for updates to reduce unnecessary refreshes
+    const float UPDATE_THRESHOLD = 0.005f;  // 5mV/mA threshold
+    
     while (1)
     {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
         
-        // Single mutex take for sensor data
         if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE)
         {
             DualChannelData newSensorData = inaSensor.readCurrentSensors();
             
-            // Quick delta check using direct comparison
-            if ((abs(newSensorData.channel0.busCurrent - latestSensorData.channel0.busCurrent) > 0.01) ||
-                (abs(newSensorData.channel1.busCurrent - latestSensorData.channel1.busCurrent) > 0.01) ||
-                forceUpdate_flag) 
-            {
-                latestSensorData = newSensorData;  // Update data directly
+            // Only update if change exceeds threshold or force update requested
+            bool shouldUpdate = forceUpdate_flag;
+            if (!shouldUpdate) {
+                shouldUpdate = (abs(newSensorData.channel0.busCurrent - latestSensorData.channel0.busCurrent) > UPDATE_THRESHOLD) ||
+                             (abs(newSensorData.channel1.busCurrent - latestSensorData.channel1.busCurrent) > UPDATE_THRESHOLD) ||
+                             (abs(newSensorData.channel0.busVoltage - latestSensorData.channel0.busVoltage) > UPDATE_THRESHOLD) ||
+                             (abs(newSensorData.channel1.busVoltage - latestSensorData.channel1.busVoltage) > UPDATE_THRESHOLD);
+            }
 
-                // Single mutex take for UI update
-                if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE && ui_container != NULL)
-                {
+            if (shouldUpdate) {
+                latestSensorData = newSensorData;
+                
+                if (xSemaphoreTake(lvglMutex, 0) == pdTRUE) {  // Non-blocking mutex take
                     lv_obj_t *container0 = lv_obj_get_child(ui_container, 0);
                     
                     if (container0) {  // At least one container exists
@@ -239,7 +244,7 @@ void sensorUpdateTask(void *pvParameters)
                                 break;
                         }
                         
-                        lv_timer_handler();
+                        // lv_timer_handler(); //Note: no need to call here, let lvgl_task handle it
                     }
                     xSemaphoreGive(lvglMutex);
                 }
@@ -255,10 +260,10 @@ void sensorUpdateTask(void *pvParameters)
 // LVGL Task Function
 void lvglTask(void *parameter)
 {
-    const TickType_t xFrequency = pdMS_TO_TICKS(1); // Run every 1ms
+    const TickType_t xFrequency = pdMS_TO_TICKS(5); // Increase refresh rate to 200Hz
     
     while (1) {
-        if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE) {
+        if (xSemaphoreTake(lvglMutex, 0) == pdTRUE) {  // Non-blocking mutex take
             lv_timer_handler();
             xSemaphoreGive(lvglMutex);
         }
