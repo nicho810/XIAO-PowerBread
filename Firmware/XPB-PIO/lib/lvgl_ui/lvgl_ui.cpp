@@ -1,5 +1,5 @@
 #include "lvgl_ui.h"
-#include "xpb_color_palette.h"
+
 
 
 // Add this helper function at the top of the file

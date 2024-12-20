@@ -18,15 +18,15 @@
  * https://github.com/nicho810/XIAO-PowerBread
  *
  * This project uses the following libraries:
- * - INA3221_RT Library: https://github.com/RobTillaart/INA3221_RT/tree/master
- * - Adafruit GFX Library: https://github.com/adafruit/Adafruit-GFX-Library
- * - Adafruit ST7735 Library: https://github.com/adafruit/Adafruit-ST7735-Library
  * - Arduino-Pico Core: https://github.com/earlephilhower/arduino-pico
  * - Arduino-ESP32: https://github.com/espressif/arduino-esp32
- * - Adafruit SleepyDog Library: https://github.com/adafruit/Adafruit_SleepyDog
+ * - INA3221_RT Library: https://github.com/RobTillaart/INA3221_RT/tree/master
  * - LVGL: https://github.com/lvgl/lvgl
  * - LovyanGFX: https://github.com/lovyan03/LovyanGFX
- * Note: A modified version of Adafruit_ST7735 library is included since v1.1.2 to fit the LCD module used in this project.
+ * 
+ * About the LCD Driver Library: 
+ * A modified version of Adafruit_ST7735&Adafruit_GFX library for v1.x
+ * LovyanGFX is used starting from v2.x to make UI response faster.
  * We are grateful to the developers and contributors of these libraries.
  *
  * Licensed under the MIT License
@@ -132,9 +132,10 @@ void xpb_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *colo
 }
 
 // UIs
-#include "ui_style.h"
 #include "lvgl_ui.h"
 #include "lvgl_ui_updateFunc.h"
+#include "xpb_color_palette.h"
+
 
 // Dial Switch
 #include "dialSwitch.h"
@@ -551,7 +552,7 @@ void setup(void)
     tft.init();
     tft.setColorDepth(16);         // RGB565
     tft.setRotation(tft_Rotation); // Set initial hardware rotation = 0
-    tft.fillScreen(color_Background);
+    tft.fillScreen(0x0000); // Black screen
 
     // LVGL LCD Init
     lv_init();
