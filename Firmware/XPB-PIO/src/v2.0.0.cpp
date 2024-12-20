@@ -383,22 +383,20 @@ void dialReadTask(void *pvParameters)
 {
     (void)pvParameters;
     TickType_t xLastReadTime = 0;
-    const TickType_t xReadInterval = pdMS_TO_TICKS(100); // Read every 100ms
+    const TickType_t xReadInterval = pdMS_TO_TICKS(50); // Read every 50ms
     TickType_t pressStartTime = 0;
-    const TickType_t longPressThreshold = pdMS_TO_TICKS(50); // 0.5 second
+    const TickType_t longPressThreshold = pdMS_TO_TICKS(1000); // 1 second
     bool longPressDetected = false;
     bool shortPressHandled = false;
 
     while (1)
     {
-
         TickType_t xCurrentTime = xTaskGetTickCount();
         if ((xCurrentTime - xLastReadTime) >= xReadInterval)
         {
             dialStatus = dial.readDialStatus();
 
-            if (dialStatus == 3)
-            { // Pressed
+            if (dialStatus == 3) { // Pressed
                 if (pressStartTime == 0)
                 {
                     pressStartTime = xCurrentTime;
@@ -411,23 +409,45 @@ void dialReadTask(void *pvParameters)
                     vTaskDelay(pdMS_TO_TICKS(300)); // Debounce delay
                 }
             }
-            else if (dialStatus == 0)
-            { // Reset
-                if (lastDialStatus == 1)
-                { // Was Up
+            else if (dialStatus == 0) { // Reset
+                if (lastDialStatus == 1) { // Was Up
                     Serial.println("Dial released from Up");
-                    vTaskDelay(pdMS_TO_TICKS(50)); // Debounce delay
+                    vTaskDelay(pdMS_TO_TICKS(50));
                 }
-                else if (lastDialStatus == 2)
-                { // Was Down
+                else if (lastDialStatus == 2) { // Was Down
                     Serial.println("Dial released from Down");
-                    vTaskDelay(pdMS_TO_TICKS(50)); // Debounce delay
+                    vTaskDelay(pdMS_TO_TICKS(50));
                 }
-                else if (pressStartTime != 0 && !longPressDetected && !shortPressHandled)
-                {
+                else if (pressStartTime != 0 && !longPressDetected && !shortPressHandled) {
                     Serial.println("Dial short pressed");
                     shortPressHandled = true;
-                    vTaskDelay(pdMS_TO_TICKS(300)); // Debounce delay
+                    
+                    // Change function mode
+                    current_functionMode = static_cast<function_mode>((static_cast<int>(current_functionMode) + 1) % dataChart);
+                    functionMode_ChangeRequested = true;
+                    
+                    // Initialize new UI based on the mode
+                    if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE) {
+                        lv_obj_clean(lv_scr_act());
+                        switch (current_functionMode) {
+                            case dataMonitor:
+                                ui_container = dataMonitor_initUI(tft_Rotation);
+                                break;
+                            case dataMonitorChart:
+                                ui_container = dataMonitorChart_initUI(tft_Rotation, highLightChannel);
+                                break;
+                            case dataMonitorCount:
+                                ui_container = dataMonitorCount_initUI(tft_Rotation, highLightChannel);
+                                break;
+                            default:
+                                ui_container = dataMonitor_initUI(tft_Rotation);
+                                break;
+                        }
+                        forceUpdate_flag = 1;
+                        xSemaphoreGive(lvglMutex);
+                    }
+                    
+                    vTaskDelay(pdMS_TO_TICKS(300));
                 }
                 pressStartTime = 0;
                 longPressDetected = false;
@@ -436,7 +456,7 @@ void dialReadTask(void *pvParameters)
             lastDialStatus = dialStatus;
             xLastReadTime = xCurrentTime;
         }
-        vTaskDelay(pdMS_TO_TICKS(10)); // Reduced delay for more frequent checks
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
