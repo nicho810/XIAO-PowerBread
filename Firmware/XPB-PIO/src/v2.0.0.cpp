@@ -50,7 +50,7 @@
 // #include "XPB_ST7735.h"
 // #include <SPI.h>
 #include <LovyanGFX.h>
-#include <LGFX_RP2040_096_XPB.hpp>
+#include <LGFX_XPB_XIAO_RP2040.hpp>
 #include <lvgl.h>
 
 // // LCD Pin Assignments
@@ -144,12 +144,8 @@ volatile int tft_Rotation = 0; // default rotation.
 #include "INA3221Sensor.h"
 INA3221Sensor inaSensor;
 DualChannelData latestSensorData; // Add a global variable to store the latest sensor data
-DualChannelData oldSensorData;
-float avgS[2] = {0}, avgM[2] = {0}, avgA[2] = {0}, peak[2] = {0}; // Average values for each channel
-unsigned long dataCount[2] = {0};                                 // Data count for each channel
-unsigned long lastUpdate = 0;                                     // Last update time
-double sumS[2] = {0}, sumM[2] = {0}, sumA[2] = {0};               // Sum of values for each channel
-unsigned long countS[2] = {0}, countM[2] = {0};                   // Count of values for each channel
+float avgS[2] = {0}, avgM[2] = {0}, avgH[2] = {0}, peak[2] = {0}; // Average values for each channel
+
 
 // FreeRTOS Task Declarations
 #if defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_S3) || defined(SEEED_XIAO_C6)
@@ -192,9 +188,22 @@ void sensorUpdateTask(void *pvParameters)
     (void)pvParameters;
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(10);
-
-    // Add threshold for updates to reduce unnecessary refreshes
     const float UPDATE_THRESHOLD = 0.005f;  // 5mV/mA threshold
+    
+    // Static buffers for averaging
+    static const int SHORT_SAMPLES = 100;   // 1 second
+    static const int MED_SAMPLES = 1000;    // 10 seconds
+    static const int LONG_SAMPLES = 6000;   // 60 seconds
+    static float shortBuffer[2][SHORT_SAMPLES] = {{0}};
+    static float medBuffer[2][MED_SAMPLES] = {{0}};
+    static float longBuffer[2][LONG_SAMPLES] = {{0}};
+    static int shortIndex = 0;
+    static int medIndex = 0;
+    static int longIndex = 0;
+    
+    // Add these static variables at the start of sensorUpdateTask
+    static bool buffersInitialized = false;
+    static int sampleCount[2] = {0, 0};
     
     while (1)
     {
@@ -204,7 +213,37 @@ void sensorUpdateTask(void *pvParameters)
         {
             DualChannelData newSensorData = inaSensor.readCurrentSensors();
             
-            // Only update if change exceeds threshold or force update requested
+            // Calculate averages for dataMonitorCount mode
+            if (current_functionMode == dataMonitorCount) {
+                for (int ch = 0; ch < 2; ch++) {
+                    float currentVal = (ch == 0) ? newSensorData.channel0.busCurrent 
+                                               : newSensorData.channel1.busCurrent;
+                    
+                    // 1-second moving average
+                    float alphaS = 0.3f;  // Faster response time
+                    avgS[ch] = (alphaS * currentVal) + ((1.0f - alphaS) * avgS[ch]);
+                    
+                    // 1-minute moving average
+                    float alphaM = 0.002f;
+                    avgM[ch] = (alphaM * currentVal) + ((1.0f - alphaM) * avgM[ch]);
+                    
+                    // 1-hour moving average
+                    float alphaH = 0.000033f;
+                    avgH[ch] = (alphaH * currentVal) + ((1.0f - alphaH) * avgH[ch]);
+                    
+                    // Update peak values
+                    if (currentVal > peak[ch]) {
+                        peak[ch] = currentVal;
+                    }
+                }
+                
+                // Update buffer indices
+                shortIndex = (shortIndex + 1) % SHORT_SAMPLES;
+                medIndex = (medIndex + 1) % MED_SAMPLES;
+                longIndex = (longIndex + 1) % LONG_SAMPLES;
+            }
+            
+            // Check if display update is needed
             bool shouldUpdate = forceUpdate_flag;
             if (!shouldUpdate) {
                 shouldUpdate = (abs(newSensorData.channel0.busCurrent - latestSensorData.channel0.busCurrent) > UPDATE_THRESHOLD) ||
@@ -216,7 +255,7 @@ void sensorUpdateTask(void *pvParameters)
             if (shouldUpdate) {
                 latestSensorData = newSensorData;
                 
-                if (xSemaphoreTake(lvglMutex, 0) == pdTRUE) {  // Non-blocking mutex take
+                if (xSemaphoreTake(lvglMutex, 0) == pdTRUE) {
                     lv_obj_t *container0 = lv_obj_get_child(ui_container, 0);
                     
                     if (container0) {  // At least one container exists
@@ -240,7 +279,15 @@ void sensorUpdateTask(void *pvParameters)
                                 break;
 
                             case dataMonitorCount:
-                                update_count_data(container0, highLightChannel, latestSensorData);
+                                update_monitor_data(container0, 0, latestSensorData);
+                                lv_obj_t *container1 = lv_obj_get_child(ui_container, 1);
+                                update_count_data(container1, highLightChannel, avgS[highLightChannel]);
+                                container1 = lv_obj_get_child(ui_container, 2);
+                                update_count_data(container1, highLightChannel, avgM[highLightChannel]);
+                                container1 = lv_obj_get_child(ui_container, 3);
+                                update_count_data(container1, highLightChannel, avgH[highLightChannel]);
+                                container1 = lv_obj_get_child(ui_container, 4);
+                                update_count_data(container1, highLightChannel, peak[highLightChannel]);
                                 break;
                         }
                         

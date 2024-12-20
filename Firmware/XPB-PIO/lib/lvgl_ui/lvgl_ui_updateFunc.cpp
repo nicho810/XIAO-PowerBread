@@ -54,12 +54,18 @@ void update_monitor_data(lv_obj_t *monitor_container, uint8_t channel, DualChann
     lv_label_set_text(power_label, str_buf);
 }
 
-void update_count_data(lv_obj_t *count_container, uint8_t channel, DualChannelData newSensorData)
+void update_count_data(lv_obj_t *count_container, uint8_t channel, float updateValue)
 {
-    // Implementation will be added when needed
-    (void)count_container;
-    (void)channel;
-    (void)newSensorData;
+    if (!count_container) return;
+
+    static char str_buf[8];  // Single buffer for all string conversions
+
+    // Get value label - it's the second child (index 1)
+    lv_obj_t* value_label = lv_obj_get_child(count_container, 2);
+    if (!value_label) return;
+    
+    format_value(str_buf, sizeof(str_buf), updateValue);
+    lv_label_set_text(value_label, str_buf);
 }
 
 void update_chart_range(lv_obj_t* chart, lv_chart_series_t* series) {

@@ -6,7 +6,7 @@
 
 void update_monitor_data(lv_obj_t *monitor_container, uint8_t channel, DualChannelData newSensorData);
 void update_chart_data(lv_obj_t *chart_container, int32_t new_value);
-void update_count_data(lv_obj_t *count_container, uint8_t channel, DualChannelData newSensorData);  
+void update_count_data(lv_obj_t *count_container, uint8_t channel, float updateValue);  
 void update_chart_range(lv_obj_t* chart, lv_chart_series_t* series);
 
 #endif

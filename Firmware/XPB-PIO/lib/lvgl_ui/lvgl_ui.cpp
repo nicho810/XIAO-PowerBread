@@ -36,7 +36,7 @@ lv_obj_t*  dataMonitorCount_initUI(int rotation, uint8_t channel)
     lv_obj_t *dataMonitor_X;
     lv_obj_t *dataCount_avgS;
     lv_obj_t *dataCount_avgM;
-    lv_obj_t *dataCount_avgA;
+    lv_obj_t *dataCount_avgH;
     lv_obj_t *dataCount_peak;
     uint16_t pos_y_of_avgS = 10;
     if (channel == 0)
@@ -44,7 +44,7 @@ lv_obj_t*  dataMonitorCount_initUI(int rotation, uint8_t channel)
         dataMonitor_X = widget_DataMonitor_create(0, -41, "Channel A", xpb_color_ChannelA);
         dataCount_avgS = widget_DataCount_create(0, pos_y_of_avgS, "AvgS", xpb_color_ChannelA, xpb_color_ChannelA_dark);
         dataCount_avgM = widget_DataCount_create(0, pos_y_of_avgS + 20, "AvgM", xpb_color_ChannelA, xpb_color_ChannelA_dark);
-        dataCount_avgA = widget_DataCount_create(0, pos_y_of_avgS + 40, "AvgA", xpb_color_ChannelA, xpb_color_ChannelA_dark);
+        dataCount_avgH = widget_DataCount_create(0, pos_y_of_avgS + 40, "AvgH", xpb_color_ChannelA, xpb_color_ChannelA_dark);
         dataCount_peak = widget_DataCount_create(0, pos_y_of_avgS + 60, "Peak", xpb_color_ChannelA, xpb_color_ChannelA_dark);
     }
     else if (channel == 1)
@@ -52,7 +52,7 @@ lv_obj_t*  dataMonitorCount_initUI(int rotation, uint8_t channel)
         dataMonitor_X = widget_DataMonitor_create(0, -41, "Channel B", xpb_color_ChannelB);
         dataCount_avgS = widget_DataCount_create(0, pos_y_of_avgS, "AvgS", xpb_color_ChannelB, xpb_color_ChannelB_dark);
         dataCount_avgM = widget_DataCount_create(0, pos_y_of_avgS + 20, "AvgM", xpb_color_ChannelB, xpb_color_ChannelB_dark);
-        dataCount_avgA = widget_DataCount_create(0, pos_y_of_avgS + 40, "AvgA", xpb_color_ChannelB, xpb_color_ChannelB_dark);
+        dataCount_avgH = widget_DataCount_create(0, pos_y_of_avgS + 40, "AvgH", xpb_color_ChannelB, xpb_color_ChannelB_dark);
         dataCount_peak = widget_DataCount_create(0, pos_y_of_avgS + 60, "Peak", xpb_color_ChannelB, xpb_color_ChannelB_dark);
     }
 
@@ -60,7 +60,7 @@ lv_obj_t*  dataMonitorCount_initUI(int rotation, uint8_t channel)
     lv_obj_set_parent(dataMonitor_X, ui_container);
     lv_obj_set_parent(dataCount_avgS, ui_container);
     lv_obj_set_parent(dataCount_avgM, ui_container);
-    lv_obj_set_parent(dataCount_avgA, ui_container);
+    lv_obj_set_parent(dataCount_avgH, ui_container);
     lv_obj_set_parent(dataCount_peak, ui_container);
 
     return ui_container;
