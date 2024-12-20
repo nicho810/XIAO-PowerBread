@@ -507,9 +507,6 @@ void setup(void)
         case dataMonitorCount:
             ui_container = dataMonitorCount_initUI(tft_Rotation, highLightChannel);
             break;
-        // case dataChart:
-        //     ui_container = dataChart_initUI(tft_Rotation, 2);
-        //     break;
         default:
             ui_container = dataMonitor_initUI(tft_Rotation);
             break;

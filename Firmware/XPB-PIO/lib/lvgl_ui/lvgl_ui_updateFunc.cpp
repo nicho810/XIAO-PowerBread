@@ -80,3 +80,5 @@ void update_chart_range(lv_obj_t* chart, lv_chart_series_t* series) {
     // Update chart range with fixed minimum at 0
     lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, max);
 }
+
+
