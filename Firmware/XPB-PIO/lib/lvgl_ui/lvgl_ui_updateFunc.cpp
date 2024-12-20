@@ -25,6 +25,7 @@ void update_chart_data(lv_obj_t *chart_container, int32_t new_value)
     if (!series) return;
     
     lv_chart_set_next_value(chart, series, new_value);
+    update_chart_range(chart, series);
     lv_chart_refresh(chart);
 }
 
@@ -59,4 +60,23 @@ void update_count_data(lv_obj_t *count_container, uint8_t channel, DualChannelDa
     (void)count_container;
     (void)channel;
     (void)newSensorData;
+}
+
+void update_chart_range(lv_obj_t* chart, lv_chart_series_t* series) {
+    // Find max value (min will be fixed at 0)
+    int32_t max = INT32_MIN;
+    uint16_t point_count = lv_chart_get_point_count(chart);
+    
+    for(uint16_t i = 0; i < point_count; i++) {
+        int32_t value = series->y_points[i];
+        if(value != LV_CHART_POINT_NONE) {
+            if(value > max) max = value;
+        }
+    }
+    
+    // Add 10% padding to the top only
+    max += max / 10;
+    
+    // Update chart range with fixed minimum at 0
+    lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, max);
 }

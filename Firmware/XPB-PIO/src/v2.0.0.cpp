@@ -231,9 +231,11 @@ void sensorUpdateTask(void *pvParameters)
                             case dataMonitorChart:
                                 if (lv_obj_t *container1 = lv_obj_get_child(ui_container, 1)) {
                                     update_monitor_data(container0, highLightChannel, latestSensorData);
-                                    update_chart_data(container1, 
-                                        highLightChannel == 0 ? latestSensorData.channel0.busCurrent 
-                                                            : latestSensorData.channel1.busCurrent);
+                                    if (highLightChannel == 0) {
+                                        update_chart_data(container1, latestSensorData.channel0.busCurrent);
+                                    } else {
+                                        update_chart_data(container1, latestSensorData.channel1.busCurrent);
+                                    }
                                 }
                                 break;
 
@@ -421,6 +423,7 @@ void setup(void)
     float shuntResistorCHB = sysConfig.cfg_data.shuntResistorCHB / 1000.0f;
     highLightChannel = sysConfig.cfg_data.default_channel; //0=channel A, 1=channel B, it used when only show one channel data
     current_functionMode = (function_mode)sysConfig.cfg_data.default_mode; //0=dataMonitor, 1=dataMonitorChart, 2=dataMonitorCount, 3=dataChart
+    // current_functionMode = (function_mode)1;
 
 
 
@@ -499,10 +502,10 @@ void setup(void)
             ui_container = dataMonitor_initUI(tft_Rotation);
             break;
         case dataMonitorChart:
-            ui_container = dataMonitorChart_initUI(tft_Rotation, 2);
+            ui_container = dataMonitorChart_initUI(tft_Rotation, highLightChannel);
             break;
         case dataMonitorCount:
-            ui_container = dataMonitorCount_initUI(tft_Rotation, 2);
+            ui_container = dataMonitorCount_initUI(tft_Rotation, highLightChannel);
             break;
         // case dataChart:
         //     ui_container = dataChart_initUI(tft_Rotation, 2);

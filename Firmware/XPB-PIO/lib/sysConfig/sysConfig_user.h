@@ -11,7 +11,7 @@
  * 1-dataMonitorChart: Data monitoring with chart visualization
  * 2-dataMonitorCount: Data monitoring with counter
  */
-#define DEFAULT_MODE 0              
+#define DEFAULT_MODE 1              
 
 /* Default measurement channel selection:
  * 0-CHA (Channel A)

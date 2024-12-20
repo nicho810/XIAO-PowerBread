@@ -1,7 +1,6 @@
 #include "lvgl_ui.h"
 #include "xpb_color_palette.h"
 
-
 lv_obj_t*  dataMonitor_initUI(int rotation)
 {
     // Create main container
@@ -97,6 +96,7 @@ lv_obj_t *dataMonitorChart_initUI(int rotation, uint8_t channel)
         lv_obj_set_parent(dataChart_X, ui_container);
     }
 
+
     return ui_container;
 }
 
@@ -118,24 +118,48 @@ lv_obj_t *widget_DataChart_create(uint16_t x, uint16_t y, lv_color_t color, lv_c
     // Basic chart setup
     lv_obj_set_size(chart, 78, 78);                    // Set chart size slightly smaller than container
     lv_obj_align(chart, LV_ALIGN_CENTER, 0, 0);        // Center in container
+    
+    // Add these lines to adjust padding
+    lv_obj_set_style_pad_left(chart, 4, LV_PART_MAIN);     // Remove left padding
+    lv_obj_set_style_pad_right(chart, 4, LV_PART_MAIN);    // Remove right padding
+    lv_obj_set_style_pad_top(chart, 4, LV_PART_MAIN);      // Remove top padding
+    lv_obj_set_style_pad_bottom(chart, 4, LV_PART_MAIN);   // Remove bottom padding
+
     lv_chart_set_type(chart, LV_CHART_TYPE_LINE);      // Set as line chart
     lv_obj_set_style_border_width(chart, 1, LV_PART_MAIN); //border width
     lv_obj_set_style_border_color(chart, color, LV_PART_MAIN); //border color
     lv_obj_set_style_radius(chart, 4, LV_PART_MAIN);    // Set chart corner radius
     
     // Configure chart properties
-    lv_chart_set_point_count(chart, 100);              // Number of data points
-    lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, 10);  // Y-axis range
+    lv_chart_set_point_count(chart, 70);              // Number of data points
+    lv_chart_set_update_mode(chart, LV_CHART_UPDATE_MODE_SHIFT);
+    
+    // Set Y axis range to auto-scale
+    lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, 100);  // Initial range
+
     lv_chart_set_div_line_count(chart, 6, 0);          // Grid line count
     lv_obj_set_style_line_color(chart, xpb_color_GridLines, LV_PART_MAIN); //grid line color
     
+    // Add dash pattern to grid lines
+    static const lv_style_prop_t props[] = {LV_STYLE_PROP_INV};
+    static lv_style_t style_grid;
+    lv_style_init(&style_grid);
+    lv_style_set_line_dash_width(&style_grid, 6);     // Length of dash
+    lv_style_set_line_dash_gap(&style_grid, 4);       // Length of gap
+    lv_obj_add_style(chart, &style_grid, LV_PART_MAIN);
+
     // Add and style a data series
     lv_chart_series_t *series = lv_chart_add_series(chart, color, LV_CHART_AXIS_PRIMARY_Y);
     
+    // Enable area drawing mode for the series
+    lv_chart_set_series_color(chart, series, color);
+
     // Style modifications
-    lv_obj_set_style_line_width(chart, 2, LV_PART_ITEMS);    // Line thickness
-    lv_obj_set_style_bg_color(chart, color_dark, LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(chart, LV_OPA_10, LV_PART_MAIN); // 10% opacity
+    lv_obj_set_style_line_width(chart, 1, LV_PART_ITEMS);    // Line thickness
+    lv_obj_set_style_line_rounded(chart, true, LV_PART_ITEMS);  // Add this line to make the line curved
+    lv_obj_set_style_bg_color(chart, xpb_color_Background, LV_PART_MAIN);
+    // lv_obj_set_style_bg_opa(chart, LV_OPA_100, LV_PART_MAIN); // 100% opacity
+
 
     return container;
 }
