@@ -123,7 +123,6 @@ enum function_mode {
   dataMonitor,
   dataMonitorChart,
   dataMonitorCount,
-  dataChart,
   // serialMonitor,
   // pwmOutput,
   // analogInputMonitor,
@@ -396,7 +395,57 @@ void dialReadTask(void *pvParameters)
         {
             dialStatus = dial.readDialStatus();
 
-            if (dialStatus == 3) { // Pressed
+            // Handle rotation changes when dial is turned
+            if (dialStatus == 1 || dialStatus == 2) { // Up or Down rotation
+                // Update rotation
+                tft_Rotation = (dialStatus == 1) ? 
+                    (tft_Rotation + 1) % 4 : 
+                    (tft_Rotation + 3) % 4;
+                    
+                if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE) {
+                    // Clear screen and update hardware rotation
+                    lv_obj_clean(lv_scr_act());
+                    tft.setRotation(tft_Rotation);
+                    
+                    // Update LVGL display dimensions
+                    lv_disp_t *disp = lv_disp_get_default();
+                    if (tft_Rotation % 2 == 0) {  // Portrait
+                        disp->driver->hor_res = screen_width;
+                        disp->driver->ver_res = screen_height;
+                    } else {  // Landscape
+                        disp->driver->hor_res = screen_height;
+                        disp->driver->ver_res = screen_width;
+                    }
+
+                    //refresh the UI
+                    lv_refr_now(disp);
+                    
+                    // Reinitialize UI
+                    ui_container = NULL;
+                    
+                    switch (current_functionMode) {
+                        case dataMonitor:
+                            ui_container = dataMonitor_initUI(tft_Rotation);
+                            break;
+                        case dataMonitorChart:
+                            ui_container = dataMonitorChart_initUI(tft_Rotation, highLightChannel);
+                            break;
+                        case dataMonitorCount:
+                            ui_container = dataMonitorCount_initUI(tft_Rotation, highLightChannel);
+                            break;
+                        default:
+                            ui_container = dataMonitor_initUI(tft_Rotation);
+                            break;
+                    }
+                    forceUpdate_flag = 1;
+                    xSemaphoreGive(lvglMutex);
+                }
+                
+                Serial.print("Rotation changed to: ");
+                Serial.println(tft_Rotation);
+                vTaskDelay(pdMS_TO_TICKS(300)); // Debounce delay
+            }
+            else if (dialStatus == 3) { // Pressed
                 if (pressStartTime == 0)
                 {
                     pressStartTime = xCurrentTime;
@@ -423,7 +472,7 @@ void dialReadTask(void *pvParameters)
                     shortPressHandled = true;
                     
                     // Change function mode
-                    current_functionMode = static_cast<function_mode>((static_cast<int>(current_functionMode) + 1) % dataChart);
+                    current_functionMode = static_cast<function_mode>((static_cast<int>(current_functionMode) + 1) % 3);
                     functionMode_ChangeRequested = true;
                     
                     // Initialize new UI based on the mode
@@ -514,7 +563,8 @@ void setup(void)
     // tft.setRotation(tft_Rotation);
 
     tft.init();
-    tft.setColorDepth(16); 
+    tft.setColorDepth(16);
+    tft.setRotation(tft_Rotation); // Set initial hardware rotation
     tft.fillScreen(color_Background);
 
     // LVGL Init
@@ -621,3 +671,4 @@ void vApplicationTickHook(void)
 {
     // it use for checking task states when debugging
 }
+
