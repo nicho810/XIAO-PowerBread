@@ -1,29 +1,29 @@
 #include "lvgl_ui.h"
 #include "xpb_color_palette.h"
-#include "FreeRTOS.h"
-#include "task.h"
+
 
 // Add this helper function at the top of the file
 void cleanupAndWait() {
-    // Delete all objects from the screen
-    lv_obj_clean(lv_scr_act());
-    
-    // Force a screen update
-    lv_refr_now(NULL);
-    
-    // Small delay to ensure cleanup is complete
-    vTaskDelay(pdMS_TO_TICKS(10));
+    lv_obj_clean(lv_scr_act()); // Delete all objects from the screen
+    lv_refr_now(NULL);  // Force a screen update
+    vTaskDelay(pdMS_TO_TICKS(10)); // Small delay to ensure cleanup is complete
 }
 
-// Common function to get container dimensions based on rotation
-void getContainerDimensions(int rotation, uint16_t &width, uint16_t &height) {
-    if (rotation % 2 == 0) {  // Portrait (0 or 2)
-        width = 80;
-        height = 160;
-    } else {  // Landscape (1 or 3)
-        width = 160;
-        height = 80;
+
+// Add event handling to the container
+static void setup_container_events(lv_obj_t* container) {
+    // Make container focusable
+    lv_obj_add_flag(container, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_flag(container, LV_OBJ_FLAG_CLICK_FOCUSABLE);
+    
+    // Add to default group
+    lv_group_t* g = lv_group_get_default();
+    if (g) {
+        lv_group_add_obj(g, container);
     }
+    
+    // Add key event handler
+    lv_obj_add_event_cb(container, key_event_cb, LV_EVENT_KEY, NULL);
 }
 
 lv_obj_t*  dataMonitor_initUI(int rotation)
@@ -66,6 +66,9 @@ lv_obj_t*  dataMonitor_initUI(int rotation)
     lv_obj_set_parent(dataMonitor_A, ui_container);
     lv_obj_set_parent(dataMonitor_B, ui_container);
 
+    // Add event handling
+    setup_container_events(ui_container);
+
     return ui_container;
 }
 
@@ -73,8 +76,7 @@ lv_obj_t*  dataMonitorCount_initUI(int rotation, uint8_t channel)
 {
     cleanupAndWait();
     
-    uint16_t container_width, container_height;
-    getContainerDimensions(rotation, container_width, container_height);
+    uint16_t container_width=80, container_height=160;
 
     // Create main container with correct dimensions
     lv_obj_t *ui_container = lv_obj_create(lv_scr_act());
@@ -109,6 +111,9 @@ lv_obj_t*  dataMonitorCount_initUI(int rotation, uint8_t channel)
         // ... existing channel 1 code ...
     }
 
+    // Add event handling
+    setup_container_events(ui_container);
+
     return ui_container;
 }
 
@@ -116,8 +121,7 @@ lv_obj_t *dataMonitorChart_initUI(int rotation, uint8_t channel)
 {
     cleanupAndWait();
     
-    uint16_t container_width, container_height;
-    getContainerDimensions(rotation, container_width, container_height);
+    uint16_t container_width=80, container_height=160;
 
     // Create main container with correct dimensions
     lv_obj_t *ui_container = lv_obj_create(lv_scr_act());
@@ -143,6 +147,9 @@ lv_obj_t *dataMonitorChart_initUI(int rotation, uint8_t channel)
         // Similar setup for channel 1
         // ... existing channel 1 code ...
     }
+
+    // Add event handling
+    setup_container_events(ui_container);
 
     return ui_container;
 }
@@ -345,3 +352,27 @@ lv_obj_t *widget_DataMonitor_create(uint16_t x, uint16_t y, const char *title_te
     return container;
 }
 
+// Add this implementation
+static void key_event_cb(lv_event_t * e) {
+    lv_event_code_t code = lv_event_get_code(e);
+    if(code == LV_EVENT_KEY) {
+        uint32_t key = lv_event_get_key(e);
+        switch(key) {
+            case LV_KEY_UP:
+                Serial.println("UP key pressed");
+                break;
+                
+            case LV_KEY_DOWN:
+                Serial.println("DOWN key pressed");
+                break;
+                
+            case LV_KEY_ENTER:
+                Serial.println("ENTER pressed(short press dial)");
+                break;
+
+            case LV_KEY_BACKSPACE:  // Our custom long press ENTER code
+                Serial.println("BACKSPACE pressed(long press dial)");
+                break;
+        }
+    }
+}

@@ -46,44 +46,73 @@
 #include <semphr.h>
 
 // LCD
-// #include <Adafruit_GFX.h>
-// #include "XPB_ST7735.h"
-// #include <SPI.h>
 #include <LovyanGFX.h>
-#include <LGFX_XPB_XIAO_RP2040.hpp>
+#include <LGFX_XPB_XIAO_RP2040.hpp> //only for RP2040
 #include <lvgl.h>
 
-// // LCD Pin Assignments
-// #if defined(SEEED_XIAO_RP2040)
-// #define TFT_CS -1  // CS is always connected to ground in this project.
-// #define TFT_RST 29 // XIAO-D3
-// #define TFT_DC 4   // XIAO-D9
-// #define TFT_MOSI 3 // XIAO-D10
-// #define TFT_SCLK 2 // XIAO-D8
-// #elif defined(SEEED_XIAO_RP2350)
-// // Todo
-// #elif defined(SEEED_XIAO_C3)
-// // Todo
-// #elif defined(SEEED_XIAO_S3)
-// // Todo
-// #elif defined(SEEED_XIAO_C6)
-// // Todo
-// #endif
-
-// LCD declaration
-// Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST); // The size of the display is 80x160 (Vertical)
 static LGFX tft;                 // LGFXのインスタンスを作成。
 static LGFX_Sprite sprite(&tft); // スプライトを使う場合はLGFX_Spriteのインスタンスを作成。
 
 #define screen_width 80
 #define screen_height 160
 
-// LVGL declaration
-static lv_disp_draw_buf_t draw_buf;
-const int buf1_size = screen_width * 80; // Screen buffer
-static lv_color_t buf1[buf1_size];
-static lv_color_t buf2[buf1_size];    // Add second buffer
 static lv_obj_t *ui_container = NULL; // Global container for the chart UI
+
+// LVGL Input Device Declaration
+static lv_indev_drv_t indev_drv;
+static bool last_key_pressed = false;
+static uint32_t last_key = 0;
+
+// long press variables
+static uint32_t enter_press_start = 0;
+static const uint32_t LONG_PRESS_DURATION = 500; // 500ms for long press
+static bool long_press_triggered = false;        // New flag to track if long press occurred
+
+// keyboard read function
+static void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
+{
+    if (last_key_pressed)
+    {
+        data->state = LV_INDEV_STATE_PRESSED;
+        data->key = last_key;
+    }
+    else
+    {
+        data->state = LV_INDEV_STATE_RELEASED;
+        data->key = last_key; // Pass the last key that was pressed
+    }
+
+    // Reset the key press state after it's been read
+    last_key_pressed = false;
+}
+
+// Update the key event callback to handle the events differently
+
+// Add this helper function to update the keyboard state
+static void update_keyboard_state(uint8_t dialStatus)
+{
+    if (dialStatus != 0)
+    { // If there's any dial activity
+        switch (dialStatus)
+        {
+        case 1: // Up rotation
+            last_key = LV_KEY_UP;
+            break;
+        case 2: // Down rotation
+            last_key = LV_KEY_DOWN;
+            break;
+        case 3: // Press
+            last_key = LV_KEY_ENTER;
+            break;
+        case 4: // Long press
+            last_key = LV_KEY_BACKSPACE;
+            break;
+        default:
+            return;
+        }
+        last_key_pressed = true;
+    }
+}
 
 // Display flushing function
 void xpb_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -94,10 +123,10 @@ void xpb_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *colo
 
     tft.startWrite();
     tft.setAddrWindow(area->x1, area->y1, w, h);
-    
+
     // Replace individual pushColor with bulk writePixels
     tft.writePixels((uint16_t *)&color_p->full, len, true);
-    
+
     tft.endWrite();
     lv_disp_flush_ready(disp);
 }
@@ -113,26 +142,26 @@ DialFunction dial;
 volatile int dialStatus = 0; // 0: reset, 1: up, 2: down, 3: press, 4: long press
 volatile int lastDialStatus = 0;
 
-//System Config
+// System Config
 #include "sysConfig.h"
 SysConfig sysConfig;
-sysConfig_data cfg_data_default; //default config data
+sysConfig_data cfg_data_default; // default config data
 
-//Function Mode
-enum function_mode {
-  dataMonitor,
-  dataMonitorChart,
-  dataMonitorCount,
-  // serialMonitor,
-  // pwmOutput,
-  // analogInputMonitor,
+// Function Mode
+enum function_mode
+{
+    dataMonitor,
+    dataMonitorChart,
+    dataMonitorCount,
+    // serialMonitor,
+    // pwmOutput,
+    // analogInputMonitor,
 };
 volatile function_mode current_functionMode = dataMonitor;
-volatile bool functionMode_ChangeRequested = true;  //a flag to indicate a mode change is requested
+volatile bool functionMode_ChangeRequested = true; // a flag to indicate a mode change is requested
 volatile bool highLightChannel_ChangeRequested = false;
 uint8_t highLightChannel = 0;
-uint8_t forceUpdate_flag = 0; //0=no force update, 1=force update
-
+uint8_t forceUpdate_flag = 0; // 0=no force update, 1=force update
 
 // LCD Rotation
 volatile bool rotationChangeRequested = false;
@@ -142,9 +171,8 @@ volatile int tft_Rotation = 0; // default rotation.
 // Current sensor
 #include "INA3221Sensor.h"
 INA3221Sensor inaSensor;
-DualChannelData latestSensorData; // Add a global variable to store the latest sensor data
+DualChannelData latestSensorData;                                 // Add a global variable to store the latest sensor data
 float avgS[2] = {0}, avgM[2] = {0}, avgH[2] = {0}, peak[2] = {0}; // Average values for each channel
-
 
 // FreeRTOS Task Declarations
 #if defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_S3) || defined(SEEED_XIAO_C6)
@@ -187,118 +215,131 @@ void sensorUpdateTask(void *pvParameters)
     (void)pvParameters;
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(10);
-    const float UPDATE_THRESHOLD = 0.005f;  // 5mV/mA threshold
-    
+    const float UPDATE_THRESHOLD = 0.005f; // 5mV/mA threshold
+
     // Static buffers for averaging
-    static const int SHORT_SAMPLES = 100;   // 1 second
-    static const int MED_SAMPLES = 1000;    // 10 seconds
-    static const int LONG_SAMPLES = 6000;   // 60 seconds
+    static const int SHORT_SAMPLES = 100; // 1 second
+    static const int MED_SAMPLES = 1000;  // 10 seconds
+    static const int LONG_SAMPLES = 6000; // 60 seconds
     static float shortBuffer[2][SHORT_SAMPLES] = {{0}};
     static float medBuffer[2][MED_SAMPLES] = {{0}};
     static float longBuffer[2][LONG_SAMPLES] = {{0}};
     static int shortIndex = 0;
     static int medIndex = 0;
     static int longIndex = 0;
-    
+
     // Add these static variables at the start of sensorUpdateTask
     static bool buffersInitialized = false;
     static int sampleCount[2] = {0, 0};
-    
+
     while (1)
     {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
-        
+
         if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE)
         {
             DualChannelData newSensorData = inaSensor.readCurrentSensors();
-            
+
             // Calculate averages for dataMonitorCount mode
-            if (current_functionMode == dataMonitorCount) {
-                for (int ch = 0; ch < 2; ch++) {
-                    float currentVal = (ch == 0) ? newSensorData.channel0.busCurrent 
-                                               : newSensorData.channel1.busCurrent;
-                    
+            if (current_functionMode == dataMonitorCount)
+            {
+                for (int ch = 0; ch < 2; ch++)
+                {
+                    float currentVal = (ch == 0) ? newSensorData.channel0.busCurrent
+                                                 : newSensorData.channel1.busCurrent;
+
                     // 1-second moving average
-                    float alphaS = 0.3f;  // Faster response time
+                    float alphaS = 0.3f; // Faster response time
                     avgS[ch] = (alphaS * currentVal) + ((1.0f - alphaS) * avgS[ch]);
-                    
+
                     // 1-minute moving average
                     float alphaM = 0.002f;
                     avgM[ch] = (alphaM * currentVal) + ((1.0f - alphaM) * avgM[ch]);
-                    
+
                     // 1-hour moving average
                     float alphaH = 0.000033f;
                     avgH[ch] = (alphaH * currentVal) + ((1.0f - alphaH) * avgH[ch]);
-                    
+
                     // Update peak values
-                    if (currentVal > peak[ch]) {
+                    if (currentVal > peak[ch])
+                    {
                         peak[ch] = currentVal;
                     }
                 }
-                
+
                 // Update buffer indices
                 shortIndex = (shortIndex + 1) % SHORT_SAMPLES;
                 medIndex = (medIndex + 1) % MED_SAMPLES;
                 longIndex = (longIndex + 1) % LONG_SAMPLES;
             }
-            
+
             // Check if display update is needed
             bool shouldUpdate = forceUpdate_flag;
-            if (!shouldUpdate) {
+            if (!shouldUpdate)
+            {
                 shouldUpdate = (abs(newSensorData.channel0.busCurrent - latestSensorData.channel0.busCurrent) > UPDATE_THRESHOLD) ||
-                             (abs(newSensorData.channel1.busCurrent - latestSensorData.channel1.busCurrent) > UPDATE_THRESHOLD) ||
-                             (abs(newSensorData.channel0.busVoltage - latestSensorData.channel0.busVoltage) > UPDATE_THRESHOLD) ||
-                             (abs(newSensorData.channel1.busVoltage - latestSensorData.channel1.busVoltage) > UPDATE_THRESHOLD);
+                               (abs(newSensorData.channel1.busCurrent - latestSensorData.channel1.busCurrent) > UPDATE_THRESHOLD) ||
+                               (abs(newSensorData.channel0.busVoltage - latestSensorData.channel0.busVoltage) > UPDATE_THRESHOLD) ||
+                               (abs(newSensorData.channel1.busVoltage - latestSensorData.channel1.busVoltage) > UPDATE_THRESHOLD);
             }
 
-            if (shouldUpdate) {
+            if (shouldUpdate)
+            {
                 latestSensorData = newSensorData;
-                
-                if (xSemaphoreTake(lvglMutex, 0) == pdTRUE) {
+
+                if (xSemaphoreTake(lvglMutex, 0) == pdTRUE)
+                {
                     lv_obj_t *container0 = lv_obj_get_child(ui_container, 0);
-                    
-                    if (container0) {  // At least one container exists
-                        switch (current_functionMode) {
-                            case dataMonitor:
-                                if (lv_obj_t *container1 = lv_obj_get_child(ui_container, 1)) {
-                                    update_monitor_data(container0, 0, latestSensorData);
-                                    update_monitor_data(container1, 1, latestSensorData);
-                                }
-                                break;
 
-                            case dataMonitorChart:
-                                if (lv_obj_t *container1 = lv_obj_get_child(ui_container, 1)) {
-                                    update_monitor_data(container0, highLightChannel, latestSensorData);
-                                    if (highLightChannel == 0) {
-                                        update_chart_data(container1, latestSensorData.channel0.busCurrent);
-                                    } else {
-                                        update_chart_data(container1, latestSensorData.channel1.busCurrent);
-                                    }
-                                }
-                                break;
-
-                            case dataMonitorCount:
+                    if (container0)
+                    { // At least one container exists
+                        switch (current_functionMode)
+                        {
+                        case dataMonitor:
+                            if (lv_obj_t *container1 = lv_obj_get_child(ui_container, 1))
+                            {
                                 update_monitor_data(container0, 0, latestSensorData);
-                                lv_obj_t *container1 = lv_obj_get_child(ui_container, 1);
-                                update_count_data(container1, highLightChannel, avgS[highLightChannel]);
-                                container1 = lv_obj_get_child(ui_container, 2);
-                                update_count_data(container1, highLightChannel, avgM[highLightChannel]);
-                                container1 = lv_obj_get_child(ui_container, 3);
-                                update_count_data(container1, highLightChannel, avgH[highLightChannel]);
-                                container1 = lv_obj_get_child(ui_container, 4);
-                                update_count_data(container1, highLightChannel, peak[highLightChannel]);
-                                break;
+                                update_monitor_data(container1, 1, latestSensorData);
+                            }
+                            break;
+
+                        case dataMonitorChart:
+                            if (lv_obj_t *container1 = lv_obj_get_child(ui_container, 1))
+                            {
+                                update_monitor_data(container0, highLightChannel, latestSensorData);
+                                if (highLightChannel == 0)
+                                {
+                                    update_chart_data(container1, latestSensorData.channel0.busCurrent);
+                                }
+                                else
+                                {
+                                    update_chart_data(container1, latestSensorData.channel1.busCurrent);
+                                }
+                            }
+                            break;
+
+                        case dataMonitorCount:
+                            update_monitor_data(container0, 0, latestSensorData);
+                            lv_obj_t *container1 = lv_obj_get_child(ui_container, 1);
+                            update_count_data(container1, highLightChannel, avgS[highLightChannel]);
+                            container1 = lv_obj_get_child(ui_container, 2);
+                            update_count_data(container1, highLightChannel, avgM[highLightChannel]);
+                            container1 = lv_obj_get_child(ui_container, 3);
+                            update_count_data(container1, highLightChannel, avgH[highLightChannel]);
+                            container1 = lv_obj_get_child(ui_container, 4);
+                            update_count_data(container1, highLightChannel, peak[highLightChannel]);
+                            break;
                         }
-                        
+
                         // lv_timer_handler(); //Note: no need to call here, let lvgl_task handle it
                     }
                     xSemaphoreGive(lvglMutex);
                 }
             }
-            
+
             xSemaphoreGive(xSemaphore);
         }
-        
+
         vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
@@ -307,9 +348,11 @@ void sensorUpdateTask(void *pvParameters)
 void lvglTask(void *parameter)
 {
     const TickType_t xFrequency = pdMS_TO_TICKS(5); // Increase refresh rate to 200Hz
-    
-    while (1) {
-        if (xSemaphoreTake(lvglMutex, 0) == pdTRUE) {  // Non-blocking mutex take
+
+    while (1)
+    {
+        if (xSemaphoreTake(lvglMutex, 0) == pdTRUE)
+        { // Non-blocking mutex take
             lv_timer_handler();
             xSemaphoreGive(lvglMutex);
         }
@@ -384,122 +427,81 @@ void dialReadTask(void *pvParameters)
     TickType_t xLastReadTime = 0;
     const TickType_t xReadInterval = pdMS_TO_TICKS(50); // Read every 50ms
     TickType_t pressStartTime = 0;
-    const TickType_t longPressThreshold = pdMS_TO_TICKS(1000); // 1 second
+    const TickType_t longPressThreshold = pdMS_TO_TICKS(700); // 1 second
     bool longPressDetected = false;
     bool shortPressHandled = false;
+
+    // Add debounce variables
+    static uint8_t lastStableStatus = 0;
+    static TickType_t lastChangeTime = 0;
+    const TickType_t debounceDelay = pdMS_TO_TICKS(20); // 20ms debounce delay
 
     while (1)
     {
         TickType_t xCurrentTime = xTaskGetTickCount();
         if ((xCurrentTime - xLastReadTime) >= xReadInterval)
         {
-            dialStatus = dial.readDialStatus();
+            // Read the raw dial status
+            uint8_t rawStatus = dial.readDialStatus();
+
+            // Apply debounce
+            if (rawStatus != lastStableStatus)
+            {
+                if ((xCurrentTime - lastChangeTime) >= debounceDelay)
+                {
+                    // Status has been stable for the debounce period
+                    dialStatus = rawStatus;
+                    lastStableStatus = rawStatus;
+                }
+                lastChangeTime = xCurrentTime;
+            }
 
             // Handle rotation changes when dial is turned
-            if (dialStatus == 1 || dialStatus == 2) { // Up or Down rotation
-                // Update rotation
-                tft_Rotation = (dialStatus == 1) ? 
-                    (tft_Rotation + 1) % 4 : 
-                    (tft_Rotation + 3) % 4;
-                    
-                if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE) {
-                    // Clear screen and update hardware rotation
-                    lv_obj_clean(lv_scr_act());
-                    tft.setRotation(tft_Rotation);
-                    
-                    // Update LVGL display dimensions
-                    lv_disp_t *disp = lv_disp_get_default();
-                    if (tft_Rotation % 2 == 0) {  // Portrait
-                        disp->driver->hor_res = screen_width;
-                        disp->driver->ver_res = screen_height;
-                    } else {  // Landscape
-                        disp->driver->hor_res = screen_height;
-                        disp->driver->ver_res = screen_width;
-                    }
-
-                    //refresh the UI
-                    lv_refr_now(disp);
-                    
-                    // Reinitialize UI
-                    ui_container = NULL;
-                    
-                    switch (current_functionMode) {
-                        case dataMonitor:
-                            ui_container = dataMonitor_initUI(tft_Rotation);
-                            break;
-                        case dataMonitorChart:
-                            ui_container = dataMonitorChart_initUI(tft_Rotation, highLightChannel);
-                            break;
-                        case dataMonitorCount:
-                            ui_container = dataMonitorCount_initUI(tft_Rotation, highLightChannel);
-                            break;
-                        default:
-                            ui_container = dataMonitor_initUI(tft_Rotation);
-                            break;
-                    }
-                    forceUpdate_flag = 1;
-                    xSemaphoreGive(lvglMutex);
-                }
-                
-                Serial.print("Rotation changed to: ");
-                Serial.println(tft_Rotation);
-                vTaskDelay(pdMS_TO_TICKS(300)); // Debounce delay
-            }
-            else if (dialStatus == 3) { // Pressed
-                if (pressStartTime == 0)
-                {
-                    pressStartTime = xCurrentTime;
-                    shortPressHandled = false;
-                }
-                else if ((xCurrentTime - pressStartTime) >= longPressThreshold && !longPressDetected)
-                {
-                    longPressDetected = true;
-                    Serial.println("Dial long pressed");
-                    vTaskDelay(pdMS_TO_TICKS(300)); // Debounce delay
-                }
-            }
-            else if (dialStatus == 0) { // Reset
-                if (lastDialStatus == 1) { // Was Up
-                    Serial.println("Dial released from Up");
-                    vTaskDelay(pdMS_TO_TICKS(50));
-                }
-                else if (lastDialStatus == 2) { // Was Down
-                    Serial.println("Dial released from Down");
-                    vTaskDelay(pdMS_TO_TICKS(50));
-                }
-                else if (pressStartTime != 0 && !longPressDetected && !shortPressHandled) {
-                    Serial.println("Dial short pressed");
-                    shortPressHandled = true;
-                    
-                    // Change function mode
-                    current_functionMode = static_cast<function_mode>((static_cast<int>(current_functionMode) + 1) % 3);
-                    functionMode_ChangeRequested = true;
-                    
-                    // Initialize new UI based on the mode
+            switch (dialStatus) {
+                case 1:  // Up rotation
+                case 2:  // Down rotation
+                    Serial.printf("Dial turn: %d\n", dialStatus);
                     if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE) {
-                        lv_obj_clean(lv_scr_act());
-                        switch (current_functionMode) {
-                            case dataMonitor:
-                                ui_container = dataMonitor_initUI(tft_Rotation);
-                                break;
-                            case dataMonitorChart:
-                                ui_container = dataMonitorChart_initUI(tft_Rotation, highLightChannel);
-                                break;
-                            case dataMonitorCount:
-                                ui_container = dataMonitorCount_initUI(tft_Rotation, highLightChannel);
-                                break;
-                            default:
-                                ui_container = dataMonitor_initUI(tft_Rotation);
-                                break;
-                        }
-                        forceUpdate_flag = 1;
+                        update_keyboard_state(dialStatus);
                         xSemaphoreGive(lvglMutex);
                     }
-                    
-                    vTaskDelay(pdMS_TO_TICKS(300));
-                }
-                pressStartTime = 0;
-                longPressDetected = false;
+                    vTaskDelay(pdMS_TO_TICKS(300)); // Debounce delay
+                    break;
+
+                case 3:  // Pressed
+                    if (pressStartTime == 0) {
+                        pressStartTime = xCurrentTime;
+                        shortPressHandled = false;
+                        longPressDetected = false;
+                    }
+                    else if ((xCurrentTime - pressStartTime) >= longPressThreshold && !longPressDetected) {
+                        if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE) {
+                            update_keyboard_state(4); // 4 = Long press Dial
+                            xSemaphoreGive(lvglMutex);
+                        }
+                        Serial.printf("Dial long pressed: %d\n", dialStatus);
+                        longPressDetected = true;  // Set the flag when long press is detected
+                        vTaskDelay(pdMS_TO_TICKS(100)); // Shorter debounce for better responsiveness
+                    }
+                    break;
+
+                case 0:  // Reset/Released
+                    if (pressStartTime != 0) {  // Only process if there was a press
+                        if (!longPressDetected && !shortPressHandled) {
+                            // This was a short press
+                            Serial.printf("Dial short pressed: %d\n", dialStatus);
+                            if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE) {
+                                update_keyboard_state(3); // 3 = Short press Dial
+                                xSemaphoreGive(lvglMutex); 
+                            }
+                            shortPressHandled = true;
+                        }
+                        // Reset all press tracking variables
+                        pressStartTime = 0;
+                        longPressDetected = false;
+                        vTaskDelay(pdMS_TO_TICKS(100)); // Debounce on release
+                    }
+                    break;
             }
 
             lastDialStatus = dialStatus;
@@ -511,15 +513,6 @@ void dialReadTask(void *pvParameters)
 
 void setup(void)
 {
-    //LED for debug
-    
-    // SPI Init
-    // #if defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
-    // SPI.setMOSI(TFT_MOSI);
-    // SPI.setSCK(TFT_SCLK);
-    // SPI.begin();
-    // #endif
-
     // Serial Init
     Serial.begin(115200);
     Serial.print(F("Hello! XPB-PIO Test"));
@@ -528,20 +521,18 @@ void setup(void)
     dial.init();
 
     // load default config data
-    sysConfig.loadConfig_from(cfg_data_default);//load default config data
+    sysConfig.loadConfig_from(cfg_data_default); // load default config data
     // Load config from EEPROM
-    //sysConfig.begin_EEPROM();
-    //sysConfig.init_EEPROM(0); //0=no force write, 1=force write
-    Serial.println(sysConfig.output_all_config_data_in_String()); //print all config data
+    // sysConfig.begin_EEPROM();
+    // sysConfig.init_EEPROM(0); //0=no force write, 1=force write
+    Serial.println(sysConfig.output_all_config_data_in_String()); // print all config data
 
-    //Apply the cfg_data to the variables
+    // Apply the cfg_data to the variables
     float shuntResistorCHA = sysConfig.cfg_data.shuntResistorCHA / 1000.0f;
     float shuntResistorCHB = sysConfig.cfg_data.shuntResistorCHB / 1000.0f;
-    highLightChannel = sysConfig.cfg_data.default_channel; //0=channel A, 1=channel B, it used when only show one channel data
-    current_functionMode = (function_mode)sysConfig.cfg_data.default_mode; //0=dataMonitor, 1=dataMonitorChart, 2=dataMonitorCount, 3=dataChart
+    highLightChannel = sysConfig.cfg_data.default_channel;                 // 0=channel A, 1=channel B, it used when only show one channel data
+    current_functionMode = (function_mode)sysConfig.cfg_data.default_mode; // 0=dataMonitor, 1=dataMonitorChart, 2=dataMonitorCount, 3=dataChart
     // current_functionMode = (function_mode)1;
-
-
 
     // INA3221 Init
     if (!inaSensor.begin(shuntResistorCHA, shuntResistorCHB))
@@ -557,37 +548,45 @@ void setup(void)
         }
     }
 
-    // LCD Init
-    // tft.setSPISpeed(40000000); // 40Mhz is the max speed for this display
-    // tft.initR(INITR_GREENTAB);
-    // tft.setRotation(tft_Rotation);
-
     tft.init();
-    tft.setColorDepth(16);
-    tft.setRotation(tft_Rotation); // Set initial hardware rotation
+    tft.setColorDepth(16);         // RGB565
+    tft.setRotation(tft_Rotation); // Set initial hardware rotation = 0
     tft.fillScreen(color_Background);
 
-    // LVGL Init
+    // LVGL LCD Init
     lv_init();
-
-    // Initialize the display buffer with dual buffering
-    lv_disp_draw_buf_init(&draw_buf, buf1, buf2, buf1_size);
-
-    // Initialize display driver with optimized settings
+    // LVGL declaration
+    static lv_disp_draw_buf_t draw_buf;
+    const int buf1_size = screen_width * 80; // Screen buffer
+    static lv_color_t buf1[buf1_size];
+    static lv_color_t buf2[buf1_size];                       // Add second buffer
+    lv_disp_draw_buf_init(&draw_buf, buf1, buf2, buf1_size); // Initialize the display buffer with dual buffering, decrease the buffer if want to save memory.
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
     disp_drv.hor_res = screen_width;
     disp_drv.ver_res = screen_height;
-    disp_drv.flush_cb = xpb_disp_flush;
+    disp_drv.flush_cb = xpb_disp_flush; // attach the flush callback function
     disp_drv.draw_buf = &draw_buf;
     disp_drv.full_refresh = 0; // 0=Enable partial updates for better performance
     disp_drv.direct_mode = 0;  // Direct mode is not supported, set to 0
     disp_drv.antialiasing = 1; // Enable antialiasing for better quality but slower performance (just a bit?)
     lv_disp_drv_register(&disp_drv);
-
-    // Set background color
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(lv_scr_act(), LV_OPA_COVER, LV_PART_MAIN);
+
+    // LVGL Input Device Declaration
+    lv_indev_drv_init(&indev_drv);
+    indev_drv.type = LV_INDEV_TYPE_KEYPAD;
+    indev_drv.read_cb = keyboard_read;
+    lv_indev_t *kb_indev = lv_indev_drv_register(&indev_drv);
+
+    // Set it as default input device (optional)
+    if (kb_indev)
+    {
+        lv_group_t *g = lv_group_create();
+        lv_group_set_default(g);
+        lv_indev_set_group(kb_indev, g);
+    }
 
     // Create LVGL mutex
     lvglMutex = xSemaphoreCreateMutex();
@@ -628,7 +627,7 @@ void setup(void)
             ui_container = dataMonitor_initUI(tft_Rotation);
             break;
         }
-        forceUpdate_flag = 1; //set flag to force update to flush the UI
+        forceUpdate_flag = 1; // set flag to force update to flush the UI
 
         lv_disp_t *disp = lv_disp_get_default();
         lv_refr_now(disp);
@@ -636,12 +635,8 @@ void setup(void)
     }
 
     // Add LVGL optimization settings
-    lv_disp_t * disp = lv_disp_get_default();
-    disp->driver->monitor_cb = NULL;  // Disable monitor callback
-    
-    // Disable unnecessary LVGL features
-    // lv_obj_remove_style_all(lv_scr_act());
-    
+    lv_disp_t *disp = lv_disp_get_default();
+    disp->driver->monitor_cb = NULL; // Disable monitor callback
 
     // Start the scheduler
     // vTaskStartScheduler(); //Note: no need to call this, it will cause a crash
@@ -671,4 +666,3 @@ void vApplicationTickHook(void)
 {
     // it use for checking task states when debugging
 }
-
