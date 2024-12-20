@@ -80,7 +80,7 @@ static LGFX_Sprite sprite(&tft); // スプライトを使う場合はLGFX_Sprite
 
 // LVGL declaration
 static lv_disp_draw_buf_t draw_buf;
-const int buf1_size = screen_width * screen_height; // Full screen buffer
+const int buf1_size = screen_width * 80; // Screen buffer
 static lv_color_t buf1[buf1_size];
 static lv_color_t buf2[buf1_size];    // Add second buffer
 static lv_obj_t *ui_container = NULL; // Global container for the chart UI
