@@ -25,6 +25,7 @@
  * - Arduino-ESP32: https://github.com/espressif/arduino-esp32
  * - Adafruit SleepyDog Library: https://github.com/adafruit/Adafruit_SleepyDog
  * - LVGL: https://github.com/lvgl/lvgl
+ * - LovyanGFX: https://github.com/lovyan03/LovyanGFX
  * Note: A modified version of Adafruit_ST7735 library is included since v1.1.2 to fit the LCD module used in this project.
  * We are grateful to the developers and contributors of these libraries.
  *
@@ -45,30 +46,35 @@
 #include <semphr.h>
 
 // LCD
-#include <Adafruit_GFX.h>
-#include "XPB_ST7735.h"
-#include <SPI.h>
+// #include <Adafruit_GFX.h>
+// #include "XPB_ST7735.h"
+// #include <SPI.h>
+#include <LovyanGFX.h>
+#include <LGFX_RP2040_096_XPB.hpp>
 #include <lvgl.h>
 
-// LCD Pin Assignments
-#if defined(SEEED_XIAO_RP2040)
-#define TFT_CS -1  // CS is always connected to ground in this project.
-#define TFT_RST 29 // XIAO-D3
-#define TFT_DC 4   // XIAO-D9
-#define TFT_MOSI 3 // XIAO-D10
-#define TFT_SCLK 2 // XIAO-D8
-#elif defined(SEEED_XIAO_RP2350)
-// Todo
-#elif defined(SEEED_XIAO_C3)
-// Todo
-#elif defined(SEEED_XIAO_S3)
-// Todo
-#elif defined(SEEED_XIAO_C6)
-// Todo
-#endif
+// // LCD Pin Assignments
+// #if defined(SEEED_XIAO_RP2040)
+// #define TFT_CS -1  // CS is always connected to ground in this project.
+// #define TFT_RST 29 // XIAO-D3
+// #define TFT_DC 4   // XIAO-D9
+// #define TFT_MOSI 3 // XIAO-D10
+// #define TFT_SCLK 2 // XIAO-D8
+// #elif defined(SEEED_XIAO_RP2350)
+// // Todo
+// #elif defined(SEEED_XIAO_C3)
+// // Todo
+// #elif defined(SEEED_XIAO_S3)
+// // Todo
+// #elif defined(SEEED_XIAO_C6)
+// // Todo
+// #endif
 
 // LCD declaration
-Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST); // The size of the display is 80x160 (Vertical)
+// Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST); // The size of the display is 80x160 (Vertical)
+static LGFX tft;                 // LGFXのインスタンスを作成。
+static LGFX_Sprite sprite(&tft); // スプライトを使う場合はLGFX_Spriteのインスタンスを作成。
+
 #define screen_width 80
 #define screen_height 160
 
@@ -84,22 +90,14 @@ void xpb_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *colo
 {
     uint32_t w = (area->x2 - area->x1 + 1);
     uint32_t h = (area->y2 - area->y1 + 1);
+    uint32_t len = w * h;
 
     tft.startWrite();
     tft.setAddrWindow(area->x1, area->y1, w, h);
-
-    // Use DMA if available, otherwise optimize the push
-    #if defined(USE_DMA)
-        tft.pushPixelsDMA((uint16_t*)color_p, w * h);
-    #else
-    uint16_t *buffer = (uint16_t *)color_p;
-    for (uint32_t i = 0; i < w * h; i++)
-    {
-        tft.pushColor(buffer[i]);
-    }
-    #endif
-
-
+    
+    // Replace individual pushColor with bulk writePixels
+    tft.writePixels((uint16_t *)&color_p->full, len, true);
+    
     tft.endWrite();
     lv_disp_flush_ready(disp);
 }
@@ -140,7 +138,7 @@ uint8_t forceUpdate_flag = 0; //0=no force update, 1=force update
 // LCD Rotation
 volatile bool rotationChangeRequested = false;
 volatile int newRotation = 0;
-volatile int tft_Rotation = 2; // default rotation.
+volatile int tft_Rotation = 0; // default rotation.
 
 // Current sensor
 #include "INA3221Sensor.h"
@@ -398,11 +396,11 @@ void setup(void)
     //LED for debug
     
     // SPI Init
-    #if defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
-    SPI.setMOSI(TFT_MOSI);
-    SPI.setSCK(TFT_SCLK);
-    SPI.begin();
-    #endif
+    // #if defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
+    // SPI.setMOSI(TFT_MOSI);
+    // SPI.setSCK(TFT_SCLK);
+    // SPI.begin();
+    // #endif
 
     // Serial Init
     Serial.begin(115200);
@@ -441,9 +439,12 @@ void setup(void)
     }
 
     // LCD Init
-    tft.setSPISpeed(40000000); // 40Mhz is the max speed for this display
-    tft.initR(INITR_GREENTAB);
-    tft.setRotation(tft_Rotation);
+    // tft.setSPISpeed(40000000); // 40Mhz is the max speed for this display
+    // tft.initR(INITR_GREENTAB);
+    // tft.setRotation(tft_Rotation);
+
+    tft.init();
+    tft.setColorDepth(16); 
     tft.fillScreen(color_Background);
 
     // LVGL Init
