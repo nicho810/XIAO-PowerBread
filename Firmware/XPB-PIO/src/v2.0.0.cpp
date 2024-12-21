@@ -45,6 +45,9 @@
 #include <task.h>
 #include <semphr.h>
 
+#include "dialReadTask.h"
+#include "serialTask.h"
+
 // LCD
 #include <LovyanGFX.h>
 #include <LGFX_XPB_XIAO_RP2040.hpp> //only for RP2040
@@ -60,13 +63,6 @@ static lv_obj_t *ui_container = NULL; // Global container for the chart UI
 
 // LVGL Input Device Declaration
 static lv_indev_drv_t indev_drv;
-static bool last_key_pressed = false;
-static uint32_t last_key = 0;
-
-// long press variables
-static uint32_t enter_press_start = 0;
-static const uint32_t LONG_PRESS_DURATION = 500; // 500ms for long press
-static bool long_press_triggered = false;        // New flag to track if long press occurred
 
 // keyboard read function
 static void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
@@ -86,33 +82,6 @@ static void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
     last_key_pressed = false;
 }
 
-// Update the key event callback to handle the events differently
-
-// Add this helper function to update the keyboard state
-static void update_keyboard_state(uint8_t dialStatus)
-{
-    if (dialStatus != 0)
-    { // If there's any dial activity
-        switch (dialStatus)
-        {
-        case 1: // Up rotation
-            last_key = LV_KEY_UP;
-            break;
-        case 2: // Down rotation
-            last_key = LV_KEY_DOWN;
-            break;
-        case 3: // Press
-            last_key = LV_KEY_ENTER;
-            break;
-        case 4: // Long press
-            last_key = LV_KEY_BACKSPACE;
-            break;
-        default:
-            return;
-        }
-        last_key_pressed = true;
-    }
-}
 
 // Display flushing function
 void xpb_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -362,155 +331,66 @@ void lvglTask(void *parameter)
 }
 
 // Serial Print Task
-void serialPrintTask(void *pvParameters)
-{
-    (void)pvParameters;
-    TickType_t xLastPrintTime = 0;
-    const TickType_t xPrintIntervals[] = {
-        pdMS_TO_TICKS(1000), // 0 - 1000ms
-        pdMS_TO_TICKS(500),  // 1 - 500ms
-        pdMS_TO_TICKS(100),  // 2 - 100ms
-        pdMS_TO_TICKS(50),   // 3 - 50ms
-        pdMS_TO_TICKS(10)    // 4 - 10ms
-    };
+// void serialPrintTask(void *pvParameters)
+// {
+//     (void)pvParameters;
+//     TickType_t xLastPrintTime = 0;
+//     const TickType_t xPrintIntervals[] = {
+//         pdMS_TO_TICKS(1000), // 0 - 1000ms
+//         pdMS_TO_TICKS(500),  // 1 - 500ms
+//         pdMS_TO_TICKS(100),  // 2 - 100ms
+//         pdMS_TO_TICKS(50),   // 3 - 50ms
+//         pdMS_TO_TICKS(10)    // 4 - 10ms
+//     };
+//
+//     // uint8_t intervalIndex = min(sysConfig.cfg_data.serial_printInterval, (uint8_t)4);
+//     uint8_t intervalIndex = 0;
+//     const TickType_t xPrintInterval = xPrintIntervals[intervalIndex];
+//     // const bool serialEnabled = sysConfig.cfg_data.serial_enable;
+//     const bool serialEnabled = true;
+//     // const uint8_t serialMode = sysConfig.cfg_data.serial_mode;
+//     const uint8_t serialMode = 0;
+//
+//     while (1)
+//     {
+//         vTaskDelay(pdMS_TO_TICKS(50)); // Give other tasks a chance to run
+//         TickType_t xCurrentTime = xTaskGetTickCount();
+//         if ((xCurrentTime - xLastPrintTime) >= xPrintInterval)
+//         {
+//             if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(100)) == pdTRUE)
+//             {
+//                 DualChannelData sensorData = latestSensorData;
+//                 xSemaphoreGive(xSemaphore);
+//
+//                 if (Serial && serialEnabled)
+//                 {
+//                     char buffer[150]; // Pre-allocate buffer for string formatting
+//                     if (serialMode == 0)
+//                     {
+//                         snprintf(buffer, sizeof(buffer),
+//                                  "A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW\n",
+//                                  sensorData.channel0.busVoltage, sensorData.channel0.shuntVoltage * 1000,
+//                                  sensorData.channel0.busCurrent, sensorData.channel0.busPower,
+//                                  sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000,
+//                                  sensorData.channel1.busCurrent, sensorData.channel1.busPower);
+//                     }
+//                     else
+//                     {
+//                         snprintf(buffer, sizeof(buffer),
+//                                  "V0:%.2f,I0:%.2f,P0:%.2f,V1:%.2f,I1:%.2f,P1:%.2f\n",
+//                                  sensorData.channel0.busVoltage, sensorData.channel0.busCurrent,
+//                                  sensorData.channel0.busPower, sensorData.channel1.busVoltage,
+//                                  sensorData.channel1.busCurrent, sensorData.channel1.busPower);
+//                     }
+//                     Serial.print(buffer);
+//                 }
+//                 xLastPrintTime = xCurrentTime;
+//             }
+//         }
+//     }
+// }
 
-    // uint8_t intervalIndex = min(sysConfig.cfg_data.serial_printInterval, (uint8_t)4);
-    uint8_t intervalIndex = 0;
-    const TickType_t xPrintInterval = xPrintIntervals[intervalIndex];
-    // const bool serialEnabled = sysConfig.cfg_data.serial_enable;
-    const bool serialEnabled = true;
-    // const uint8_t serialMode = sysConfig.cfg_data.serial_mode;
-    const uint8_t serialMode = 0;
 
-    while (1)
-    {
-        vTaskDelay(pdMS_TO_TICKS(50)); // Give other tasks a chance to run
-        TickType_t xCurrentTime = xTaskGetTickCount();
-        if ((xCurrentTime - xLastPrintTime) >= xPrintInterval)
-        {
-            if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(100)) == pdTRUE)
-            {
-                DualChannelData sensorData = latestSensorData;
-                xSemaphoreGive(xSemaphore);
-
-                if (Serial && serialEnabled)
-                {
-                    char buffer[150]; // Pre-allocate buffer for string formatting
-                    if (serialMode == 0)
-                    {
-                        snprintf(buffer, sizeof(buffer),
-                                 "A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW\n",
-                                 sensorData.channel0.busVoltage, sensorData.channel0.shuntVoltage * 1000,
-                                 sensorData.channel0.busCurrent, sensorData.channel0.busPower,
-                                 sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000,
-                                 sensorData.channel1.busCurrent, sensorData.channel1.busPower);
-                    }
-                    else
-                    {
-                        snprintf(buffer, sizeof(buffer),
-                                 "V0:%.2f,I0:%.2f,P0:%.2f,V1:%.2f,I1:%.2f,P1:%.2f\n",
-                                 sensorData.channel0.busVoltage, sensorData.channel0.busCurrent,
-                                 sensorData.channel0.busPower, sensorData.channel1.busVoltage,
-                                 sensorData.channel1.busCurrent, sensorData.channel1.busPower);
-                    }
-                    Serial.print(buffer);
-                }
-                xLastPrintTime = xCurrentTime;
-            }
-        }
-    }
-}
-
-// Dial Read Task
-void dialReadTask(void *pvParameters)
-{
-    (void)pvParameters;
-    TickType_t xLastReadTime = 0;
-    const TickType_t xReadInterval = pdMS_TO_TICKS(50); // Read every 50ms
-    TickType_t pressStartTime = 0;
-    const TickType_t longPressThreshold = pdMS_TO_TICKS(700); // 1 second
-    bool longPressDetected = false;
-    bool shortPressHandled = false;
-
-    // Add debounce variables
-    static uint8_t lastStableStatus = 0;
-    static TickType_t lastChangeTime = 0;
-    const TickType_t debounceDelay = pdMS_TO_TICKS(20); // 20ms debounce delay
-
-    while (1)
-    {
-        TickType_t xCurrentTime = xTaskGetTickCount();
-        if ((xCurrentTime - xLastReadTime) >= xReadInterval)
-        {
-            // Read the raw dial status
-            uint8_t rawStatus = dial.readDialStatus();
-
-            // Apply debounce
-            if (rawStatus != lastStableStatus)
-            {
-                if ((xCurrentTime - lastChangeTime) >= debounceDelay)
-                {
-                    // Status has been stable for the debounce period
-                    dialStatus = rawStatus;
-                    lastStableStatus = rawStatus;
-                }
-                lastChangeTime = xCurrentTime;
-            }
-
-            // Handle rotation changes when dial is turned
-            switch (dialStatus) {
-                case 1:  // Up rotation
-                case 2:  // Down rotation
-                    Serial.printf("Dial turn: %d\n", dialStatus);
-                    if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE) {
-                        update_keyboard_state(dialStatus);
-                        xSemaphoreGive(lvglMutex);
-                    }
-                    vTaskDelay(pdMS_TO_TICKS(300)); // Debounce delay
-                    break;
-
-                case 3:  // Pressed
-                    if (pressStartTime == 0) {
-                        pressStartTime = xCurrentTime;
-                        shortPressHandled = false;
-                        longPressDetected = false;
-                    }
-                    else if ((xCurrentTime - pressStartTime) >= longPressThreshold && !longPressDetected) {
-                        if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE) {
-                            update_keyboard_state(4); // 4 = Long press Dial
-                            xSemaphoreGive(lvglMutex);
-                        }
-                        Serial.printf("Dial long pressed: %d\n", dialStatus);
-                        longPressDetected = true;  // Set the flag when long press is detected
-                        vTaskDelay(pdMS_TO_TICKS(100)); // Shorter debounce for better responsiveness
-                    }
-                    break;
-
-                case 0:  // Reset/Released
-                    if (pressStartTime != 0) {  // Only process if there was a press
-                        if (!longPressDetected && !shortPressHandled) {
-                            // This was a short press
-                            Serial.printf("Dial short pressed: %d\n", dialStatus);
-                            if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE) {
-                                update_keyboard_state(3); // 3 = Short press Dial
-                                xSemaphoreGive(lvglMutex); 
-                            }
-                            shortPressHandled = true;
-                        }
-                        // Reset all press tracking variables
-                        pressStartTime = 0;
-                        longPressDetected = false;
-                        vTaskDelay(pdMS_TO_TICKS(100)); // Debounce on release
-                    }
-                    break;
-            }
-
-            lastDialStatus = dialStatus;
-            xLastReadTime = xCurrentTime;
-        }
-        vTaskDelay(pdMS_TO_TICKS(10));
-    }
-}
 
 void setup(void)
 {
