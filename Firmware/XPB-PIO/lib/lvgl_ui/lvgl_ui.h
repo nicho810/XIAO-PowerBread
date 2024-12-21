@@ -8,6 +8,9 @@
 #include "xpb_color_palette.h"
 #include "lvgl_ui_widget.h"
 
+// Add this global variable declaration
+extern volatile bool menu_is_visible;
+
 lv_obj_t* dataMonitor_initUI(int rotation);
 lv_obj_t* dataMonitorCount_initUI(int rotation, uint8_t channel);
 lv_obj_t* dataMonitorChart_initUI(int rotation, uint8_t channel);

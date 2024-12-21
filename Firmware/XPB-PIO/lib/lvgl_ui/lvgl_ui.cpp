@@ -7,6 +7,8 @@ void cleanupAndWait() {
     vTaskDelay(pdMS_TO_TICKS(10)); // Small delay to ensure cleanup is complete
 }
 
+// Add this at the top of the file with other global variables
+volatile bool menu_is_visible = false;
 
 // Add event handling to the container
 static void setup_container_events(lv_obj_t* container) {
@@ -27,8 +29,13 @@ static void setup_container_events(lv_obj_t* container) {
 // Add this implementation
 static void key_event_cb(lv_event_t * e) {
     lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t* this_menu = NULL;
     if(code == LV_EVENT_KEY) {
         uint32_t key = lv_event_get_key(e);
+        
+        // Get the container (which is the target of the event)
+        lv_obj_t* container = lv_event_get_target(e);
+        
         switch(key) {
             case LV_KEY_UP:
                 Serial.println("UP key pressed");
@@ -40,9 +47,24 @@ static void key_event_cb(lv_event_t * e) {
                 
             case LV_KEY_ENTER:
                 Serial.println("ENTER pressed(short press dial)");
+                // Toggle menu visibility
+                menu_is_visible = !menu_is_visible;
+                
+                // Find the menu object (last child of the container)
+                if (lv_obj_get_child_cnt(container) > 0) {
+                    this_menu = lv_obj_get_child(container, lv_obj_get_child_cnt(container) - 1);
+                    
+                    if (this_menu) {
+                        if (menu_is_visible) {
+                            lv_obj_clear_flag(this_menu, LV_OBJ_FLAG_HIDDEN);
+                        } else {
+                            lv_obj_add_flag(this_menu, LV_OBJ_FLAG_HIDDEN);
+                        }
+                    }
+                }
                 break;
 
-            case LV_KEY_BACKSPACE:  // Our custom long press ENTER code
+            case LV_KEY_BACKSPACE:
                 Serial.println("BACKSPACE pressed(long press dial)");
                 break;
         }
@@ -182,6 +204,10 @@ lv_obj_t*  dataMonitorCount_initUI(int rotation, uint8_t channel)
         lv_obj_set_parent(dataCount_avgH, ui_container);
         lv_obj_set_parent(dataCount_peak, ui_container);
     }
+
+    // Create menu
+    lv_obj_t *menu = widget_DataCount_Menu_create(0, 0, channel);
+    lv_obj_set_parent(menu, ui_container);
 
     // Add event handling
     setup_container_events(ui_container);
