@@ -49,7 +49,7 @@
 #include "dialReadTask.h" // dial read task
 #include "serialTask.h"   // serial task
 #include "sensorUpdateTask.h" // sensor update task
-
+#include "lvglTask.h" // LVGL task
 // LCD
 #include <LovyanGFX.h>
 #include <LGFX_XPB_XIAO_RP2040.hpp> //only for RP2040
@@ -147,43 +147,25 @@ float avgS[2] = {0}, avgM[2] = {0}, avgH[2] = {0}, peak[2] = {0}; // Average val
 #define STACK_SIZE_SENSOR 1024
 #endif
 
-StaticTask_t xTaskBuffer_UI;
+// Task buffers and stacks
+StaticTask_t xTaskBuffer_UI, xTaskBuffer_Serial, xTaskBuffer_Dial, xTaskBuffer_Sensor;
 StackType_t xStack_UI[STACK_SIZE_UI];
-
-StaticTask_t xTaskBuffer_Serial;
-StackType_t xStack_Serial[STACK_SIZE_SERIAL];
-
-StaticTask_t xTaskBuffer_Dial;
+StackType_t xStack_Serial[STACK_SIZE_SERIAL]; 
 StackType_t xStack_Dial[STACK_SIZE_DIAL];
-
-StaticTask_t xTaskBuffer_Sensor;
 StackType_t xStack_Sensor[STACK_SIZE_SENSOR];
 
+// Task handles
 TaskHandle_t xLvglTaskHandle = NULL;
 TaskHandle_t xSerialTaskHandle = NULL;
 TaskHandle_t xDialTaskHandle = NULL;
 TaskHandle_t xSensorTaskHandle = NULL;
 
+// Semaphores
 SemaphoreHandle_t lvglMutex = NULL;
 SemaphoreHandle_t xSemaphore = NULL;
-
 StaticSemaphore_t xMutexBuffer;
 
-// LVGL Task Function
-void lvglTask(void *parameter)
-{
-    const TickType_t xFrequency = pdMS_TO_TICKS(5); // Increase refresh rate to 200Hz
 
-    while (1)
-    {
-        if (xSemaphoreTake(lvglMutex, 0) == pdTRUE)
-        { // Non-blocking mutex take
-            lv_timer_handler();
-            xSemaphoreGive(lvglMutex);
-        }
-        vTaskDelay(xFrequency);
-    }
-}
 
 void setup(void)
 {
@@ -316,7 +298,6 @@ void setup(void)
     // vTaskStartScheduler(); //Note: no need to call this, it will cause a crash
 }
 
-// Replace the loop function
 void loop()
 {
     // Empty - tasks handle everything
