@@ -45,26 +45,26 @@
 #include <task.h>
 #include <semphr.h>
 
-#include "dialReadTask.h"
-#include "serialTask.h"
+// RTOS Tasks
+#include "dialReadTask.h" // dial read task
+#include "serialTask.h"   // serial task
+#include "sensorUpdateTask.h" // sensor update task
 
 // LCD
 #include <LovyanGFX.h>
 #include <LGFX_XPB_XIAO_RP2040.hpp> //only for RP2040
 #include <lvgl.h>
-
 static LGFX tft;                 // LGFXのインスタンスを作成。
 static LGFX_Sprite sprite(&tft); // スプライトを使う場合はLGFX_Spriteのインスタンスを作成。
-
 #define screen_width 80
 #define screen_height 160
 
-static lv_obj_t *ui_container = NULL; // Global container for the chart UI
 
-// LVGL Input Device Declaration
-static lv_indev_drv_t indev_drv;
+// LVGL UI & Input Device Declaration
+lv_obj_t *ui_container = NULL; // Global container for the chart UI
+static lv_indev_drv_t indev_drv; // Input device driver
 
-// keyboard read function
+// LVGL Input Device Keyboard read function
 static void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
 {
     if (last_key_pressed)
@@ -83,7 +83,7 @@ static void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
 }
 
 
-// Display flushing function
+// LVGL Display flushing function
 void xpb_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
     uint32_t w = (area->x2 - area->x1 + 1);
@@ -105,7 +105,6 @@ void xpb_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *colo
 #include "lvgl_ui_updateFunc.h"
 #include "xpb_color_palette.h"
 
-
 // Dial Switch
 #include "dialSwitch.h"
 DialFunction dial;
@@ -117,23 +116,14 @@ volatile int lastDialStatus = 0;
 SysConfig sysConfig;
 sysConfig_data cfg_data_default; // default config data
 
-// Function Mode
-enum function_mode
-{
-    dataMonitor,
-    dataMonitorChart,
-    dataMonitorCount,
-    // serialMonitor,
-    // pwmOutput,
-    // analogInputMonitor,
-};
+// Global variables
 volatile function_mode current_functionMode = dataMonitor;
-volatile bool functionMode_ChangeRequested = true; // a flag to indicate a mode change is requested
+volatile bool functionMode_ChangeRequested = true;
 volatile bool highLightChannel_ChangeRequested = false;
 uint8_t highLightChannel = 0;
-uint8_t forceUpdate_flag = 0; // 0=no force update, 1=force update
+uint8_t forceUpdate_flag = 0;
 
-// LCD Rotation
+// LCD Rotation variables
 volatile bool rotationChangeRequested = false;
 volatile int newRotation = 0;
 volatile int tft_Rotation = 0; // default rotation.
@@ -179,141 +169,6 @@ SemaphoreHandle_t xSemaphore = NULL;
 
 StaticSemaphore_t xMutexBuffer;
 
-// Sensor Update Task
-void sensorUpdateTask(void *pvParameters)
-{
-    (void)pvParameters;
-    TickType_t xLastWakeTime = xTaskGetTickCount();
-    const TickType_t xFrequency = pdMS_TO_TICKS(10);
-    const float UPDATE_THRESHOLD = 0.005f; // 5mV/mA threshold
-
-    // Static buffers for averaging
-    static const int SHORT_SAMPLES = 100; // 1 second
-    static const int MED_SAMPLES = 1000;  // 10 seconds
-    static const int LONG_SAMPLES = 6000; // 60 seconds
-    static float shortBuffer[2][SHORT_SAMPLES] = {{0}};
-    static float medBuffer[2][MED_SAMPLES] = {{0}};
-    static float longBuffer[2][LONG_SAMPLES] = {{0}};
-    static int shortIndex = 0;
-    static int medIndex = 0;
-    static int longIndex = 0;
-
-    // Add these static variables at the start of sensorUpdateTask
-    static bool buffersInitialized = false;
-    static int sampleCount[2] = {0, 0};
-
-    while (1)
-    {
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
-
-        if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE)
-        {
-            DualChannelData newSensorData = inaSensor.readCurrentSensors();
-
-            // Calculate averages for dataMonitorCount mode
-            if (current_functionMode == dataMonitorCount)
-            {
-                for (int ch = 0; ch < 2; ch++)
-                {
-                    float currentVal = (ch == 0) ? newSensorData.channel0.busCurrent
-                                                 : newSensorData.channel1.busCurrent;
-
-                    // 1-second moving average
-                    float alphaS = 0.3f; // Faster response time
-                    avgS[ch] = (alphaS * currentVal) + ((1.0f - alphaS) * avgS[ch]);
-
-                    // 1-minute moving average
-                    float alphaM = 0.002f;
-                    avgM[ch] = (alphaM * currentVal) + ((1.0f - alphaM) * avgM[ch]);
-
-                    // 1-hour moving average
-                    float alphaH = 0.000033f;
-                    avgH[ch] = (alphaH * currentVal) + ((1.0f - alphaH) * avgH[ch]);
-
-                    // Update peak values
-                    if (currentVal > peak[ch])
-                    {
-                        peak[ch] = currentVal;
-                    }
-                }
-
-                // Update buffer indices
-                shortIndex = (shortIndex + 1) % SHORT_SAMPLES;
-                medIndex = (medIndex + 1) % MED_SAMPLES;
-                longIndex = (longIndex + 1) % LONG_SAMPLES;
-            }
-
-            // Check if display update is needed
-            bool shouldUpdate = forceUpdate_flag;
-            if (!shouldUpdate)
-            {
-                shouldUpdate = (abs(newSensorData.channel0.busCurrent - latestSensorData.channel0.busCurrent) > UPDATE_THRESHOLD) ||
-                               (abs(newSensorData.channel1.busCurrent - latestSensorData.channel1.busCurrent) > UPDATE_THRESHOLD) ||
-                               (abs(newSensorData.channel0.busVoltage - latestSensorData.channel0.busVoltage) > UPDATE_THRESHOLD) ||
-                               (abs(newSensorData.channel1.busVoltage - latestSensorData.channel1.busVoltage) > UPDATE_THRESHOLD);
-            }
-
-            if (shouldUpdate)
-            {
-                latestSensorData = newSensorData;
-
-                if (xSemaphoreTake(lvglMutex, 0) == pdTRUE)
-                {
-                    lv_obj_t *container0 = lv_obj_get_child(ui_container, 0);
-
-                    if (container0)
-                    { // At least one container exists
-                        switch (current_functionMode)
-                        {
-                        case dataMonitor:
-                            if (lv_obj_t *container1 = lv_obj_get_child(ui_container, 1))
-                            {
-                                update_monitor_data(container0, 0, latestSensorData);
-                                update_monitor_data(container1, 1, latestSensorData);
-                            }
-                            break;
-
-                        case dataMonitorChart:
-                            if (lv_obj_t *container1 = lv_obj_get_child(ui_container, 1))
-                            {
-                                update_monitor_data(container0, highLightChannel, latestSensorData);
-                                if (highLightChannel == 0)
-                                {
-                                    update_chart_data(container1, latestSensorData.channel0.busCurrent);
-                                }
-                                else
-                                {
-                                    update_chart_data(container1, latestSensorData.channel1.busCurrent);
-                                }
-                            }
-                            break;
-
-                        case dataMonitorCount:
-                            update_monitor_data(container0, 0, latestSensorData);
-                            lv_obj_t *container1 = lv_obj_get_child(ui_container, 1);
-                            update_count_data(container1, highLightChannel, avgS[highLightChannel]);
-                            container1 = lv_obj_get_child(ui_container, 2);
-                            update_count_data(container1, highLightChannel, avgM[highLightChannel]);
-                            container1 = lv_obj_get_child(ui_container, 3);
-                            update_count_data(container1, highLightChannel, avgH[highLightChannel]);
-                            container1 = lv_obj_get_child(ui_container, 4);
-                            update_count_data(container1, highLightChannel, peak[highLightChannel]);
-                            break;
-                        }
-
-                        // lv_timer_handler(); //Note: no need to call here, let lvgl_task handle it
-                    }
-                    xSemaphoreGive(lvglMutex);
-                }
-            }
-
-            xSemaphoreGive(xSemaphore);
-        }
-
-        vTaskDelay(pdMS_TO_TICKS(1));
-    }
-}
-
 // LVGL Task Function
 void lvglTask(void *parameter)
 {
@@ -329,68 +184,6 @@ void lvglTask(void *parameter)
         vTaskDelay(xFrequency);
     }
 }
-
-// Serial Print Task
-// void serialPrintTask(void *pvParameters)
-// {
-//     (void)pvParameters;
-//     TickType_t xLastPrintTime = 0;
-//     const TickType_t xPrintIntervals[] = {
-//         pdMS_TO_TICKS(1000), // 0 - 1000ms
-//         pdMS_TO_TICKS(500),  // 1 - 500ms
-//         pdMS_TO_TICKS(100),  // 2 - 100ms
-//         pdMS_TO_TICKS(50),   // 3 - 50ms
-//         pdMS_TO_TICKS(10)    // 4 - 10ms
-//     };
-//
-//     // uint8_t intervalIndex = min(sysConfig.cfg_data.serial_printInterval, (uint8_t)4);
-//     uint8_t intervalIndex = 0;
-//     const TickType_t xPrintInterval = xPrintIntervals[intervalIndex];
-//     // const bool serialEnabled = sysConfig.cfg_data.serial_enable;
-//     const bool serialEnabled = true;
-//     // const uint8_t serialMode = sysConfig.cfg_data.serial_mode;
-//     const uint8_t serialMode = 0;
-//
-//     while (1)
-//     {
-//         vTaskDelay(pdMS_TO_TICKS(50)); // Give other tasks a chance to run
-//         TickType_t xCurrentTime = xTaskGetTickCount();
-//         if ((xCurrentTime - xLastPrintTime) >= xPrintInterval)
-//         {
-//             if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(100)) == pdTRUE)
-//             {
-//                 DualChannelData sensorData = latestSensorData;
-//                 xSemaphoreGive(xSemaphore);
-//
-//                 if (Serial && serialEnabled)
-//                 {
-//                     char buffer[150]; // Pre-allocate buffer for string formatting
-//                     if (serialMode == 0)
-//                     {
-//                         snprintf(buffer, sizeof(buffer),
-//                                  "A: %.2fV %.2fmV %.2fmA %.2fmW | B: %.2fV %.2fmV %.2fmA %.2fmW\n",
-//                                  sensorData.channel0.busVoltage, sensorData.channel0.shuntVoltage * 1000,
-//                                  sensorData.channel0.busCurrent, sensorData.channel0.busPower,
-//                                  sensorData.channel1.busVoltage, sensorData.channel1.shuntVoltage * 1000,
-//                                  sensorData.channel1.busCurrent, sensorData.channel1.busPower);
-//                     }
-//                     else
-//                     {
-//                         snprintf(buffer, sizeof(buffer),
-//                                  "V0:%.2f,I0:%.2f,P0:%.2f,V1:%.2f,I1:%.2f,P1:%.2f\n",
-//                                  sensorData.channel0.busVoltage, sensorData.channel0.busCurrent,
-//                                  sensorData.channel0.busPower, sensorData.channel1.busVoltage,
-//                                  sensorData.channel1.busCurrent, sensorData.channel1.busPower);
-//                     }
-//                     Serial.print(buffer);
-//                 }
-//                 xLastPrintTime = xCurrentTime;
-//             }
-//         }
-//     }
-// }
-
-
 
 void setup(void)
 {
