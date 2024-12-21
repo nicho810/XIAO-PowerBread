@@ -27,10 +27,6 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
 ![switchCH](Docs/Images/pic_switchCH.png)
 > Long press the dial to switch channels in chart and statistic mode
 
-![uiRotate](Docs/Images/pic_uiRotation.png)
-> Rotate the dial to adjust the UI for different viewing angles
-
-
 ## Hardware Specifications
 
 - **Input Voltage**: Powered via USB-C through the Seeed Studio XIAO.
@@ -113,15 +109,16 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
 
 ### Firmware Releases
 
-| Version | Stable | Development | Features added | Link |
+| Version | Stable | Tags | Features added | Link |
 |---------|---------|---------|---------|---------|
-| 0.9.0     | Yes | Yes | Real-time current sensor data displayed on the LCD. | - |
-| 1.0.0     | Yes | Yes | Dial wheel to adjust the UI for different viewing angles. | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.0.0) |
-| 1.1.0     | No  | Yes | Line chart mode to visualize power usage for each channel. | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.0) |
-| 1.1.1     | Yes  | Yes | support Data-Dashboard, Line-chart, current-Statistic，Setting | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.1) |
-| 1.1.2     | Yes | Yes | Introduces LED blink functionality for debugging purposes | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.2) |
-| 1.1.3     | Yes👍 | Yes | Add fixed-scale and auto-scale support for line-chart | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.3) |
-| 1.1.4     | Yes👍 | Yes | Add support for XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3, XIAO ESP32-C6 | [Release page](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.4) |
+| 0.9.0     | Yes | - | Real-time current sensor data displayed on the LCD. | - |
+| 1.0.0     | Yes | - | Dial wheel to adjust the UI for different viewing angles. | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.0.0) |
+| 1.1.0     | No  | - | Line chart mode to visualize power usage for each channel. | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.0) |
+| 1.1.1     | Yes  | - | support Data-Dashboard, Line-chart, current-Statistic，Setting | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.1) |
+| 1.1.2     | Yes | - | Introduces LED blink functionality for debugging purposes | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.2) |
+| 1.1.3     | Yes👍 | - | Add fixed-scale and auto-scale support for line-chart | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.3) |
+| 1.1.4     | Yes👍 | - | Add support for XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3, XIAO ESP32-C6 | [MultiPlatform](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.4) |
+| 2.0.0     | No | Beta | Switch to LVGL(LovyanGFX) for UI rendering.| [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v2.0.0) |
 
 ### Documentation
 - [System Config Explanation](Docs/sysConfig.md)
@@ -143,14 +140,18 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
 
 
 ### Libraries Used
-- [INA3221_RT Library](https://github.com/RobTillaart/INA3221_RT/tree/master)
-- [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library)
-- [Adafruit ST7735 Library](https://github.com/adafruit/Adafruit-ST7735-Library) 
-- [Arduino-Pico Core (4.x.x)](https://github.com/earlephilhower/arduino-pico)
-- [Arduino-ESP32 Core (3.x.x)](https://github.com/espressif/arduino-esp32)
-- [adafruit sleepydog](https://github.com/adafruit/Adafruit_SleepyDog)
+| Library | v1.x | v2.x | Link |
+|---------|------|------|------|
+| Arduino-Pico Core | ✅ | ✅ | [Arduino-Pico Core (4.x.x)](https://github.com/earlephilhower/arduino-pico) |
+| Arduino-ESP32 Core | ✅ | ✅ | [Arduino-ESP32 Core (3.x.x)](https://github.com/espressif/arduino-esp32) |
+| INA3221_RT Library | ✅ | ✅ | [INA3221_RT Library](https://github.com/RobTillaart/INA3221_RT/tree/master) |
+| Adafruit GFX Library | ✅ |  | [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library) |
+| Adafruit ST7735 Library | ✅ |  | [Adafruit ST7735 Library](https://github.com/adafruit/Adafruit-ST7735-Library) |
+| Adafruit SleepyDog | ✅ |  | [Adafruit SleepyDog](https://github.com/adafruit/Adafruit_SleepyDog) |
+| LovyanGFX |  | ✅ | [LovyanGFX](https://github.com/lovyan03/LovyanGFX) |
+| LVGL |  | ✅ | [LVGL](https://github.com/lvgl/lvgl) |
 
-> Included a modified version of Adafruit_ST7735 library since v1.1.2 to fit the lcd module used on this project.
+
 
 ## Contributing
 

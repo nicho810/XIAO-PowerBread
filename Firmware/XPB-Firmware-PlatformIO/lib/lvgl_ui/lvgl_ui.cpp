@@ -21,7 +21,6 @@ static void setup_container_events(lv_obj_t* container) {
     if (g) {
         lv_group_add_obj(g, container);
     }
-    
     // Add key event handler
     lv_obj_add_event_cb(container, key_event_cb, LV_EVENT_KEY, NULL);
 }
@@ -29,44 +28,50 @@ static void setup_container_events(lv_obj_t* container) {
 // Add this implementation
 static void key_event_cb(lv_event_t * e) {
     lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t* this_menu = NULL;
     if(code == LV_EVENT_KEY) {
         uint32_t key = lv_event_get_key(e);
         
-        // Get the container (which is the target of the event)
-        lv_obj_t* container = lv_event_get_target(e);
-        
-        switch(key) {
-            case LV_KEY_UP:
-                Serial.println("UP key pressed");
-                break;
-                
-            case LV_KEY_DOWN:
-                Serial.println("DOWN key pressed");
-                break;
-                
-            case LV_KEY_ENTER:
-                Serial.println("ENTER pressed(short press dial)");
-                // Toggle menu visibility
-                menu_is_visible = !menu_is_visible;
-                
-                // Find the menu object (last child of the container)
-                if (lv_obj_get_child_cnt(container) > 0) {
-                    this_menu = lv_obj_get_child(container, lv_obj_get_child_cnt(container) - 1);
-                    
-                    if (this_menu) {
-                        if (menu_is_visible) {
-                            lv_obj_clear_flag(this_menu, LV_OBJ_FLAG_HIDDEN);
-                        } else {
-                            lv_obj_add_flag(this_menu, LV_OBJ_FLAG_HIDDEN);
-                        }
+        if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE) {
+            switch(key) {
+                case LV_KEY_UP:
+                    // Serial.println("UP key pressed");
+                    // Switch to previous UI mode
+                    if (current_functionMode > dataMonitor) {
+                        current_functionMode = static_cast<function_mode>(current_functionMode - 1);
+                    } else {
+                        current_functionMode = dataMonitorCount;  // Wrap around to last mode
                     }
-                }
-                break;
+                    functionMode_ChangeRequested = true;
+                    break;
+                            
+                case LV_KEY_DOWN:
+                    // Serial.println("DOWN key pressed");
+                    // Switch to next UI mode
+                    if (current_functionMode < dataMonitorCount) {
+                        current_functionMode = static_cast<function_mode>(current_functionMode + 1);
+                    } else {
+                        current_functionMode = dataMonitor;  // Wrap around to first mode
+                    }
+                    functionMode_ChangeRequested = true;
+                    break;
+                
+                case LV_KEY_ENTER:
+                    //change the highLight channel
+                    highLightChannel = (highLightChannel + 1) % 2; //0 or 1
+                    highLightChannel_ChangeRequested = true;  // Set this flag
+                    
+                    // Only request UI change for chart and count modes
+                    if (current_functionMode == dataMonitorChart || 
+                        current_functionMode == dataMonitorCount) {
+                        functionMode_ChangeRequested = true;
+                    }
+                    break;
 
-            case LV_KEY_BACKSPACE:
-                Serial.println("BACKSPACE pressed(long press dial)");
-                break;
+                case LV_KEY_BACKSPACE:
+                    // Serial.println("BACKSPACE pressed(long press dial)");
+                    break;
+            } 
+            xSemaphoreGive(xSemaphore);
         }
     }
 }
@@ -146,8 +151,10 @@ lv_obj_t *dataMonitorChart_initUI(int rotation, uint8_t channel)
         lv_obj_set_parent(dataMonitor_X, ui_container);
         lv_obj_set_parent(dataChart_X, ui_container);
     } else {
-        // Similar setup for channel 1
-        // ... existing channel 1 code ...
+        lv_obj_t *dataMonitor_X = widget_DataMonitor_create(monitor_x, monitor_y, "Channel B", xpb_color_ChannelB);
+        lv_obj_t *dataChart_X = widget_DataChart_create(chart_x, chart_y, xpb_color_ChannelB, xpb_color_ChannelB_dark);
+        lv_obj_set_parent(dataMonitor_X, ui_container);
+        lv_obj_set_parent(dataChart_X, ui_container);
     }
 
     // Add event handling

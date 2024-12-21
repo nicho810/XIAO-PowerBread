@@ -13,12 +13,21 @@ lv_obj_t *widget_DataCount_Menu_create(uint16_t x, uint16_t y, uint8_t current_h
     // Create a container
     lv_obj_t *menu_container = lv_obj_create(lv_scr_act());
     lv_obj_clear_flag(menu_container, LV_OBJ_FLAG_SCROLLABLE); // Disable container scrolling
-    lv_obj_set_size(menu_container, 60, 120);
+    lv_obj_set_size(menu_container, 80, 160);
     lv_obj_align(menu_container, LV_ALIGN_CENTER, x, y);
     lv_obj_set_style_radius(menu_container, 5, LV_PART_MAIN);
     lv_obj_set_style_bg_color(menu_container, xpb_color_Background, LV_PART_MAIN); // Black background
-    lv_obj_set_style_border_width(menu_container, 1, LV_PART_MAIN);                // 2px border width
-    lv_obj_set_style_border_color(menu_container, this_channel_color, LV_PART_MAIN);            // Red border color
+    lv_obj_set_style_bg_opa(menu_container, LV_OPA_70, LV_PART_MAIN); // 100% opacity
+    lv_obj_set_style_border_width(menu_container, 0, LV_PART_MAIN); //no border
+
+    //Create a item
+    lv_obj_t *item_1 = lv_obj_create(menu_container);
+    lv_obj_set_size(item_1, 40, 40);
+    lv_obj_align(item_1, LV_ALIGN_CENTER, 0, -40);
+    lv_obj_set_style_bg_color(item_1, xpb_color_Background, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(item_1, LV_OPA_100, LV_PART_MAIN); // 100% opacity
+    lv_obj_set_style_border_width(item_1, 4, LV_PART_MAIN); //no border
+    lv_obj_set_style_border_color(item_1, this_channel_color, LV_PART_MAIN); //border color
 
     //Make the menu hidden by default
     lv_obj_add_flag(menu_container, LV_OBJ_FLAG_HIDDEN);
