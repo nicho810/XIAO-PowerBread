@@ -222,3 +222,71 @@ lv_obj_t*  dataMonitorCount_initUI(int rotation, uint8_t channel)
     return ui_container;
 }
 
+lv_obj_t* configMode_initUI(int rotation)
+{
+    cleanupAndWait();
+
+    uint16_t container_width = 80, container_height = 160;
+
+    // Create main container
+    lv_obj_t *ui_container = lv_obj_create(lv_scr_act());
+    lv_obj_clear_flag(ui_container, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_size(ui_container, container_width, container_height);
+    lv_obj_center(ui_container);
+    lv_obj_set_style_bg_color(ui_container, xpb_color_Background, LV_PART_MAIN);
+    lv_obj_set_style_border_width(ui_container, 0, LV_PART_MAIN);
+
+    // Create menu
+    lv_obj_t *menu = lv_menu_create(ui_container);
+    lv_obj_set_size(menu, container_width, container_height);
+    lv_menu_set_mode_root_back_btn(menu, LV_MENU_ROOT_BACK_BTN_ENABLED);
+    
+    // Create root page
+    lv_obj_t *root_page = lv_menu_page_create(menu, "Settings");
+    lv_obj_t *root_section = lv_menu_section_create(root_page);
+
+    // Create Channel A submenu page
+    lv_obj_t *sub_channelA_page = lv_menu_page_create(menu, "Channel A");
+    lv_obj_t *channelA_section = lv_menu_section_create(sub_channelA_page);
+    
+    // Add items to Channel A submenu
+    lv_obj_t *chA_range = lv_menu_cont_create(channelA_section);
+    lv_obj_t *chA_range_label = lv_label_create(chA_range);
+    lv_label_set_text(chA_range_label, "Range");
+    
+    lv_obj_t *chA_alert = lv_menu_cont_create(channelA_section);
+    lv_obj_t *chA_alert_label = lv_label_create(chA_alert);
+    lv_label_set_text(chA_alert_label, "Alert");
+
+    // Create Channel B submenu page
+    lv_obj_t *sub_channelB_page = lv_menu_page_create(menu, "Channel B");
+    lv_obj_t *channelB_section = lv_menu_section_create(sub_channelB_page);
+    
+    // Add items to Channel B submenu
+    lv_obj_t *chB_range = lv_menu_cont_create(channelB_section);
+    lv_obj_t *chB_range_label = lv_label_create(chB_range);
+    lv_label_set_text(chB_range_label, "Range");
+    
+    lv_obj_t *chB_alert = lv_menu_cont_create(channelB_section);
+    lv_obj_t *chB_alert_label = lv_label_create(chB_alert);
+    lv_label_set_text(chB_alert_label, "Alert");
+
+    // Add main menu items and link to subpages
+    lv_obj_t *channelA_btn = lv_menu_cont_create(root_section);
+    lv_obj_t *channelA_label = lv_label_create(channelA_btn);
+    lv_label_set_text(channelA_label, "Channel A");
+    lv_menu_set_load_page_event(menu, channelA_btn, sub_channelA_page);
+
+    lv_obj_t *channelB_btn = lv_menu_cont_create(root_section);
+    lv_obj_t *channelB_label = lv_label_create(channelB_btn);
+    lv_label_set_text(channelB_label, "Channel B");
+    lv_menu_set_load_page_event(menu, channelB_btn, sub_channelB_page);
+
+    // Set the root page
+    lv_menu_set_page(menu, root_page);
+
+    // Add event handling
+    setup_container_events(ui_container);
+
+    return ui_container;
+}

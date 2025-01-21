@@ -122,6 +122,7 @@ volatile bool functionMode_ChangeRequested = true;
 volatile bool highLightChannel_ChangeRequested = false;
 uint8_t highLightChannel = 0;
 uint8_t forceUpdate_flag = 0;
+volatile bool is_configMode_active = false; // flag to check if the config mode is active
 
 // LCD Rotation variables
 volatile bool rotationChangeRequested = false;
@@ -229,6 +230,8 @@ void setup(void)
     lv_disp_drv_register(&disp_drv);
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(lv_scr_act(), LV_OPA_COVER, LV_PART_MAIN);
+    lv_disp_t *disp = lv_disp_get_default();
+    disp->driver->monitor_cb = NULL; // LVGL optimization settings -> Disable monitor callback
 
     // LVGL Input Device Declaration
     lv_indev_drv_init(&indev_drv);
@@ -264,6 +267,36 @@ void setup(void)
 
     Serial.println("-----------[Boot info end]------------");
 
+    //delay 3 seconds before entering the config mode
+    // vTaskDelay(pdMS_TO_TICKS(3000));
+
+    // Check if user want to enter the config mode
+    if (dial.readDialStatus() == 2) { // 2 = The dial is turned down by user when boot up -> Enter the config mode
+        Serial.println("Entering config mode...");
+
+        // Stop other unrelevant tasks
+        vTaskSuspend(xSensorTaskHandle);
+        vTaskSuspend(xSerialTaskHandle);
+        
+        is_configMode_active = true;
+        if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE) {
+            lv_obj_clean(lv_scr_act());
+            ui_container = configMode_initUI(tft_Rotation);
+            forceUpdate_flag = 1; // set flag to force update to flush the UI
+            lv_disp_t *disp = lv_disp_get_default();
+            lv_refr_now(disp);
+            xSemaphoreGive(lvglMutex);
+        }
+
+        // Wait for the user to exit the config mode
+        while (is_configMode_active) {
+            vTaskDelay(pdMS_TO_TICKS(500)); // Small delay to avoid busy-looping
+        }
+        Serial.println("Exiting config mode...");
+    }
+
+    // Load the config data from EEPROM
+
     // Init the default UI
     if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
     {
@@ -289,10 +322,6 @@ void setup(void)
         lv_refr_now(disp);
         xSemaphoreGive(lvglMutex);
     }
-
-    // Add LVGL optimization settings
-    lv_disp_t *disp = lv_disp_get_default();
-    disp->driver->monitor_cb = NULL; // Disable monitor callback
 
     // Start the scheduler
     // vTaskStartScheduler(); //Note: no need to call this, it will cause a crash

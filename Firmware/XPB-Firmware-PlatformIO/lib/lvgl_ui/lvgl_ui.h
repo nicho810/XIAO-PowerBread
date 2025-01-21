@@ -22,6 +22,7 @@ extern SemaphoreHandle_t xSemaphore;  // Declare the external semaphore
 lv_obj_t* dataMonitor_initUI(int rotation);
 lv_obj_t* dataMonitorCount_initUI(int rotation, uint8_t channel);
 lv_obj_t* dataMonitorChart_initUI(int rotation, uint8_t channel);
+lv_obj_t* configMode_initUI(int rotation);
 
 extern uint8_t highLightChannel;
 
