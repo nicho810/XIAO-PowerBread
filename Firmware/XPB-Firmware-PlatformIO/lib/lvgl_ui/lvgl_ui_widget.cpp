@@ -244,7 +244,7 @@ lv_obj_t *widget_configMode_item(lv_obj_t *parent, uint16_t x, uint16_t y, const
     lv_obj_set_style_bg_color(container, xpb_color_Background, LV_PART_MAIN);
     lv_obj_set_style_border_width(container, 0, LV_PART_MAIN);
 
-    // Create a label
+    // Create a title label
     lv_obj_t *label = lv_label_create(container);
     lv_obj_set_style_text_font(label, &inter_bold_8px_basicLatin_2b, LV_PART_MAIN);
     lv_obj_set_style_text_color(label, xpb_color_Text, LV_PART_MAIN);

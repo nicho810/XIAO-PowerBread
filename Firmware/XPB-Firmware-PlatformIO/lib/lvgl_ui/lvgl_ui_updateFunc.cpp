@@ -88,34 +88,44 @@ void update_chart_range(lv_obj_t* chart, lv_chart_series_t* series) {
 }
 
 
-void update_configMode(lv_obj_t *item_area, int8_t cursor, int8_t cursor_status)
+void update_configMode(lv_obj_t *item_area, int8_t cursor, int8_t cursor_last, int8_t cursor_max, int8_t cursor_status)
 {
     if (!item_area) return;
 
-    for (int i = 0; i < 15; i++) {
-        lv_obj_t *item = lv_obj_get_child(item_area, i);
-        //get the child of the item, which is the value_box
-        lv_obj_t *value_box = lv_obj_get_child(item, 1);
-        if (i == cursor && cursor_status == 0) {  // when the cursor = item_id, and cursor_status = 0(unselected), change the itemStatus to 1(Hover)
-            update_configMode_changeItemStatus(value_box, 1);
-        } else if (i == cursor && cursor_status == 1) {  // when the cursor = item_id, and cursor_status = 1(selected), change the itemStatus to 2(Selected)
-            update_configMode_changeItemStatus(value_box, 2);
-        } else { // when the cursor != item_id, change the itemStatus to 0(unselected)
-            update_configMode_changeItemStatus(value_box, 0);
+    // Validate cursor ranges
+    if (cursor < 0 || cursor >= cursor_max || cursor_last < -1 || cursor_last >= cursor_max) return;
+
+    // Clear previous highlight if valid
+    if (cursor_last >= 0) {
+        lv_obj_t *last_item = lv_obj_get_child(item_area, cursor_last);
+        if (last_item) {
+            lv_obj_t *last_value_box = lv_obj_get_child(last_item, 1);
+            if (last_value_box) {
+                update_configMode_changeItemStatus(last_value_box, 0);
+            }
         }
     }
-    
+
+    // Update current item
+    lv_obj_t *current_item = lv_obj_get_child(item_area, cursor);
+    if (current_item) {
+        lv_obj_t *current_value_box = lv_obj_get_child(current_item, 1);
+        if (current_value_box) {
+            update_configMode_changeItemStatus(current_value_box, 
+                cursor_status == 0 ? 1 : 2); // 1 for hover, 2 for selected
+        }
+    }
 }
 
 void update_configMode_changeItemStatus(lv_obj_t *item, int8_t itemStatus){
     if (!item) return;
 
-    if (itemStatus == 0) {
+    if (itemStatus == 0) { // normal(not selected)
         lv_obj_set_style_border_width(item, 0, LV_PART_MAIN);
-    } else if (itemStatus == 1) {
+    } else if (itemStatus == 1) { // Hover
         lv_obj_set_style_border_width(item, 1, LV_PART_MAIN);
         lv_obj_set_style_border_color(item, xpb_color_Text, LV_PART_MAIN);
-    } else if (itemStatus == 2) {
+    } else if (itemStatus == 2) { // Selected
         lv_obj_set_style_border_width(item, 2, LV_PART_MAIN);
         lv_obj_set_style_border_color(item, xpb_color_ChannelA, LV_PART_MAIN);
     }

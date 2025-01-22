@@ -1,8 +1,12 @@
 #include "lvgl_ui.h"
-extern volatile bool is_configMode_active;
-extern volatile int8_t configMode_cursor;
-extern volatile int8_t configMode_cursor_status;
-extern volatile uint8_t configMode_cursor_max;
+#include "sysConfig.h"
+
+extern ConfigMode configMode;
+// extern volatile bool is_configMode_active;
+// extern volatile int8_t configMode_cursor;
+// extern volatile int8_t configMode_cursor_last; // last cursor position
+// extern volatile int8_t configMode_cursor_status;
+// extern volatile uint8_t configMode_cursor_max;
 
 // Add this helper function at the top of the file
 void cleanupAndWait()
@@ -42,45 +46,45 @@ static void key_event_cb(lv_event_t *e)
 
         if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE)
         {
-            if (is_configMode_active)
+            if (configMode.configState.isActive)
             {
                 switch (key)
                 {
                 case LV_KEY_UP: // Dial turned up (status 1)
-                    Serial.println("UP key pressed: cursor = " + String(configMode_cursor));
-                    Serial.flush();
-
-                    configMode_cursor = (configMode_cursor - 1);
-                    if (configMode_cursor < 0)
+                    configMode.configState.cursorLast = configMode.configState.cursor;
+                    configMode.configState.cursor = (configMode.configState.cursor - 1);
+                    if (configMode.configState.cursor < 0)
                     {
-                        configMode_cursor = configMode_cursor_max;
+                        configMode.configState.cursor = 0;
                     }
+                    Serial.println("UP key pressed: cursor = " + String(configMode.configState.cursor));
+                    Serial.flush();
                     break;
                 case LV_KEY_DOWN: // Dial turned down (status 2)
-                    Serial.println("DOWN key pressed: cursor = " + String(configMode_cursor));
-                    Serial.flush();
-
-                    configMode_cursor = (configMode_cursor + 1);
-                    if (configMode_cursor > configMode_cursor_max)
+                    configMode.configState.cursorLast = configMode.configState.cursor;
+                    configMode.configState.cursor = (configMode.configState.cursor + 1);
+                    if (configMode.configState.cursor > configMode.configState.cursorMax)
                     {
-                        configMode_cursor = configMode_cursor_max;
+                        configMode.configState.cursor = configMode.configState.cursorMax;
                     }
+                    Serial.println("DOWN key pressed: cursor = " + String(configMode.configState.cursor));
+                    Serial.flush();
                     break;
                 case LV_KEY_ENTER: // Short press (status 3)
-                    Serial.println("ENTER key pressed: cursor = " + String(configMode_cursor));
-                    Serial.flush();
 
-                    configMode_cursor_status = 1;
+                    configMode.configState.cursorStatus = 1;
+                    Serial.println("ENTER key pressed: cursor = " + String(configMode.configState.cursor));
+                    Serial.flush();
                     break;
                 case LV_KEY_ESC: // Long press (status 4)
-                    Serial.println("ESC pressed(long press dial): cursor = " + String(configMode_cursor));
-                    Serial.flush();
 
-                    configMode_cursor_status = 0;
+                    configMode.configState.cursorStatus = 0;
+                    Serial.println("ESC pressed(long press dial): cursor = " + String(configMode.configState.cursor));
+                    Serial.flush();
                     break;
                 }
             }
-            else
+            else // not in config mode
             {
                 switch (key)
                 {
@@ -307,9 +311,10 @@ lv_obj_t *configMode_initUI(int rotation)
     lv_obj_add_flag(ui_container, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_flag(ui_container, LV_OBJ_FLAG_CLICK_FOCUSABLE);
     lv_group_t *g = lv_group_get_default();
-    if (g) {
+    if (g)
+    {
         lv_group_add_obj(g, ui_container);
-        lv_group_focus_obj(ui_container);  // Explicitly focus the container
+        lv_group_focus_obj(ui_container); // Explicitly focus the container
     }
 
     // title background
@@ -349,13 +354,7 @@ lv_obj_t *configMode_initUI(int rotation)
     lv_obj_t *item_6 = widget_configMode_item(item_area, -12, item_firstItemPos_y + item_spacing_y * 5, "Unit 6", 128, 0);
     lv_obj_t *item_7 = widget_configMode_item(item_area, -12, item_firstItemPos_y + item_spacing_y * 6, "Unit 7", 128, 0);
     lv_obj_t *item_8 = widget_configMode_item(item_area, -12, item_firstItemPos_y + item_spacing_y * 7, "Unit 8", 128, 0);
-    lv_obj_t *item_9 = widget_configMode_item(item_area, -12, item_firstItemPos_y + item_spacing_y * 8, "Unit 9", 128, 0);
-    lv_obj_t *item_10 = widget_configMode_item(item_area, -12, item_firstItemPos_y + item_spacing_y * 9, "Unit 10", 128, 0);
-    lv_obj_t *item_11 = widget_configMode_item(item_area, -12, item_firstItemPos_y + item_spacing_y * 10, "Unit 11", 128, 0);
-    lv_obj_t *item_12 = widget_configMode_item(item_area, -12, item_firstItemPos_y + item_spacing_y * 11, "Unit 12", 128, 0);
-    lv_obj_t *item_13 = widget_configMode_item(item_area, -12, item_firstItemPos_y + item_spacing_y * 12, "Unit 13", 128, 0);
-    lv_obj_t *item_14 = widget_configMode_item(item_area, -12, item_firstItemPos_y + item_spacing_y * 13, "Unit 14", 128, 0);
-    lv_obj_t *item_15 = widget_configMode_item(item_area, -12, item_firstItemPos_y + item_spacing_y * 14, "Unit 15", 128, 0);
+
 
     return ui_container;
 }

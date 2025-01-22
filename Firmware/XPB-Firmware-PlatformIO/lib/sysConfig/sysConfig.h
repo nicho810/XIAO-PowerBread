@@ -3,6 +3,9 @@
 
 #include <Arduino.h>
 #include <EEPROM.h>
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
 #include "sysConfig_user.h"
 
 struct sysConfig_addr{
@@ -89,6 +92,27 @@ class SysConfig {
         void incrementConfigValue(int cursor, sysConfig_data& cfg_data);
         void decrementConfigValue(int cursor, sysConfig_data& cfg_data);
         String output_all_config_data_in_String();
+};
+
+// Config mode state
+struct ConfigModeState
+{
+    bool isActive;
+    int8_t cursor;
+    int8_t cursorLast;
+    int8_t cursorStatus;
+    int8_t cursorMax;
+};
+
+class ConfigMode{
+    public:
+        ConfigMode() : configState{false, 0, 0, 0, 6} {}
+        ConfigModeState configState;
+        bool enterConfigMode();
+        bool exitConfigMode();
+        void updateConfigCursor(int8_t newCursor);
+        bool getConfigState(ConfigModeState *state);
+        bool updateConfigState(const ConfigModeState *state);
 };
 
 #endif

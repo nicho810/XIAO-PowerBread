@@ -83,10 +83,10 @@ static void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
             data->state = LV_INDEV_STATE_RELEASED;
             data->key = last_key;
         }
-        
+
         // Reset the key press state after it's been read
         last_key_pressed = false;
-        
+
         xSemaphoreGive(xSemaphore);
     }
     else
@@ -130,16 +130,14 @@ volatile int lastDialStatus = 0;
 SysConfig sysConfig;
 sysConfig_data cfg_data_default; // default config data
 
+ConfigMode configMode;
+
 // Global variables
 volatile function_mode current_functionMode = dataMonitor;
 volatile bool functionMode_ChangeRequested = true;
 volatile bool highLightChannel_ChangeRequested = false;
 uint8_t highLightChannel = 0;
 uint8_t forceUpdate_flag = 0;
-volatile bool is_configMode_active = false; // flag to check if the config mode is active
-volatile int8_t configMode_cursor = 0;
-volatile int8_t configMode_cursor_status = 0; // 0 = unselected, 1 = selected
-volatile uint8_t configMode_cursor_max = 14;
 
 // LCD Rotation variables
 volatile bool rotationChangeRequested = false;
@@ -178,7 +176,10 @@ TaskHandle_t xSerialTaskHandle = NULL;
 TaskHandle_t xDialTaskHandle = NULL;
 TaskHandle_t xSensorTaskHandle = NULL;
 
-// Semaphores
+// Add this near the top of the file with other declarations
+extern SemaphoreHandle_t configStateMutex;
+
+// Other semaphores
 SemaphoreHandle_t lvglMutex = NULL;
 SemaphoreHandle_t xSemaphore = NULL;
 StaticSemaphore_t xMutexBuffer;
@@ -265,6 +266,9 @@ void setup(void)
     // Create LVGL mutex
     lvglMutex = xSemaphoreCreateMutex();
 
+    // Create config mode state mutex
+    configStateMutex = xSemaphoreCreateMutex();
+
     // semaphore init
     xSemaphore = xSemaphoreCreateMutexStatic(&xMutexBuffer);
     if (xSemaphore == NULL)
@@ -274,14 +278,11 @@ void setup(void)
             ;
     }
 
-
     // Check if user want to enter the config mode, 2 = The dial is turned down by user when boot up -> Enter the config mode
     if (dial.readDialStatus() == 2)
-    { 
-        // Direct serial print before RTOS starts
+    {
+        configMode.enterConfigMode();
         Serial.println("Entering config mode...");
-        Serial.flush(); // Ensure the message is sent
-        is_configMode_active = true;
     }
     // Create tasks (Create here because we still need it to update the UI even in config mode)
     xSensorTaskHandle = xTaskCreateStatic(sensorUpdateTask, "Sensor_Update", STACK_SIZE_SENSOR, NULL, 3, xStack_Sensor, &xTaskBuffer_Sensor);
@@ -292,7 +293,7 @@ void setup(void)
     // Serial.println("-----------[Boot info end]------------");
 
     // Other things to do when in config mode
-    if (is_configMode_active == true)
+    if (configMode.configState.isActive == true)
     {
         // Stop other unrelevant tasks
         // vTaskSuspend(xSensorTaskHandle);
@@ -309,16 +310,16 @@ void setup(void)
         }
 
         // Wait for the user to exit the config mode
-        while (is_configMode_active)
+        while (configMode.configState.isActive)
         {
             vTaskDelay(pdMS_TO_TICKS(500)); // Small delay to avoid busy-looping
         }
+        configMode.exitConfigMode();
         Serial.println("Exiting config mode...");
         Serial.flush(); // Ensure the message is sent
 
-
-        //resume the other tasks
-        // vTaskResume(xSerialTaskHandle);
+        // resume the other tasks
+        //  vTaskResume(xSerialTaskHandle);
     }
 
     // Load the config data from EEPROM
@@ -376,3 +377,6 @@ void vApplicationTickHook(void)
 {
     // it use for checking task states when debugging
 }
+
+
+

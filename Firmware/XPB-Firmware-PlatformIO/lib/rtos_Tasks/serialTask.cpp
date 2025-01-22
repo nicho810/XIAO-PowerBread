@@ -1,5 +1,7 @@
 #include "serialTask.h"
-extern volatile bool is_configMode_active;
+#include "sysConfig.h"
+
+extern ConfigMode configMode;
 
 extern SemaphoreHandle_t xSemaphore;
 extern DualChannelData latestSensorData;
@@ -27,7 +29,7 @@ void serialPrintTask(void *pvParameters)
         TickType_t xCurrentTime = xTaskGetTickCount();
         if ((xCurrentTime - xLastPrintTime) >= xPrintInterval)
         {
-            if (!is_configMode_active) // Only run this print when not in config mode
+            if (!configMode.configState.isActive) // Only run this print when not in config mode
             {
                 if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(100)) == pdTRUE)
                 {
