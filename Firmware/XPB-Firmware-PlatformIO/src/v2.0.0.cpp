@@ -343,7 +343,15 @@ void setup(void)
             ui_container = dataMonitor_initUI(tft_Rotation);
             break;
         }
-        forceUpdate_flag = 1; // set flag to force update to flush the UI
+        
+        // Initialize with invalid values to force first update
+        latestSensorData.channel0.busCurrent = -999.0f;
+        latestSensorData.channel1.busCurrent = -999.0f;
+        latestSensorData.channel0.busVoltage = -999.0f;
+        latestSensorData.channel1.busVoltage = -999.0f;
+        
+        forceUpdate_flag = true;  // Make sure this is set to true
+        functionMode_ChangeRequested = true;  // Add this line
 
         lv_disp_t *disp = lv_disp_get_default();
         lv_refr_now(disp);

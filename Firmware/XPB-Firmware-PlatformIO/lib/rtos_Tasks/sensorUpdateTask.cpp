@@ -99,14 +99,12 @@ void sensorUpdateTask(void *pvParameters)
                             break;
                         }
 
-                        forceUpdate_flag = true; // force update the ui after mode change
-
-                        // Ensure UI was created successfully
-                        if (ui_container == NULL)
-                        {
-                            // Fallback to default UI if creation failed
-                            ui_container = dataMonitor_initUI(tft_Rotation);
-                        }
+                        forceUpdate_flag = true;
+                        // Initialize latestSensorData with invalid values to force first update
+                        latestSensorData.channel0.busCurrent = -999.0f;
+                        latestSensorData.channel1.busCurrent = -999.0f;
+                        latestSensorData.channel0.busVoltage = -999.0f;
+                        latestSensorData.channel1.busVoltage = -999.0f;
 
                         xSemaphoreGive(lvglMutex);
                     }
@@ -150,8 +148,14 @@ void sensorUpdateTask(void *pvParameters)
                 bool shouldUpdate = forceUpdate_flag;
                 if (!shouldUpdate)
                 {
+                    // Force update if latestSensorData contains invalid values
+                    if (latestSensorData.channel0.busCurrent < -900.0f ||
+                        latestSensorData.channel1.busCurrent < -900.0f)
+                    {
+                        shouldUpdate = true;
+                    }
                     // Always update for Chart and Count modes
-                    if (current_functionMode == dataMonitorChart ||
+                    else if (current_functionMode == dataMonitorChart ||
                         current_functionMode == dataMonitorCount)
                     {
                         shouldUpdate = true;
@@ -160,17 +164,19 @@ void sensorUpdateTask(void *pvParameters)
                     {
                         // For other modes, only update on significant changes
                         shouldUpdate = (abs(newSensorData.channel0.busCurrent - latestSensorData.channel0.busCurrent) > UPDATE_THRESHOLD) ||
-                                       (abs(newSensorData.channel1.busCurrent - latestSensorData.channel1.busCurrent) > UPDATE_THRESHOLD) ||
-                                       (abs(newSensorData.channel0.busVoltage - latestSensorData.channel0.busVoltage) > UPDATE_THRESHOLD) ||
-                                       (abs(newSensorData.channel1.busVoltage - latestSensorData.channel1.busVoltage) > UPDATE_THRESHOLD);
+                                     (abs(newSensorData.channel1.busCurrent - latestSensorData.channel1.busCurrent) > UPDATE_THRESHOLD) ||
+                                     (abs(newSensorData.channel0.busVoltage - latestSensorData.channel0.busVoltage) > UPDATE_THRESHOLD) ||
+                                     (abs(newSensorData.channel1.busVoltage - latestSensorData.channel1.busVoltage) > UPDATE_THRESHOLD);
                     }
                 }
 
                 if (shouldUpdate || highLightChannel_ChangeRequested)
                 {
+
+
                     latestSensorData = newSensorData;
 
-                    if (xSemaphoreTake(lvglMutex, 0) == pdTRUE)
+                    if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(100)) == pdTRUE)  // Increased timeout
                     {
                         lv_obj_t *container0 = lv_obj_get_child(ui_container, 0);
 
@@ -183,6 +189,7 @@ void sensorUpdateTask(void *pvParameters)
                                 {
                                     update_monitor_data(container0, 0, latestSensorData);
                                     update_monitor_data(container1, 1, latestSensorData);
+                                    
                                 }
                                 break;
 
@@ -217,6 +224,10 @@ void sensorUpdateTask(void *pvParameters)
                         }
                         xSemaphoreGive(lvglMutex);
                     }
+                    else {
+                        //Serial.println("Failed to take LVGL mutex for update");
+                    }
+                    
                     forceUpdate_flag = false;
                     highLightChannel_ChangeRequested = false;
                 }
