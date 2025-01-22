@@ -10,14 +10,12 @@ void lvglTask(void *parameter)
         if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
         { 
             // Process any pending LVGL tasks
-            lv_timer_handler();
+            lv_timer_handler();  // This internally handles input device reading
             
-            // Force LVGL to process input devices
-            lv_indev_t * indev = lv_indev_get_next(NULL);
-            while(indev) {
-                lv_indev_data_t data;
-                _lv_indev_read(indev, &data);  // Fixed: added data parameter
-                indev = lv_indev_get_next(indev);
+            // Force a display refresh if needed
+            lv_disp_t * disp = lv_disp_get_default();
+            if(disp) {
+                lv_refr_now(disp);
             }
             
             xSemaphoreGive(lvglMutex);

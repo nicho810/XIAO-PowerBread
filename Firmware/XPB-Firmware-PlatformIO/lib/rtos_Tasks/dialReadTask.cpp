@@ -13,31 +13,31 @@ static bool long_press_triggered = false;
 // Add debounce variables
 static uint8_t lastStableStatus = 0;
 static TickType_t lastChangeTime = 0;
-const TickType_t debounceDelay = pdMS_TO_TICKS(20); // 20ms debounce delay
+const TickType_t debounceDelay = pdMS_TO_TICKS(100); // 100ms debounce delay
 
-void update_keyboard_state(uint8_t dialStatus)
+void update_keyboard_state(uint8_t status)
 {
-    if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(10)) == pdTRUE) {  // Use xSemaphore instead of lvglMutex
-        if (dialStatus != 0) { // If there's any dial activity
-            switch (dialStatus) {
-                case 1: // Up rotation
-                    last_key = LV_KEY_UP;
-                    break;
-                case 2: // Down rotation
-                    last_key = LV_KEY_DOWN;
-                    break;
-                case 3: // Press
-                    last_key = LV_KEY_ENTER;
-                    break;
-                case 4: // Long press
-                    last_key = LV_KEY_BACKSPACE;
-                    break;
-                default:
-                    xSemaphoreGive(xSemaphore);
-                    return;
-            }
-            last_key_pressed = true;
-            Serial.printf("Dial status: %d, Key set: %d\n", dialStatus, last_key);  // Debug print
+    if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(10)) == pdTRUE)
+    {
+        last_key_pressed = true;
+        switch (status)
+        {
+        case 1: // Up
+            last_key = LV_KEY_UP;
+            break;
+        case 2: // Down
+            last_key = LV_KEY_DOWN;
+            break;
+        case 3: // Short press
+            last_key = LV_KEY_ENTER;
+            break;
+        case 4: // Long press
+            last_key = LV_KEY_ESC;
+            break;
+        default:
+            last_key_pressed = false;
+            last_key = 0;
+            break;
         }
         xSemaphoreGive(xSemaphore);
     }
@@ -48,64 +48,83 @@ void dialReadTask(void *pvParameters)
 {
     (void)pvParameters;
     TickType_t xLastReadTime = 0;
-    const TickType_t xReadInterval = pdMS_TO_TICKS(50); // Read every 50ms
+    const TickType_t xReadInterval = pdMS_TO_TICKS(100);
     TickType_t pressStartTime = 0;
-    const TickType_t longPressThreshold = pdMS_TO_TICKS(700); // 1 second
+    const TickType_t longPressThreshold = pdMS_TO_TICKS(700);
     bool longPressDetected = false;
     bool shortPressHandled = false;
+    bool isPressed = false;
 
     while (1)
     {
         TickType_t xCurrentTime = xTaskGetTickCount();
         if ((xCurrentTime - xLastReadTime) >= xReadInterval)
         {
-            uint8_t rawStatus = dial.readDialStatus();// Read the raw dial status
+            uint8_t rawStatus = dial.readDialStatus();
             // Apply debounce
-            if (rawStatus != lastStableStatus){
-                if ((xCurrentTime - lastChangeTime) >= debounceDelay) // Status has been stable for the debounce period
+            if (rawStatus != lastStableStatus) {
+                if ((xCurrentTime - lastChangeTime) >= debounceDelay)
                 {
                     dialStatus = rawStatus;
                     lastStableStatus = rawStatus;
+                    
+                    // Handle press start
+                    if (dialStatus == 3) {
+                        if (!isPressed) {
+                            isPressed = true;
+                            pressStartTime = xCurrentTime;
+                            longPressDetected = false;
+                            shortPressHandled = false;
+                        }
+                    }
+                    // Handle release
+                    else if (dialStatus == 0 && isPressed) {
+                        isPressed = false;
+                        // If it wasn't a long press, then it's a short press
+                        if (!longPressDetected) {
+                            update_keyboard_state(3); // Short press
+                            shortPressHandled = true;
+                            vTaskDelay(pdMS_TO_TICKS(200)); // Add delay after short press
+                        }
+                        // Reset press states
+                        pressStartTime = 0;
+                        longPressDetected = false;
+                        shortPressHandled = false;
+                    }
                 }
                 lastChangeTime = xCurrentTime;
             }
 
-            // Handle rotation changes when dial is turned
+            // Handle different states
             switch (dialStatus) {
                 case 1:  // Up rotation
                 case 2:  // Down rotation
                     update_keyboard_state(dialStatus);
-                    vTaskDelay(pdMS_TO_TICKS(10));  // Reduced to 10ms
+                    vTaskDelay(pdMS_TO_TICKS(200));
                     break;
 
                 case 3:  // Pressed
-                    if (pressStartTime == 0) {
-                        pressStartTime = xCurrentTime;
-                        shortPressHandled = false;
-                        longPressDetected = false;
-                    }
-                    else if ((xCurrentTime - pressStartTime) >= longPressThreshold && !longPressDetected) {
-                        update_keyboard_state(4); // 4 = Long press Dial
+                    if (isPressed && !longPressDetected && 
+                        (xCurrentTime - pressStartTime) >= longPressThreshold) {
+                        update_keyboard_state(4); // Long press
                         longPressDetected = true;
-                        vTaskDelay(pdMS_TO_TICKS(5));  // Reduced to 5ms
+                        vTaskDelay(pdMS_TO_TICKS(200));
                     }
                     break;
 
-                case 0:  // Reset/Released
-                    if (pressStartTime != 0) {
-                        if (!longPressDetected && !shortPressHandled) {
-                            update_keyboard_state(3); // 3 = Short press Dial
-                            shortPressHandled = true;
-                        }
-                        pressStartTime = 0;
-                        longPressDetected = false;
-                        vTaskDelay(pdMS_TO_TICKS(5));  // Reduced to 5ms
+                case 0:  // Released
+                    // Reset key state after a delay
+                    if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(10)) == pdTRUE) {
+                        last_key_pressed = false;
+                        last_key = 0;
+                        xSemaphoreGive(xSemaphore);
                     }
                     break;
             }
+            
             lastDialStatus = dialStatus;
             xLastReadTime = xCurrentTime;
         }
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 }

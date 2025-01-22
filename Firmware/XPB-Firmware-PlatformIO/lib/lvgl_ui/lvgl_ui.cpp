@@ -46,9 +46,9 @@ static void key_event_cb(lv_event_t *e)
             {
                 switch (key)
                 {
-                case LV_KEY_UP:
+                case LV_KEY_UP: // Dial turned up (status 1)
                     Serial.println("UP key pressed: cursor = " + String(configMode_cursor));
-                    Serial.flush(); // Ensure the message is sent
+                    Serial.flush();
 
                     configMode_cursor = (configMode_cursor - 1);
                     if (configMode_cursor < 0)
@@ -56,9 +56,9 @@ static void key_event_cb(lv_event_t *e)
                         configMode_cursor = configMode_cursor_max;
                     }
                     break;
-                case LV_KEY_DOWN:
+                case LV_KEY_DOWN: // Dial turned down (status 2)
                     Serial.println("DOWN key pressed: cursor = " + String(configMode_cursor));
-                    Serial.flush(); // Ensure the message is sent
+                    Serial.flush();
 
                     configMode_cursor = (configMode_cursor + 1);
                     if (configMode_cursor > configMode_cursor_max)
@@ -66,15 +66,15 @@ static void key_event_cb(lv_event_t *e)
                         configMode_cursor = configMode_cursor_max;
                     }
                     break;
-                case LV_KEY_ENTER:
+                case LV_KEY_ENTER: // Short press (status 3)
                     Serial.println("ENTER key pressed: cursor = " + String(configMode_cursor));
-                    Serial.flush(); // Ensure the message is sent
+                    Serial.flush();
 
                     configMode_cursor_status = 1;
                     break;
-                case LV_KEY_BACKSPACE:
-                    Serial.println("BACKSPACE pressed(long press dial): cursor = " + String(configMode_cursor));
-                    Serial.flush(); // Ensure the message is sent
+                case LV_KEY_ESC: // Long press (status 4)
+                    Serial.println("ESC pressed(long press dial): cursor = " + String(configMode_cursor));
+                    Serial.flush();
 
                     configMode_cursor_status = 0;
                     break;
@@ -84,41 +84,37 @@ static void key_event_cb(lv_event_t *e)
             {
                 switch (key)
                 {
-                case LV_KEY_UP:
+                case LV_KEY_UP: // Dial turned up (status 1)
                     Serial.println("UP key pressed");
-                    // Switch to previous UI mode
                     if (current_functionMode > dataMonitor)
                     {
                         current_functionMode = static_cast<function_mode>(current_functionMode - 1);
                     }
                     else
                     {
-                        current_functionMode = dataMonitorCount; // Wrap around to last mode
+                        current_functionMode = dataMonitorCount;
                     }
                     functionMode_ChangeRequested = true;
                     break;
 
-                case LV_KEY_DOWN:
+                case LV_KEY_DOWN: // Dial turned down (status 2)
                     Serial.println("DOWN key pressed");
-                    // Switch to next UI mode
                     if (current_functionMode < dataMonitorCount)
                     {
                         current_functionMode = static_cast<function_mode>(current_functionMode + 1);
                     }
                     else
                     {
-                        current_functionMode = dataMonitor; // Wrap around to first mode
+                        current_functionMode = dataMonitor;
                     }
                     functionMode_ChangeRequested = true;
                     break;
 
-                case LV_KEY_ENTER:
+                case LV_KEY_ENTER: // Short press (status 3)
                     Serial.println("ENTER key pressed");
-                    // change the highLight channel
-                    highLightChannel = (highLightChannel + 1) % 2; // 0 or 1
-                    highLightChannel_ChangeRequested = true;       // Set this flag
+                    highLightChannel = (highLightChannel + 1) % 2;
+                    highLightChannel_ChangeRequested = true;
 
-                    // Only request UI change for chart and count modes
                     if (current_functionMode == dataMonitorChart ||
                         current_functionMode == dataMonitorCount)
                     {
@@ -126,8 +122,9 @@ static void key_event_cb(lv_event_t *e)
                     }
                     break;
 
-                case LV_KEY_BACKSPACE:
-                    Serial.println("BACKSPACE pressed(long press dial)");
+                case LV_KEY_ESC: // Long press (status 4)
+                    Serial.println("ESC pressed(long press dial)");
+                    // Add any long press handling here
                     break;
                 }
             }
