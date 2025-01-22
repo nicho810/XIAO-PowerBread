@@ -10,7 +10,7 @@ void sensorUpdateTask(void *pvParameters)
 {
     (void)pvParameters;
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    const TickType_t xFrequency = pdMS_TO_TICKS(10);
+    const TickType_t xFrequency = pdMS_TO_TICKS(5);
     const float UPDATE_THRESHOLD = 0.005f; // 5mV/mA threshold
 
     // Static buffers for averaging
@@ -32,12 +32,12 @@ void sensorUpdateTask(void *pvParameters)
     {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
-        if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE)
+        if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(5)) == pdTRUE)
         {
             if (configMode.configState.isActive)
             { 
                 // Take LVGL mutex with shorter timeout for config mode
-                if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(5)) == pdTRUE)
+                if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(2)) == pdTRUE)
                 {
                     lv_obj_t *item_area = lv_obj_get_child(ui_container, 1);
                     
@@ -87,6 +87,16 @@ void sensorUpdateTask(void *pvParameters)
                         {
                         case dataMonitor:
                             ui_container = dataMonitor_initUI(tft_Rotation);
+                            // Force immediate sensor read and update for dataMonitor mode
+                            latestSensorData = inaSensor.readCurrentSensors();
+                            if (lv_obj_t *container0 = lv_obj_get_child(ui_container, 0))
+                            {
+                                if (lv_obj_t *container1 = lv_obj_get_child(ui_container, 1))
+                                {
+                                    update_monitor_data(container0, 0, latestSensorData);
+                                    update_monitor_data(container1, 1, latestSensorData);
+                                }
+                            }
                             break;
                         case dataMonitorChart:
                             ui_container = dataMonitorChart_initUI(tft_Rotation, highLightChannel);
@@ -99,13 +109,13 @@ void sensorUpdateTask(void *pvParameters)
                             break;
                         }
 
-                        forceUpdate_flag = true;
-                        // Initialize latestSensorData with invalid values to force first update
+                        // Reset latest sensor data to force next update
                         latestSensorData.channel0.busCurrent = -999.0f;
                         latestSensorData.channel1.busCurrent = -999.0f;
                         latestSensorData.channel0.busVoltage = -999.0f;
                         latestSensorData.channel1.busVoltage = -999.0f;
 
+                        forceUpdate_flag = true;
                         xSemaphoreGive(lvglMutex);
                     }
                     functionMode_ChangeRequested = false;
@@ -172,11 +182,9 @@ void sensorUpdateTask(void *pvParameters)
 
                 if (shouldUpdate || highLightChannel_ChangeRequested)
                 {
-
-
                     latestSensorData = newSensorData;
 
-                    if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(100)) == pdTRUE)  // Increased timeout
+                    if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(5)) == pdTRUE)
                     {
                         lv_obj_t *container0 = lv_obj_get_child(ui_container, 0);
 
@@ -189,7 +197,6 @@ void sensorUpdateTask(void *pvParameters)
                                 {
                                     update_monitor_data(container0, 0, latestSensorData);
                                     update_monitor_data(container1, 1, latestSensorData);
-                                    
                                 }
                                 break;
 
@@ -224,9 +231,6 @@ void sensorUpdateTask(void *pvParameters)
                         }
                         xSemaphoreGive(lvglMutex);
                     }
-                    else {
-                        //Serial.println("Failed to take LVGL mutex for update");
-                    }
                     
                     forceUpdate_flag = false;
                     highLightChannel_ChangeRequested = false;
@@ -236,7 +240,6 @@ void sensorUpdateTask(void *pvParameters)
             xSemaphoreGive(xSemaphore);
         }
 
-        // Reduce delay for faster UI response
         vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
