@@ -46,90 +46,101 @@ static void key_event_cb(lv_event_t *e)
 
         if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE)
         {
-            if (configMode.configState.isActive)
+            ConfigModeState currentState;
+            if (configMode.getConfigState(&currentState))  // Safely get current state
             {
-                switch (key)
+                if (currentState.isActive)
                 {
-                case LV_KEY_UP: // Dial turned up (status 1)
-                    configMode.configState.cursorLast = configMode.configState.cursor;
-                    configMode.configState.cursor = (configMode.configState.cursor - 1);
-                    if (configMode.configState.cursor < 0)
-                    {
-                        configMode.configState.cursor = 0;
-                    }
-                    Serial.println("UP key pressed: cursor = " + String(configMode.configState.cursor));
-                    Serial.flush();
-                    break;
-                case LV_KEY_DOWN: // Dial turned down (status 2)
-                    configMode.configState.cursorLast = configMode.configState.cursor;
-                    configMode.configState.cursor = (configMode.configState.cursor + 1);
-                    if (configMode.configState.cursor > configMode.configState.cursorMax)
-                    {
-                        configMode.configState.cursor = configMode.configState.cursorMax;
-                    }
-                    Serial.println("DOWN key pressed: cursor = " + String(configMode.configState.cursor));
-                    Serial.flush();
-                    break;
-                case LV_KEY_ENTER: // Short press (status 3)
+                    int8_t newCursor = currentState.cursor;  // Work with local copy
+                    bool stateChanged = false;
 
-                    configMode.configState.cursorStatus = 1;
-                    Serial.println("ENTER key pressed: cursor = " + String(configMode.configState.cursor));
-                    Serial.flush();
-                    break;
-                case LV_KEY_ESC: // Long press (status 4)
+                    switch (key)
+                    {
+                    case LV_KEY_UP:
+                        if (newCursor > 0) {  // Bounds check
+                            newCursor--;
+                            stateChanged = true;
+                        }
+                        break;
 
-                    configMode.configState.cursorStatus = 0;
-                    Serial.println("ESC pressed(long press dial): cursor = " + String(configMode.configState.cursor));
-                    Serial.flush();
-                    break;
+                    case LV_KEY_DOWN:
+                        if (newCursor < (currentState.cursorMax - 1)) {  // Bounds check
+                            newCursor++;
+                            stateChanged = true;
+                        }
+                        break;
+
+                    case LV_KEY_ENTER:
+                        currentState.cursorStatus = 1;
+                        stateChanged = true;
+                        break;
+
+                    case LV_KEY_ESC:
+                        currentState.cursorStatus = 0;
+                        stateChanged = true;
+                        break;
+                    }
+
+                    if (stateChanged) {
+                        currentState.cursorLast = currentState.cursor;
+                        currentState.cursor = newCursor;
+                        configMode.updateConfigState(&currentState);  // Safely update state
+                    }
+
+                    // Debug output
+                    Serial.printf("Config mode: cursor=%d, last=%d, max=%d, status=%d\n", 
+                        currentState.cursor, 
+                        currentState.cursorLast,
+                        currentState.cursorMax,
+                        currentState.cursorStatus);
                 }
-            }
-            else // not in config mode
-            {
-                switch (key)
+                else // not in config mode
                 {
-                case LV_KEY_UP: // Dial turned up (status 1)
-                    Serial.println("UP key pressed");
-                    if (current_functionMode > dataMonitor)
+                    switch (key)
                     {
-                        current_functionMode = static_cast<function_mode>(current_functionMode - 1);
-                    }
-                    else
-                    {
-                        current_functionMode = dataMonitorCount;
-                    }
-                    functionMode_ChangeRequested = true;
-                    break;
-
-                case LV_KEY_DOWN: // Dial turned down (status 2)
-                    Serial.println("DOWN key pressed");
-                    if (current_functionMode < dataMonitorCount)
-                    {
-                        current_functionMode = static_cast<function_mode>(current_functionMode + 1);
-                    }
-                    else
-                    {
-                        current_functionMode = dataMonitor;
-                    }
-                    functionMode_ChangeRequested = true;
-                    break;
-
-                case LV_KEY_ENTER: // Short press (status 3)
-                    Serial.println("ENTER key pressed");
-                    highLightChannel = (highLightChannel + 1) % 2;
-                    highLightChannel_ChangeRequested = true;
-
-                    if (current_functionMode == dataMonitorChart ||
-                        current_functionMode == dataMonitorCount)
-                    {
+                    case LV_KEY_UP: // Dial turned up (status 1)
+                        Serial.println("UP key pressed");
+                        if (current_functionMode > dataMonitor)
+                        {
+                            current_functionMode = static_cast<function_mode>(current_functionMode - 1);
+                        }
+                        else
+                        {
+                            current_functionMode = dataMonitorCount;
+                        }
                         functionMode_ChangeRequested = true;
-                    }
-                    break;
+                        break;
 
-                case LV_KEY_ESC: // Long press (status 4)
-                    Serial.println("ESC pressed(long press dial)");
-                    // Add any long press handling here
-                    break;
+                    case LV_KEY_DOWN: // Dial turned down (status 2)
+                        Serial.println("DOWN key pressed");
+                        if (current_functionMode < dataMonitorCount)
+                        {
+                            current_functionMode = static_cast<function_mode>(current_functionMode + 1);
+                        }
+                        else
+                        {
+                            current_functionMode = dataMonitor;
+                        }
+                        functionMode_ChangeRequested = true;
+                        break;
+
+                    case LV_KEY_ENTER: // Short press (status 3)
+                        Serial.println("ENTER key pressed");
+                        highLightChannel = (highLightChannel + 1) % 2;
+                        highLightChannel_ChangeRequested = true;
+
+                        if (current_functionMode == dataMonitorChart ||
+                            current_functionMode == dataMonitorCount)
+                        {
+                            functionMode_ChangeRequested = true;
+                        }
+                        break;
+
+                    case LV_KEY_ESC: // Long press (status 4)
+                        Serial.println("ESC pressed(long press dial)");
+                        // Add any long press handling here
+                        break;
+                    }
                 }
             }
             xSemaphoreGive(xSemaphore);
