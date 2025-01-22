@@ -35,17 +35,32 @@ void sensorUpdateTask(void *pvParameters)
         if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE)
         {
             if (configMode.configState.isActive)
-            { // use this task to update the config mode when the config mode is active
-                // Take LVGL mutex before UI operations
-                if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
+            { 
+                // Take LVGL mutex with shorter timeout for config mode
+                if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(5)) == pdTRUE)
                 {
-                    lv_obj_t *item_area = lv_obj_get_child(ui_container, 1); // Get item_area (second child of ui_container)
+                    lv_obj_t *item_area = lv_obj_get_child(ui_container, 1);
                     
-                    if (configMode.configState.cursorStatus >=0) {
-                        update_configMode(item_area, configMode.configState.cursor, configMode.configState.cursorLast, configMode.configState.cursorMax, configMode.configState.cursorStatus);
+                    if (configMode.configState.cursorStatus >= 0) {
+                        // Skip update if cursor hasn't changed
+                        static int8_t last_cursor = -1;
+                        static int8_t last_status = -1;
+                        
+                        if (last_cursor != configMode.configState.cursor || 
+                            last_status != configMode.configState.cursorStatus) {
+                            
+                            update_configMode(item_area, 
+                                           configMode.configState.cursor,
+                                           configMode.configState.cursorLast,
+                                           configMode.configState.cursorMax,
+                                           configMode.configState.cursorStatus);
+                                           
+                            last_cursor = configMode.configState.cursor;
+                            last_status = configMode.configState.cursorStatus;
+                        }
                     }
-                    else if(configMode.configState.cursorStatus == -1){ //When the cursorStatus is -1, exit the config mode
-                        configMode.configState.isActive = false; //set the config mode to false, it will exit the config mode in main code.
+                    else if(configMode.configState.cursorStatus == -1){
+                        configMode.configState.isActive = false;
                     }
                     xSemaphoreGive(lvglMutex);
                 }
@@ -210,6 +225,7 @@ void sensorUpdateTask(void *pvParameters)
             xSemaphoreGive(xSemaphore);
         }
 
+        // Reduce delay for faster UI response
         vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
