@@ -73,10 +73,10 @@ static void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
         {
             data->state = LV_INDEV_STATE_PRESSED;
             data->key = last_key;
-            Serial.print("Key pressed: ");
-            Serial.print(last_key);
-            Serial.print(", State: PRESSED");
-            Serial.println();
+            // Serial.print("Key pressed: ");
+            // Serial.print(last_key);
+            // Serial.print(", State: PRESSED");
+            // Serial.println();
         }
         else
         {
@@ -128,7 +128,8 @@ volatile int lastDialStatus = 0;
 // System Config
 #include "sysConfig.h"
 SysConfig sysConfig;
-sysConfig_data cfg_data_default; // default config data
+sysConfig_data tmp_cfg_data;
+//sysConfig_data cfg_data_default; // default config data
 
 ConfigMode configMode;
 
@@ -186,18 +187,23 @@ StaticSemaphore_t xMutexBuffer;
 
 void setup(void)
 {
+    //delay for debug, remove this when releasing.
+    delay(1500);
+
     // Serial Init
     Serial.begin(115200);
-    Serial.print(F("Hello! XPB-PIO Test"));
+    Serial.println("==========[XIAO-PowerBread Boot Info]===========");
 
     // Dial init
     dial.init();
 
     // load default config data
-    sysConfig.loadConfig_from(cfg_data_default); // load default config data
+    // sysConfig.loadConfig_from(cfg_data_default); // load default config data
     // Load config from EEPROM
-    // sysConfig.begin_EEPROM();
-    // sysConfig.init_EEPROM(0); //0=no force write, 1=force write
+    sysConfig.begin_EEPROM();
+    sysConfig.init_EEPROM(0); //0=no force write, 1=force write
+    sysConfig.loadConfig_from_EEPROM();
+
     Serial.println(sysConfig.output_all_config_data_in_String()); // print all config data
 
     // Apply the cfg_data to the variables
@@ -282,6 +288,7 @@ void setup(void)
     if (dial.readDialStatus() == 2)
     {
         configMode.enterConfigMode();
+        tmp_cfg_data = sysConfig.cfg_data;  //copy cfg_data to tmp_cfg_data for later use(making changes to the config data)
         Serial.println("Entering config mode...");
     }
     // Create tasks (Create here because we still need it to update the UI even in config mode)

@@ -2,12 +2,8 @@
 #include "sysConfig.h"
 
 extern ConfigMode configMode;
-// extern volatile bool is_configMode_active;
-// extern volatile int8_t configMode_cursor;
-// extern volatile int8_t configMode_cursor_last; // last cursor position
-// extern volatile int8_t configMode_cursor_status;
-// extern volatile uint8_t configMode_cursor_max;
-
+extern SysConfig sysConfig;
+extern sysConfig_data tmp_cfg_data;
 // Add this helper function at the top of the file
 void cleanupAndWait()
 {
@@ -77,6 +73,8 @@ static void key_event_cb(lv_event_t *e)
                             //if the cursorStatus is 1, it means selected, so we increase the value of the item instead of moving the cursor
                             Serial.println("Increase the value of the item. ++");
                             Serial.flush();
+                            sysConfig.incrementConfigValue(newCursor, tmp_cfg_data);
+
                         }
                         break;
 
@@ -91,6 +89,7 @@ static void key_event_cb(lv_event_t *e)
                             //if the cursorStatus is 1, it means selected, so we decrease the value of the item instead of moving the cursor
                             Serial.println("Decrease the value of the item. --");
                             Serial.flush();
+                            sysConfig.decrementConfigValue(newCursor, tmp_cfg_data);
                         }
                         break;
 
@@ -124,6 +123,7 @@ static void key_event_cb(lv_event_t *e)
                         currentState.cursorLast,
                         currentState.cursorMax,
                         currentState.cursorStatus);
+                    Serial.flush();
                 }
                 else // not in config mode
                 {
@@ -402,17 +402,17 @@ lv_obj_t *configMode_initUI(int rotation)
     sysConfig_cfgName configNames;
     
     // Create items using config names from sysConfig - removed the -14 x offset
-    lv_obj_t *item_0 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 0, configNames.items[CFG_DEFAULT_MODE].name, 16, 1);
-    lv_obj_t *item_1 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 1, configNames.items[CFG_DEFAULT_CHANNEL].name, 255, 0);
-    lv_obj_t *item_2 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 2, configNames.items[CFG_SHUNT_RESISTOR_CHA].name, 128, 0);
-    lv_obj_t *item_3 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 3, configNames.items[CFG_SHUNT_RESISTOR_CHB].name, 128, 0);
-    lv_obj_t *item_4 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 4, configNames.items[CFG_SERIAL_ENABLE].name, 128, 0);
-    lv_obj_t *item_5 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 5, configNames.items[CFG_SERIAL_BAUDRATE].name, 128, 0);
-    lv_obj_t *item_6 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 6, configNames.items[CFG_SERIAL_MODE].name, 128, 0);
-    lv_obj_t *item_7 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 7, configNames.items[CFG_SERIAL_PRINT_INTERVAL].name, 128, 0);
-    lv_obj_t *item_8 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 8, configNames.items[CFG_CHART_UPDATE_INTERVAL].name, 128, 0);
-    lv_obj_t *item_9 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 9, configNames.items[CFG_CHART_SCALE_MODE].name, 128, 0);
-    lv_obj_t *item_10 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 10, configNames.items[CFG_CHART_SCALE].name, 128, 0);
+    lv_obj_t *item_0 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 0, configNames.items[CFG_DEFAULT_MODE].name, sysConfig.cfg_data.default_mode, 1);
+    lv_obj_t *item_1 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 1, configNames.items[CFG_DEFAULT_CHANNEL].name, sysConfig.cfg_data.default_channel, 0);
+    lv_obj_t *item_2 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 2, configNames.items[CFG_SHUNT_RESISTOR_CHA].name, sysConfig.cfg_data.shuntResistorCHA, 0);
+    lv_obj_t *item_3 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 3, configNames.items[CFG_SHUNT_RESISTOR_CHB].name, sysConfig.cfg_data.shuntResistorCHB, 0);
+    lv_obj_t *item_4 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 4, configNames.items[CFG_SERIAL_ENABLE].name, sysConfig.cfg_data.serial_enable, 0);
+    lv_obj_t *item_5 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 5, configNames.items[CFG_SERIAL_BAUDRATE].name, sysConfig.cfg_data.serial_baudRate, 0);
+    lv_obj_t *item_6 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 6, configNames.items[CFG_SERIAL_MODE].name, sysConfig.cfg_data.serial_mode, 0);
+    lv_obj_t *item_7 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 7, configNames.items[CFG_SERIAL_PRINT_INTERVAL].name, sysConfig.cfg_data.serial_printInterval, 0);
+    lv_obj_t *item_8 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 8, configNames.items[CFG_CHART_UPDATE_INTERVAL].name, sysConfig.cfg_data.chart_updateInterval, 0);
+    lv_obj_t *item_9 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 9, configNames.items[CFG_CHART_SCALE_MODE].name, sysConfig.cfg_data.chart_scaleMode, 0);
+    lv_obj_t *item_10 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 10, configNames.items[CFG_CHART_SCALE].name, sysConfig.cfg_data.chart_scale, 0);
 
     return ui_container;
 }

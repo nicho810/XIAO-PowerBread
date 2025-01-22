@@ -1,5 +1,8 @@
 #include "lvgl_ui_updateFunc.h"
 #include "INA3221Sensor.h"
+#include "sysConfig.h"
+
+extern sysConfig_data tmp_cfg_data;
 
 static void format_value(char* buf, size_t buf_size, float value) {
     int32_t val100 = (int32_t)(value * 100.0f);
@@ -149,4 +152,36 @@ void update_configMode_changeItemStatus(lv_obj_t *item, int8_t itemStatus){
         lv_obj_set_style_border_color(item, xpb_color_ChannelA, LV_PART_MAIN);
     }
 
+}
+
+void update_configMode_cfgData(lv_obj_t *item_area, int8_t cursor) {
+    if (!item_area) return;
+
+    lv_obj_t *current_item = lv_obj_get_child(item_area, cursor);
+    if (current_item) {
+        lv_obj_t *current_value_box = lv_obj_get_child(current_item, 1);
+        lv_obj_t *current_value_label = lv_obj_get_child(current_value_box, 0); // get the value label
+        if (current_value_label) {
+            uint8_t value = 0;
+            //get value from tmp_cfg_data by cursor
+
+            switch (cursor) {
+                case 0: value = tmp_cfg_data.default_mode; break;
+                case 1: value = tmp_cfg_data.default_channel; break;
+                case 2: value = tmp_cfg_data.shuntResistorCHA; break;
+                case 3: value = tmp_cfg_data.shuntResistorCHB; break;
+                case 4: value = tmp_cfg_data.serial_enable; break;
+                case 5: value = tmp_cfg_data.serial_baudRate; break;
+                case 6: value = tmp_cfg_data.serial_mode; break;
+                case 7: value = tmp_cfg_data.serial_printInterval; break;
+                case 8: value = tmp_cfg_data.chart_updateInterval; break;
+                case 9: value = tmp_cfg_data.chart_scaleMode; break;
+                case 10: value = tmp_cfg_data.chart_scale; break;
+            }
+
+            char value_str[4];
+            snprintf(value_str, sizeof(value_str), "%u", value);
+            lv_label_set_text(current_value_label, value_str);
+        }
+    }
 }

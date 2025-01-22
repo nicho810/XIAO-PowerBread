@@ -3,8 +3,6 @@
 
 extern ConfigMode configMode;
 
-
-
 // Sensor Update Task
 void sensorUpdateTask(void *pvParameters)
 {
@@ -35,32 +33,40 @@ void sensorUpdateTask(void *pvParameters)
         if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(5)) == pdTRUE)
         {
             if (configMode.configState.isActive)
-            { 
+            {
                 // Take LVGL mutex with shorter timeout for config mode
                 if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(2)) == pdTRUE)
                 {
                     lv_obj_t *item_area = lv_obj_get_child(ui_container, 1);
-                    
-                    if (configMode.configState.cursorStatus >= 0) {
+                    if (configMode.configState.cursorStatus >= 0)
+                    {
                         // Skip update if cursor hasn't changed
                         static int8_t last_cursor = -1;
                         static int8_t last_status = -1;
-                        
-                        if (last_cursor != configMode.configState.cursor || 
-                            last_status != configMode.configState.cursorStatus) {
-                            
-                            update_configMode(item_area, 
-                                           configMode.configState.cursor,
-                                           configMode.configState.cursorLast,
-                                           configMode.configState.cursorMax,
-                                           configMode.configState.cursorStatus);
-                                           
+
+                        if (last_cursor != configMode.configState.cursor ||
+                            last_status != configMode.configState.cursorStatus)
+                        {
+
+                            update_configMode(item_area,
+                                              configMode.configState.cursor,
+                                              configMode.configState.cursorLast,
+                                              configMode.configState.cursorMax,
+                                              configMode.configState.cursorStatus);
+
                             last_cursor = configMode.configState.cursor;
                             last_status = configMode.configState.cursorStatus;
                         }
+
+                        // update the value of the item if cursorStatus is 1(selected)
+                        if (configMode.configState.cursorStatus == 1)
+                        {
+                            update_configMode_cfgData(item_area, configMode.configState.cursor);
+                        }
                     }
-                    else if(configMode.configState.cursorStatus == -1){
-                        configMode.configState.isActive = false;
+                    else if (configMode.configState.cursorStatus == -1)
+                    {
+                        configMode.configState.isActive = false; // set to false to exit config mode
                     }
                     xSemaphoreGive(lvglMutex);
                 }
@@ -166,7 +172,7 @@ void sensorUpdateTask(void *pvParameters)
                     }
                     // Always update for Chart and Count modes
                     else if (current_functionMode == dataMonitorChart ||
-                        current_functionMode == dataMonitorCount)
+                             current_functionMode == dataMonitorCount)
                     {
                         shouldUpdate = true;
                     }
@@ -174,9 +180,9 @@ void sensorUpdateTask(void *pvParameters)
                     {
                         // For other modes, only update on significant changes
                         shouldUpdate = (abs(newSensorData.channel0.busCurrent - latestSensorData.channel0.busCurrent) > UPDATE_THRESHOLD) ||
-                                     (abs(newSensorData.channel1.busCurrent - latestSensorData.channel1.busCurrent) > UPDATE_THRESHOLD) ||
-                                     (abs(newSensorData.channel0.busVoltage - latestSensorData.channel0.busVoltage) > UPDATE_THRESHOLD) ||
-                                     (abs(newSensorData.channel1.busVoltage - latestSensorData.channel1.busVoltage) > UPDATE_THRESHOLD);
+                                       (abs(newSensorData.channel1.busCurrent - latestSensorData.channel1.busCurrent) > UPDATE_THRESHOLD) ||
+                                       (abs(newSensorData.channel0.busVoltage - latestSensorData.channel0.busVoltage) > UPDATE_THRESHOLD) ||
+                                       (abs(newSensorData.channel1.busVoltage - latestSensorData.channel1.busVoltage) > UPDATE_THRESHOLD);
                     }
                 }
 
@@ -231,7 +237,7 @@ void sensorUpdateTask(void *pvParameters)
                         }
                         xSemaphoreGive(lvglMutex);
                     }
-                    
+
                     forceUpdate_flag = false;
                     highLightChannel_ChangeRequested = false;
                 }

@@ -57,8 +57,8 @@ struct sysConfig_cfgName
         {"uart_mode"},
         {"uart_intv"},
         {"chart_intv"},
-        {"chart_sc_m"},
-        {"chart_sc"}
+        {"chart_M"},
+        {"chart_SC"}
     };
 };
 
@@ -130,8 +130,8 @@ public:
   void saveConfig_to_EEPROM(sysConfig_data data);
   void loadConfig_from_EEPROM();
   void loadConfig_from(sysConfig_data input_cfg_data);
-  void incrementConfigValue(int cursor, sysConfig_data &cfg_data);
-  void decrementConfigValue(int cursor, sysConfig_data &cfg_data);
+  void incrementConfigValue(int cursor, sysConfig_data& tmp_cfg_data);
+  void decrementConfigValue(int cursor, sysConfig_data& tmp_cfg_data);
   String output_all_config_data_in_String();
 };
 
@@ -148,7 +148,7 @@ struct ConfigModeState
 class ConfigMode
 {
 public:
-  ConfigMode() : configState{false, 0, 0, 0, 11} {}
+  ConfigMode() : configState{false, 0, 0, 0, 11} {} // when added new config, update cursorMax here !!!
   ConfigModeState configState;
   bool enterConfigMode();
   bool exitConfigMode();

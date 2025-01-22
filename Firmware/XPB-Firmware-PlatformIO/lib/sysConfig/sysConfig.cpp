@@ -20,6 +20,10 @@ void SysConfig::saveConfig_to_EEPROM(sysConfig_data data) {
     EEPROM.commit();
 }
 
+void SysConfig::loadConfig_from(sysConfig_data input_cfg_data) {
+    cfg_data = input_cfg_data;
+}
+
 void SysConfig::loadConfig_from_EEPROM() {
     //load config from EEPROM
     cfg_data.cfg_version = EEPROM.read(cfg_addr.cfg_version);
@@ -95,7 +99,7 @@ String SysConfig::output_all_config_data_in_String() {
 
 
 //Adjust the range of the config value here
-void incrementConfigValue(int cursor, sysConfig_data& tmp_cfg_data) {
+void SysConfig::incrementConfigValue(int cursor, sysConfig_data& tmp_cfg_data) {
     switch (cursor) {
         case 0: tmp_cfg_data.default_mode = min(tmp_cfg_data.default_mode + 1, 2); break;
         case 1: tmp_cfg_data.default_channel = min(tmp_cfg_data.default_channel + 1, 1); break;
@@ -111,7 +115,7 @@ void incrementConfigValue(int cursor, sysConfig_data& tmp_cfg_data) {
     }
 }
 
-void decrementConfigValue(int cursor, sysConfig_data& tmp_cfg_data) {
+void SysConfig::decrementConfigValue(int cursor, sysConfig_data& tmp_cfg_data) {
     switch (cursor) {
         case 0: tmp_cfg_data.default_mode = max(tmp_cfg_data.default_mode - 1, 0); break;
         case 1: tmp_cfg_data.default_channel = max(tmp_cfg_data.default_channel - 1, 0); break;
@@ -127,9 +131,7 @@ void decrementConfigValue(int cursor, sysConfig_data& tmp_cfg_data) {
     }
 }
 
-void SysConfig::loadConfig_from(sysConfig_data input_cfg_data) {
-    cfg_data = input_cfg_data;
-}
+
 
 // Helper functions to safely modify state
 bool ConfigMode::enterConfigMode() {
