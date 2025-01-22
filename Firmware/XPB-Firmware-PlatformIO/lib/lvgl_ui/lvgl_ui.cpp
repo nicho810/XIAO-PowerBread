@@ -68,16 +68,29 @@ static void key_event_cb(lv_event_t *e)
                     switch (key)
                     {
                     case LV_KEY_UP:
-                        if (newCursor > 0 && newCursor < currentState.cursorMax) {  // Extra bounds validation
-                            newCursor--;
-                            stateChanged = true;
+                        if (currentState.cursorStatus == 0) { //if the cursorStatus is 0, it means not selected, so we can move the cursor
+                            if (newCursor > 0 && newCursor < currentState.cursorMax) {  // Extra bounds validation
+                                newCursor--;
+                                stateChanged = true;
+                            }
+                        } else if (currentState.cursorStatus == 1) { 
+                            //if the cursorStatus is 1, it means selected, so we increase the value of the item instead of moving the cursor
+                            Serial.println("Increase the value of the item. ++");
+                            Serial.flush();
                         }
                         break;
 
                     case LV_KEY_DOWN:
-                        if (newCursor >= 0 && newCursor < (currentState.cursorMax - 1)) {  // Extra bounds validation
-                            newCursor++;
-                            stateChanged = true;
+                        if (currentState.cursorStatus == 0) { //if the cursorStatus is 0, it means not selected, so we can move the cursor
+                            if (newCursor >= 0 && newCursor < (currentState.cursorMax - 1)) {  // Extra bounds validation
+                                newCursor++;
+                                stateChanged = true;
+                            }
+                        }
+                        else if (currentState.cursorStatus == 1) { 
+                            //if the cursorStatus is 1, it means selected, so we decrease the value of the item instead of moving the cursor
+                            Serial.println("Decrease the value of the item. --");
+                            Serial.flush();
                         }
                         break;
 
@@ -367,26 +380,39 @@ lv_obj_t *configMode_initUI(int rotation)
 
     // Item area
     lv_obj_t *item_area = lv_obj_create(ui_container);
-    lv_obj_clear_flag(item_area, LV_OBJ_FLAG_SCROLLABLE); // Disable container scrolling
-    lv_obj_set_size(item_area, 80, 148);
-    lv_obj_align(item_area, LV_ALIGN_BOTTOM_MID, 0, 12);
+    lv_obj_set_size(item_area, 80, 120);
+    lv_obj_set_style_pad_top(item_area, 16, LV_PART_MAIN);    
+    lv_obj_set_style_pad_bottom(item_area, 0, LV_PART_MAIN); 
+    lv_obj_set_style_pad_left(item_area, 0, LV_PART_MAIN);   // Set left padding to 0
+    lv_obj_set_scroll_dir(item_area, LV_DIR_VER);            
+    lv_obj_align(item_area, LV_ALIGN_TOP_MID, 0, -2);
     lv_obj_set_style_bg_color(item_area, xpb_color_Background, LV_PART_MAIN);
-    lv_obj_set_style_border_width(item_area, 0, LV_PART_MAIN);
+    lv_obj_set_style_border_width(item_area, 1, LV_PART_MAIN);
     lv_obj_set_style_border_color(item_area, xpb_color_ChannelA, LV_PART_MAIN);
     lv_obj_set_style_radius(item_area, 0, LV_PART_MAIN);
 
     // Add items
     uint8_t item_spacing_y = 16;
     int8_t item_firstItemPos_y = -10;
-    lv_obj_t *item_1 = widget_configMode_item(item_area, -12, item_firstItemPos_y + item_spacing_y * 0, "Unit 1", 16, 1);
-    lv_obj_t *item_2 = widget_configMode_item(item_area, -12, item_firstItemPos_y + item_spacing_y * 1, "Unit 2", 255, 0);
-    lv_obj_t *item_3 = widget_configMode_item(item_area, -12, item_firstItemPos_y + item_spacing_y * 2, "Unit 3", 128, 0);
-    lv_obj_t *item_4 = widget_configMode_item(item_area, -12, item_firstItemPos_y + item_spacing_y * 3, "Unit 4", 128, 0);
-    lv_obj_t *item_5 = widget_configMode_item(item_area, -12, item_firstItemPos_y + item_spacing_y * 4, "Unit 5", 128, 0);
-    lv_obj_t *item_6 = widget_configMode_item(item_area, -12, item_firstItemPos_y + item_spacing_y * 5, "Unit 6", 128, 0);
-    lv_obj_t *item_7 = widget_configMode_item(item_area, -12, item_firstItemPos_y + item_spacing_y * 6, "Unit 7", 128, 0);
-    lv_obj_t *item_8 = widget_configMode_item(item_area, -12, item_firstItemPos_y + item_spacing_y * 7, "Unit 8", 128, 0);
+    // int16_t total_content_height = item_firstItemPos_y + (item_spacing_y * 4);  // 11 items
+    // lv_obj_set_content_height(item_area, total_content_height);
 
+    
+    // Create instance of sysConfig_cfgName to access config names
+    sysConfig_cfgName configNames;
+    
+    // Create items using config names from sysConfig - removed the -14 x offset
+    lv_obj_t *item_0 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 0, configNames.items[CFG_DEFAULT_MODE].name, 16, 1);
+    lv_obj_t *item_1 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 1, configNames.items[CFG_DEFAULT_CHANNEL].name, 255, 0);
+    lv_obj_t *item_2 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 2, configNames.items[CFG_SHUNT_RESISTOR_CHA].name, 128, 0);
+    lv_obj_t *item_3 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 3, configNames.items[CFG_SHUNT_RESISTOR_CHB].name, 128, 0);
+    lv_obj_t *item_4 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 4, configNames.items[CFG_SERIAL_ENABLE].name, 128, 0);
+    lv_obj_t *item_5 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 5, configNames.items[CFG_SERIAL_BAUDRATE].name, 128, 0);
+    lv_obj_t *item_6 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 6, configNames.items[CFG_SERIAL_MODE].name, 128, 0);
+    lv_obj_t *item_7 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 7, configNames.items[CFG_SERIAL_PRINT_INTERVAL].name, 128, 0);
+    lv_obj_t *item_8 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 8, configNames.items[CFG_CHART_UPDATE_INTERVAL].name, 128, 0);
+    lv_obj_t *item_9 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 9, configNames.items[CFG_CHART_SCALE_MODE].name, 128, 0);
+    lv_obj_t *item_10 = widget_configMode_item(item_area, 0, item_firstItemPos_y + item_spacing_y * 10, configNames.items[CFG_CHART_SCALE].name, 128, 0);
 
     return ui_container;
 }

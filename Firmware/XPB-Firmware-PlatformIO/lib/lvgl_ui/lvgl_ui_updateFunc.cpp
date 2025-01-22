@@ -95,15 +95,6 @@ void update_configMode(lv_obj_t *item_area, int8_t cursor, int8_t cursor_last, i
     // Validate cursor ranges
     if (cursor < 0 || cursor >= cursor_max || cursor_last < -1 || cursor_last >= cursor_max) return;
 
-    switch (cursor_status)
-    {
-    case 0: // normal(not selected)
-        break;
-    case 1: // hover
-        break;
-    case 2: // selected
-        break;
-    }
     // Clear previous highlight if valid
     if (cursor_last >= 0) {
         lv_obj_t *last_item = lv_obj_get_child(item_area, cursor_last);
@@ -122,6 +113,25 @@ void update_configMode(lv_obj_t *item_area, int8_t cursor, int8_t cursor_last, i
         if (current_value_box) {
             update_configMode_changeItemStatus(current_value_box, 
                 cursor_status == 0 ? 1 : 2); // 1 for hover, 2 for selected
+        }
+
+        // Scroll to make the current item visible
+        lv_coord_t item_y = lv_obj_get_y(current_item);
+        lv_coord_t container_height = lv_obj_get_height(item_area);
+        lv_coord_t item_height = lv_obj_get_height(current_item);
+        
+        // Calculate the visible area boundaries
+        lv_coord_t scroll_top = lv_obj_get_scroll_y(item_area);
+        lv_coord_t visible_top = scroll_top;
+        lv_coord_t visible_bottom = scroll_top + container_height;
+        
+        // If item is above visible area
+        if (item_y < visible_top + 30) { // Increase offset for more scrolling
+            lv_obj_scroll_to_y(item_area, item_y - 30, LV_ANIM_ON);
+        }
+        // If item is below visible area
+        else if ((item_y + item_height) > visible_bottom - 30) {
+            lv_obj_scroll_to_y(item_area, item_y - container_height + item_height + 30, LV_ANIM_ON);
         }
     }
 }

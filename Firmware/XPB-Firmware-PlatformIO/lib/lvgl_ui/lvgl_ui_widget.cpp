@@ -239,7 +239,7 @@ lv_obj_t *widget_configMode_item(lv_obj_t *parent, uint16_t x, uint16_t y, const
     // Create a container
     lv_obj_t *container = lv_obj_create(parent);
     lv_obj_clear_flag(container, LV_OBJ_FLAG_SCROLLABLE); // Disable container scrolling
-    lv_obj_set_size(container, 78, 14);
+    lv_obj_set_size(container, 70, 14);
     lv_obj_align(container, LV_ALIGN_TOP_LEFT, x, y);
     lv_obj_set_style_bg_color(container, xpb_color_Background, LV_PART_MAIN);
     lv_obj_set_style_border_width(container, 0, LV_PART_MAIN);
