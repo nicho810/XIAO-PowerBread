@@ -380,7 +380,7 @@ lv_obj_t *configMode_initUI(int rotation)
 
     // Item area
     lv_obj_t *item_area = lv_obj_create(ui_container);
-    lv_obj_set_size(item_area, 80, 120);
+    lv_obj_set_size(item_area, 80, 148);
     lv_obj_set_style_pad_top(item_area, 16, LV_PART_MAIN);    
     lv_obj_set_style_pad_bottom(item_area, 0, LV_PART_MAIN); 
     lv_obj_set_style_pad_left(item_area, 0, LV_PART_MAIN);   // Set left padding to 0
