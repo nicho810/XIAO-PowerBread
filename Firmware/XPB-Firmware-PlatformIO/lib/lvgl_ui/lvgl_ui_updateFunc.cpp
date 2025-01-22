@@ -95,6 +95,15 @@ void update_configMode(lv_obj_t *item_area, int8_t cursor, int8_t cursor_last, i
     // Validate cursor ranges
     if (cursor < 0 || cursor >= cursor_max || cursor_last < -1 || cursor_last >= cursor_max) return;
 
+    switch (cursor_status)
+    {
+    case 0: // normal(not selected)
+        break;
+    case 1: // hover
+        break;
+    case 2: // selected
+        break;
+    }
     // Clear previous highlight if valid
     if (cursor_last >= 0) {
         lv_obj_t *last_item = lv_obj_get_child(item_area, cursor_last);

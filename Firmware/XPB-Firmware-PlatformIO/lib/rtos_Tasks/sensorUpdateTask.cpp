@@ -40,7 +40,13 @@ void sensorUpdateTask(void *pvParameters)
                 if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
                 {
                     lv_obj_t *item_area = lv_obj_get_child(ui_container, 1); // Get item_area (second child of ui_container)
-                    update_configMode(item_area, configMode.configState.cursor, configMode.configState.cursorLast, configMode.configState.cursorMax, configMode.configState.cursorStatus);
+                    
+                    if (configMode.configState.cursorStatus >=0) {
+                        update_configMode(item_area, configMode.configState.cursor, configMode.configState.cursorLast, configMode.configState.cursorMax, configMode.configState.cursorStatus);
+                    }
+                    else if(configMode.configState.cursorStatus == -1){ //When the cursorStatus is -1, exit the config mode
+                        configMode.configState.isActive = false; //set the config mode to false, it will exit the config mode in main code.
+                    }
                     xSemaphoreGive(lvglMutex);
                 }
             }

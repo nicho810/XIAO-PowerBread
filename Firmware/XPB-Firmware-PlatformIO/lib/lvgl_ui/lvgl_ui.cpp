@@ -82,12 +82,15 @@ static void key_event_cb(lv_event_t *e)
                         break;
 
                     case LV_KEY_ENTER:
-                        currentState.cursorStatus = 1;
+                        currentState.cursorStatus = 1; //1 is max, it means select the item, and it can edit the value
                         stateChanged = true;
                         break;
 
                     case LV_KEY_ESC:
-                        currentState.cursorStatus = 0;
+                        currentState.cursorStatus--;
+                        if (currentState.cursorStatus < -1) { //-1 is min, it means exit the config mode, 0 is normal(not selected)
+                            currentState.cursorStatus = -1;
+                        }
                         stateChanged = true;
                         break;
                     }
