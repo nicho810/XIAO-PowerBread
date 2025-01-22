@@ -19,6 +19,10 @@ void cleanupAndWait()
 // Add this at the top of the file with other global variables
 volatile bool menu_is_visible = false;
 
+// Add at the top with other global variables
+static uint32_t last_key_time = 0;
+const uint32_t KEY_DEBOUNCE_MS = 50;  // Minimum time between key events
+
 // Add event handling to the container
 static void setup_container_events(lv_obj_t *container)
 {
@@ -42,9 +46,16 @@ static void key_event_cb(lv_event_t *e)
     lv_event_code_t code = lv_event_get_code(e);
     if (code == LV_EVENT_KEY)
     {
+        // Rate limiting check
+        uint32_t current_time = millis();
+        if (current_time - last_key_time < KEY_DEBOUNCE_MS) {
+            return;  // Ignore rapid keypresses
+        }
+        last_key_time = current_time;
+
         uint32_t key = lv_event_get_key(e);
 
-        if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE)
+        if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(50)) == pdTRUE)  // Increased timeout
         {
             ConfigModeState currentState;
             if (configMode.getConfigState(&currentState))  // Safely get current state
@@ -57,14 +68,14 @@ static void key_event_cb(lv_event_t *e)
                     switch (key)
                     {
                     case LV_KEY_UP:
-                        if (newCursor > 0) {  // Bounds check
+                        if (newCursor > 0 && newCursor < currentState.cursorMax) {  // Extra bounds validation
                             newCursor--;
                             stateChanged = true;
                         }
                         break;
 
                     case LV_KEY_DOWN:
-                        if (newCursor < (currentState.cursorMax - 1)) {  // Bounds check
+                        if (newCursor >= 0 && newCursor < (currentState.cursorMax - 1)) {  // Extra bounds validation
                             newCursor++;
                             stateChanged = true;
                         }
@@ -81,10 +92,14 @@ static void key_event_cb(lv_event_t *e)
                         break;
                     }
 
-                    if (stateChanged) {
+                    if (stateChanged && 
+                        newCursor >= 0 && 
+                        newCursor < currentState.cursorMax) {  // Final bounds check
                         currentState.cursorLast = currentState.cursor;
                         currentState.cursor = newCursor;
-                        configMode.updateConfigState(&currentState);  // Safely update state
+                        if (!configMode.updateConfigState(&currentState)) {  // Check if update succeeded
+                            Serial.println("Failed to update config state");
+                        }
                     }
 
                     // Debug output
@@ -144,6 +159,9 @@ static void key_event_cb(lv_event_t *e)
                 }
             }
             xSemaphoreGive(xSemaphore);
+        }
+        else {
+            Serial.println("Failed to take semaphore in key_event_cb");
         }
     }
 }
