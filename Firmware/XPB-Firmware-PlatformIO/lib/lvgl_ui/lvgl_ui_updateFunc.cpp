@@ -88,3 +88,36 @@ void update_chart_range(lv_obj_t* chart, lv_chart_series_t* series) {
 }
 
 
+void update_configMode(lv_obj_t *item_area, int8_t cursor, int8_t cursor_status)
+{
+    if (!item_area) return;
+
+    for (int i = 0; i < 15; i++) {
+        lv_obj_t *item = lv_obj_get_child(item_area, i);
+        //get the child of the item, which is the value_box
+        lv_obj_t *value_box = lv_obj_get_child(item, 1);
+        if (i == cursor && cursor_status == 0) {  // when the cursor = item_id, and cursor_status = 0(unselected), change the itemStatus to 1(Hover)
+            update_configMode_changeItemStatus(value_box, 1);
+        } else if (i == cursor && cursor_status == 1) {  // when the cursor = item_id, and cursor_status = 1(selected), change the itemStatus to 2(Selected)
+            update_configMode_changeItemStatus(value_box, 2);
+        } else { // when the cursor != item_id, change the itemStatus to 0(unselected)
+            update_configMode_changeItemStatus(value_box, 0);
+        }
+    }
+    
+}
+
+void update_configMode_changeItemStatus(lv_obj_t *item, int8_t itemStatus){
+    if (!item) return;
+
+    if (itemStatus == 0) {
+        lv_obj_set_style_border_width(item, 0, LV_PART_MAIN);
+    } else if (itemStatus == 1) {
+        lv_obj_set_style_border_width(item, 1, LV_PART_MAIN);
+        lv_obj_set_style_border_color(item, xpb_color_Text, LV_PART_MAIN);
+    } else if (itemStatus == 2) {
+        lv_obj_set_style_border_width(item, 2, LV_PART_MAIN);
+        lv_obj_set_style_border_color(item, xpb_color_ChannelA, LV_PART_MAIN);
+    }
+
+}

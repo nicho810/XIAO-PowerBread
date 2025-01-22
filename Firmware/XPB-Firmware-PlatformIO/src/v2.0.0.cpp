@@ -23,8 +23,8 @@
  * - INA3221_RT Library: https://github.com/RobTillaart/INA3221_RT/tree/master
  * - LVGL: https://github.com/lvgl/lvgl
  * - LovyanGFX: https://github.com/lovyan03/LovyanGFX
- * 
- * About the LCD Driver Library: 
+ *
+ * About the LCD Driver Library:
  * A modified version of Adafruit_ST7735&Adafruit_GFX library for v1.x
  * LovyanGFX is used starting from v2.x to make UI response faster.
  * We are grateful to the developers and contributors of these libraries.
@@ -46,10 +46,10 @@
 #include <semphr.h>
 
 // RTOS Tasks
-#include "dialReadTask.h" // dial read task
-#include "serialTask.h"   // serial task
+#include "dialReadTask.h"     // dial read task
+#include "serialTask.h"       // serial task
 #include "sensorUpdateTask.h" // sensor update task
-#include "lvglTask.h" // LVGL task
+#include "lvglTask.h"         // LVGL task
 // LCD
 #include <LovyanGFX.h>
 #include <LGFX_XPB_XIAO_RP2040.hpp> //only for RP2040
@@ -59,29 +59,43 @@ static LGFX_Sprite sprite(&tft); // スプライトを使う場合はLGFX_Sprite
 #define screen_width 80
 #define screen_height 160
 
-
 // LVGL UI & Input Device Declaration
-lv_obj_t *ui_container = NULL; // Global container for the chart UI
+lv_obj_t *ui_container = NULL;   // Global container for the chart UI
 static lv_indev_drv_t indev_drv; // Input device driver
 
 // LVGL Input Device Keyboard read function
 static void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
 {
-    if (last_key_pressed)
+    // Take semaphore with a short timeout
+    if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(10)) == pdTRUE)
     {
-        data->state = LV_INDEV_STATE_PRESSED;
-        data->key = last_key;
+        if (last_key_pressed)
+        {
+            data->state = LV_INDEV_STATE_PRESSED;
+            data->key = last_key;
+            Serial.print("Key pressed: ");
+            Serial.print(last_key);
+            Serial.print(", State: PRESSED");
+            Serial.println();
+        }
+        else
+        {
+            data->state = LV_INDEV_STATE_RELEASED;
+            data->key = last_key;
+        }
+        
+        // Reset the key press state after it's been read
+        last_key_pressed = false;
+        
+        xSemaphoreGive(xSemaphore);
     }
     else
     {
+        // If we couldn't get the semaphore, maintain previous state
         data->state = LV_INDEV_STATE_RELEASED;
-        data->key = last_key; // Pass the last key that was pressed
+        data->key = 0;
     }
-
-    // Reset the key press state after it's been read
-    last_key_pressed = false;
 }
-
 
 // LVGL Display flushing function
 void xpb_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -123,6 +137,9 @@ volatile bool highLightChannel_ChangeRequested = false;
 uint8_t highLightChannel = 0;
 uint8_t forceUpdate_flag = 0;
 volatile bool is_configMode_active = false; // flag to check if the config mode is active
+volatile int8_t configMode_cursor = 0;
+volatile int8_t configMode_cursor_status = 0; // 0 = unselected, 1 = selected
+volatile uint8_t configMode_cursor_max = 14;
 
 // LCD Rotation variables
 volatile bool rotationChangeRequested = false;
@@ -151,7 +168,7 @@ float avgS[2] = {0}, avgM[2] = {0}, avgH[2] = {0}, peak[2] = {0}; // Average val
 // Task buffers and stacks
 StaticTask_t xTaskBuffer_UI, xTaskBuffer_Serial, xTaskBuffer_Dial, xTaskBuffer_Sensor;
 StackType_t xStack_UI[STACK_SIZE_UI];
-StackType_t xStack_Serial[STACK_SIZE_SERIAL]; 
+StackType_t xStack_Serial[STACK_SIZE_SERIAL];
 StackType_t xStack_Dial[STACK_SIZE_DIAL];
 StackType_t xStack_Sensor[STACK_SIZE_SENSOR];
 
@@ -165,8 +182,6 @@ TaskHandle_t xSensorTaskHandle = NULL;
 SemaphoreHandle_t lvglMutex = NULL;
 SemaphoreHandle_t xSemaphore = NULL;
 StaticSemaphore_t xMutexBuffer;
-
-
 
 void setup(void)
 {
@@ -208,7 +223,7 @@ void setup(void)
     tft.init();
     tft.setColorDepth(16);         // RGB565
     tft.setRotation(tft_Rotation); // Set initial hardware rotation = 0
-    tft.fillScreen(0x0000); // Black screen
+    tft.fillScreen(0x0000);        // Black screen
 
     // LVGL LCD Init
     lv_init();
@@ -259,40 +274,51 @@ void setup(void)
             ;
     }
 
-    // Create tasks with optimized priorities
+
+    // Check if user want to enter the config mode, 2 = The dial is turned down by user when boot up -> Enter the config mode
+    if (dial.readDialStatus() == 2)
+    { 
+        // Direct serial print before RTOS starts
+        Serial.println("Entering config mode...");
+        Serial.flush(); // Ensure the message is sent
+        is_configMode_active = true;
+    }
+    // Create tasks (Create here because we still need it to update the UI even in config mode)
     xSensorTaskHandle = xTaskCreateStatic(sensorUpdateTask, "Sensor_Update", STACK_SIZE_SENSOR, NULL, 3, xStack_Sensor, &xTaskBuffer_Sensor);
     xLvglTaskHandle = xTaskCreateStatic(lvglTask, "UI_Update", STACK_SIZE_UI, NULL, 4, xStack_UI, &xTaskBuffer_UI);
     xDialTaskHandle = xTaskCreateStatic(dialReadTask, "Dial_Read", STACK_SIZE_DIAL, NULL, 2, xStack_Dial, &xTaskBuffer_Dial);
     xSerialTaskHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print", STACK_SIZE_SERIAL, NULL, 1, xStack_Serial, &xTaskBuffer_Serial);
 
-    Serial.println("-----------[Boot info end]------------");
+    // Serial.println("-----------[Boot info end]------------");
 
-    //delay 3 seconds before entering the config mode
-    // vTaskDelay(pdMS_TO_TICKS(3000));
-
-    // Check if user want to enter the config mode
-    if (dial.readDialStatus() == 2) { // 2 = The dial is turned down by user when boot up -> Enter the config mode
-        Serial.println("Entering config mode...");
-
+    // Other things to do when in config mode
+    if (is_configMode_active == true)
+    {
         // Stop other unrelevant tasks
-        vTaskSuspend(xSensorTaskHandle);
-        vTaskSuspend(xSerialTaskHandle);
-        
-        is_configMode_active = true;
-        if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE) {
+        // vTaskSuspend(xSensorTaskHandle);
+        // vTaskSuspend(xSerialTaskHandle);
+
+        if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
+        {
             lv_obj_clean(lv_scr_act());
-            ui_container = configMode_initUI(tft_Rotation);
-            forceUpdate_flag = 1; // set flag to force update to flush the UI
+            ui_container = configMode_initUI(tft_Rotation); // init the config mode UI
+            forceUpdate_flag = 1;                           // set flag to force update to flush the UI
             lv_disp_t *disp = lv_disp_get_default();
             lv_refr_now(disp);
             xSemaphoreGive(lvglMutex);
         }
 
         // Wait for the user to exit the config mode
-        while (is_configMode_active) {
+        while (is_configMode_active)
+        {
             vTaskDelay(pdMS_TO_TICKS(500)); // Small delay to avoid busy-looping
         }
         Serial.println("Exiting config mode...");
+        Serial.flush(); // Ensure the message is sent
+
+
+        //resume the other tasks
+        // vTaskResume(xSerialTaskHandle);
     }
 
     // Load the config data from EEPROM

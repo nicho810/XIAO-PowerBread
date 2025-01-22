@@ -1,6 +1,9 @@
 #include "sensorUpdateTask.h"
 
 extern volatile bool is_configMode_active;
+extern volatile int8_t configMode_cursor;
+extern volatile int8_t configMode_cursor_status;
+extern volatile uint8_t configMode_cursor_max;
 
 // Sensor Update Task
 void sensorUpdateTask(void *pvParameters)
@@ -30,8 +33,18 @@ void sensorUpdateTask(void *pvParameters)
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
         if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE)
-        { 
-            if (!is_configMode_active) // Only process sensor updates when not in config mode
+        {
+            if (is_configMode_active)
+            { // use this task to update the config mode when the config mode is active
+                // Take LVGL mutex before UI operations
+                if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
+                {
+                    lv_obj_t *item_area = lv_obj_get_child(ui_container, 1); // Get item_area (second child of ui_container)
+                    update_configMode(item_area, configMode_cursor, configMode_cursor_status);
+                    xSemaphoreGive(lvglMutex);
+                }
+            }
+            else if (!is_configMode_active) // Only process sensor updates when not in config mode
             {
                 DualChannelData newSensorData = inaSensor.readCurrentSensors();
 

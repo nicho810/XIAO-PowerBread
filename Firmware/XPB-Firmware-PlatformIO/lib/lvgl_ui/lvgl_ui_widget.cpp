@@ -233,3 +233,55 @@ lv_obj_t *widget_DataMonitor_create(uint16_t x, uint16_t y, const char *title_te
 
     return container;
 }
+
+lv_obj_t *widget_configMode_item(lv_obj_t *parent, uint16_t x, uint16_t y, const char *title_text, uint8_t value, uint8_t itemStatus = 0)
+{
+    // Create a container
+    lv_obj_t *container = lv_obj_create(parent);
+    lv_obj_clear_flag(container, LV_OBJ_FLAG_SCROLLABLE); // Disable container scrolling
+    lv_obj_set_size(container, 78, 14);
+    lv_obj_align(container, LV_ALIGN_TOP_LEFT, x, y);
+    lv_obj_set_style_bg_color(container, xpb_color_Background, LV_PART_MAIN);
+    lv_obj_set_style_border_width(container, 0, LV_PART_MAIN);
+
+    // Create a label
+    lv_obj_t *label = lv_label_create(container);
+    lv_obj_set_style_text_font(label, &inter_bold_8px_basicLatin_2b, LV_PART_MAIN);
+    lv_obj_set_style_text_color(label, xpb_color_Text, LV_PART_MAIN);
+    lv_label_set_text(label, title_text);
+    lv_obj_align(label, LV_ALIGN_LEFT_MID, -10, 0);
+
+
+    //creat a value box
+    lv_obj_t *value_box = lv_obj_create(container);
+    lv_obj_clear_flag(value_box, LV_OBJ_FLAG_SCROLLABLE); // Disable container scrolling
+    lv_obj_set_size(value_box, 22, 14);
+    lv_obj_set_style_bg_color(value_box, xpb_color_Background, LV_PART_MAIN);
+    lv_obj_set_style_radius(value_box, 4, LV_PART_MAIN);
+    lv_obj_align(value_box, LV_ALIGN_RIGHT_MID, 10, 0);
+    /*
+    itemStatus = 0: normal(not selected)
+    itemStatus = 1: Hover
+    itemStatus = 2: Selected
+    */
+    if (itemStatus == 0) {
+        lv_obj_set_style_border_width(value_box, 0, LV_PART_MAIN);
+    } else if (itemStatus == 1) {
+        lv_obj_set_style_border_width(value_box, 1, LV_PART_MAIN);
+        lv_obj_set_style_border_color(value_box, xpb_color_Text, LV_PART_MAIN);
+    } else if (itemStatus == 2) {
+        lv_obj_set_style_border_width(value_box, 2, LV_PART_MAIN);
+        lv_obj_set_style_border_color(value_box, xpb_color_ChannelA, LV_PART_MAIN);
+    }
+
+    //creat a value label
+    lv_obj_t *value_label = lv_label_create(value_box);
+    lv_obj_set_style_text_font(value_label, &inter_bold_8px_basicLatin_2b, LV_PART_MAIN);
+    lv_obj_set_style_text_color(value_label, xpb_color_Text, LV_PART_MAIN);
+    char value_str[4];
+    snprintf(value_str, sizeof(value_str), "%u", value);
+    lv_label_set_text(value_label, value_str);
+    lv_obj_align(value_label, LV_ALIGN_CENTER, 0, 0);
+
+    return container;
+}
