@@ -1,13 +1,13 @@
 #include "dialSwitch.h"
-#define dial_pin 28
+
 
 void DialFunction::init() {
-  pinMode(dial_pin, INPUT);
+  pinMode(pin_dial, INPUT);
   analogReadResolution(10); //10 bit ADC resolution
 }
 
 int DialFunction::read() {
-  return analogRead(dial_pin);
+  return analogRead(pin_dial);
 }
 
 int DialFunction::readDialStatus() {

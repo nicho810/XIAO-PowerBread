@@ -9,6 +9,7 @@
 
 #include <Wire.h>
 #include "INA3221.h"
+#include "boardConfig.h"
 
 struct INAData {
   float busVoltage;

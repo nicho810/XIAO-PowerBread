@@ -6,13 +6,31 @@
 #include "INA3221Sensor.h"
 
 INA3221Sensor::INA3221Sensor(uint8_t address)
+#if defined(RPI_PICO)
   : ina(address, &Wire1) {}
+#elif defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
+  : ina(address, &Wire) {}
+#else
+  : ina(address, &Wire) {}
+#endif
 
 bool INA3221Sensor::begin(float shuntResistorCHA=0.050, float shuntResistorCHB=0.050) {
-  Wire1.setSDA(6);
-  Wire1.setSCL(7);
-  Wire1.setClock(400000); // Set I2C to 400KHz
-  Wire1.begin();
+  /* when using RPI_PICO, the I2C have to set to Wire1, the actual I2C is Wire1, but on seeed_xiao_rp2040, they mapped it to Wire0 */
+  #if defined(RPI_PICO)
+    Wire1.setSDA(6);
+    Wire1.setSCL(7);
+    Wire1.setClock(400000); // Set I2C to 400KHz
+    Wire1.begin();
+  #elif defined(SEEED_XIAO_RP2040)
+    Wire.setClock(400000); // Set I2C to 400KHz
+    Wire.begin();
+  #else
+    Wire.setSDA(pin_i2c_sda);
+    Wire.setSCL(pin_i2c_scl);
+    Wire.setClock(400000); // Set I2C to 400KHz
+    Wire.begin();
+  #endif
+
   if (!ina.begin()) {
     Serial.println("could not connect. Fix and Reboot");
     return false;

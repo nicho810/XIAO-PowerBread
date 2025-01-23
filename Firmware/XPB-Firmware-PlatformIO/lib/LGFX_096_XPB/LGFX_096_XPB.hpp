@@ -3,9 +3,7 @@
 #define LGFX_USE_V1
 
 #include <LovyanGFX.hpp>
-
-// LGFX for Waveshare RP2040-LCD-0.96
-// https://www.waveshare.com/wiki/RP2040-LCD-0.96
+#include <boardConfig.h>
 
 class LGFX : public lgfx::LGFX_Device
 {
@@ -21,18 +19,18 @@ class LGFX : public lgfx::LGFX_Device
       cfg.spi_host   = 0;
       cfg.spi_mode   = 0;
       cfg.freq_write = 80000000;
-      cfg.pin_sclk   = 2;
-      cfg.pin_miso   = -1;
-      cfg.pin_mosi   = 3;
-      cfg.pin_dc     = 4;
+      cfg.pin_sclk   = pin_lcd_sclk;
+      cfg.pin_miso   = pin_lcd_miso;
+      cfg.pin_mosi   = pin_lcd_mosi;
+      cfg.pin_dc     = pin_lcd_dc;
       _bus_instance.config(cfg);
       _panel_instance.setBus(&_bus_instance);
     }
 
     {
       auto cfg = _panel_instance.config();
-      cfg.pin_cs       = -1;
-      cfg.pin_rst      = 29;
+      cfg.pin_cs       = pin_lcd_cs;
+      cfg.pin_rst      = pin_lcd_rst;
       cfg.panel_width  = 80;
       cfg.panel_height = 160;
       cfg.offset_x     = 24;

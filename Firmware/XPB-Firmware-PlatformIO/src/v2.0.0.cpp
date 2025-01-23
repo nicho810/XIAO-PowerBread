@@ -52,7 +52,7 @@
 #include "lvglTask.h"         // LVGL task
 // LCD
 #include <LovyanGFX.h>
-#include <LGFX_XPB_XIAO_RP2040.hpp> //only for RP2040
+#include <LGFX_096_XPB.hpp>
 #include <lvgl.h>
 static LGFX tft;                 // LGFXのインスタンスを作成。
 static LGFX_Sprite sprite(&tft); // スプライトを使う場合はLGFX_Spriteのインスタンスを作成。
