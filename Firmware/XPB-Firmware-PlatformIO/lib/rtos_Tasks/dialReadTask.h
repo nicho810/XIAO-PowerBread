@@ -2,9 +2,7 @@
 #define DIALREADTASK_H
 
 #include <Arduino.h>
-#include <FreeRTOS.h>
-#include <task.h>
-#include <semphr.h>
+#include "boardConfig.h"
 #include "dialSwitch.h"
 #include "lvgl.h"
 

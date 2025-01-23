@@ -2,9 +2,7 @@
 #define LVGL_TASK_H
 
 #include <Arduino.h>
-#include <FreeRTOS.h>
-#include <task.h>
-#include <semphr.h>
+#include "boardConfig.h"
 #include <lvgl.h>
 
 // Function declaration

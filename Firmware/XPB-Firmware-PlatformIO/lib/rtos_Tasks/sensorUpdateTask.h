@@ -1,9 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <FreeRTOS.h>
-#include <task.h>
-#include <semphr.h>
+#include "boardConfig.h"
 #include <lvgl.h>
 #include "INA3221Sensor.h"
 #include "lvgl_ui.h"

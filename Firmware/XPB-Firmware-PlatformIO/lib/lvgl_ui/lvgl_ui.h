@@ -2,10 +2,8 @@
 #define LVGL_UI_H
 
 #include "Arduino.h"
+#include "boardConfig.h"
 #include "lvgl.h"
-#include "FreeRTOS.h"
-#include "task.h"
-#include "semphr.h"
 #include "xpb_color_palette.h"
 #include "lvgl_ui_widget.h"
 #include "function_mode.h"

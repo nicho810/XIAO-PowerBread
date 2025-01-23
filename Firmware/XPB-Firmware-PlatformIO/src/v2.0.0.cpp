@@ -40,11 +40,6 @@
 #include "boardConfig.h"
 #include <Arduino.h>
 
-// RTOS
-#include <FreeRTOS.h>
-#include <task.h>
-#include <semphr.h>
-
 // RTOS Tasks
 #include "dialReadTask.h"     // dial read task
 #include "serialTask.h"       // serial task
@@ -152,7 +147,7 @@ DualChannelData latestSensorData;                                 // Add a globa
 float avgS[2] = {0}, avgM[2] = {0}, avgH[2] = {0}, peak[2] = {0}; // Average values for each channel
 
 // FreeRTOS Task Declarations
-#if defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_S3) || defined(SEEED_XIAO_C6)
+#if defined(SEEED_XIAO_ESP32C3) || defined(SEEED_XIAO_ESP32S3) || defined(SEEED_XIAO_ESP32C6)
 #define STACK_SIZE_UI 4096
 #define STACK_SIZE_SERIAL 4096
 #define STACK_SIZE_DIAL 2048
@@ -345,10 +340,6 @@ void setup(void)
             {
                 // Print error message
                 Serial.println("INA3221 initialization failed. Please check the wiring and try again.");
-                // Print the SDA and SCL pin number
-                Serial.printf("> SDA1: %d, SCL1: %d\n", PIN_WIRE1_SDA, PIN_WIRE1_SCL);
-                Serial.printf("> SDA0: %d, SCL0: %d\n", PIN_WIRE0_SDA, PIN_WIRE0_SCL);
-                Serial.printf("> SDA: %d, SCL: %d\n", SDA, SCL);
                 delay(1000);
                 // Since not all XIAO boards have built-in LED, so we don't use LED blink here.
                 // Need to find another way to indicate the error besides Serial print. Maybe LCD screen?
