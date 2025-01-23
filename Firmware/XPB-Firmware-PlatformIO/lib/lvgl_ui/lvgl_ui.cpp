@@ -71,8 +71,8 @@ static void key_event_cb(lv_event_t *e)
                             }
                         } else if (currentState.cursorStatus == 1) { 
                             //if the cursorStatus is 1, it means selected, so we increase the value of the item instead of moving the cursor
-                            Serial.println("Increase the value of the item. ++");
-                            Serial.flush();
+                            // Serial.println("Increase the value of the item. ++");
+                            // Serial.flush();
                             sysConfig.incrementConfigValue(newCursor, tmp_cfg_data);
 
                         }
@@ -87,8 +87,8 @@ static void key_event_cb(lv_event_t *e)
                         }
                         else if (currentState.cursorStatus == 1) { 
                             //if the cursorStatus is 1, it means selected, so we decrease the value of the item instead of moving the cursor
-                            Serial.println("Decrease the value of the item. --");
-                            Serial.flush();
+                            // Serial.println("Decrease the value of the item. --");
+                            // Serial.flush();
                             sysConfig.decrementConfigValue(newCursor, tmp_cfg_data);
                         }
                         break;
@@ -118,19 +118,19 @@ static void key_event_cb(lv_event_t *e)
                     }
 
                     // Debug output
-                    Serial.printf("Config mode: cursor=%d, last=%d, max=%d, status=%d\n", 
-                        currentState.cursor, 
-                        currentState.cursorLast,
-                        currentState.cursorMax,
-                        currentState.cursorStatus);
-                    Serial.flush();
+                    // Serial.printf("Config mode: cursor=%d, last=%d, max=%d, status=%d\n", 
+                    //     currentState.cursor, 
+                    //     currentState.cursorLast,
+                    //     currentState.cursorMax,
+                    //     currentState.cursorStatus);
+                    // Serial.flush();
                 }
                 else // not in config mode
                 {
                     switch (key)
                     {
                     case LV_KEY_UP: // Dial turned up (status 1)
-                        Serial.println("UP key pressed");
+                        // Serial.println("UP key pressed");
                         if (current_functionMode > dataMonitor)
                         {
                             current_functionMode = static_cast<function_mode>(current_functionMode - 1);
@@ -143,7 +143,7 @@ static void key_event_cb(lv_event_t *e)
                         break;
 
                     case LV_KEY_DOWN: // Dial turned down (status 2)
-                        Serial.println("DOWN key pressed");
+                        // Serial.println("DOWN key pressed");
                         if (current_functionMode < dataMonitorCount)
                         {
                             current_functionMode = static_cast<function_mode>(current_functionMode + 1);
@@ -156,7 +156,7 @@ static void key_event_cb(lv_event_t *e)
                         break;
 
                     case LV_KEY_ENTER: // Short press (status 3)
-                        Serial.println("ENTER key pressed");
+                        // Serial.println("ENTER key pressed");
                         highLightChannel = (highLightChannel + 1) % 2;
                         highLightChannel_ChangeRequested = true;
 
@@ -168,7 +168,7 @@ static void key_event_cb(lv_event_t *e)
                         break;
 
                     case LV_KEY_ESC: // Long press (status 4)
-                        Serial.println("ESC pressed(long press dial)");
+                        // Serial.println("ESC pressed(long press dial)");
                         // Add any long press handling here
                         break;
                     }
@@ -177,7 +177,7 @@ static void key_event_cb(lv_event_t *e)
             xSemaphoreGive(xSemaphore);
         }
         else {
-            Serial.println("Failed to take semaphore in key_event_cb");
+            // Serial.println("Failed to take semaphore in key_event_cb");
         }
     }
 }

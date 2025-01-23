@@ -187,9 +187,6 @@ StaticSemaphore_t xMutexBuffer;
 
 void setup(void)
 {
-    // delay for debug, remove this when releasing.
-    delay(1500);
-
     // Serial Init
     Serial.begin(115200);
     Serial.println("==========[XIAO-PowerBread Boot Info]===========");
