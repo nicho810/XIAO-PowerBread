@@ -118,7 +118,7 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
 | 1.1.2     | Yes | - | Introduces LED blink functionality for debugging purposes | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.2) |
 | 1.1.3     | Yes👍 | - | Add fixed-scale and auto-scale support for line-chart | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.3) |
 | 1.1.4     | Yes👍 | - | Add support for XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3, XIAO ESP32-C6 | [MultiPlatform](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.4) |
-| 2.0.0     | No | Beta | Switch to LVGL(LovyanGFX) for UI rendering.| [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v2.0.0) |
+| 2.0.0     | Yes👍 | - | refactor code and switch to LVGL(LovyanGFX) for UI rendering to improve the performance.| [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v2.0.0) |
 
 ### Documentation
 - [System Config Explanation](Docs/sysConfig.md)
