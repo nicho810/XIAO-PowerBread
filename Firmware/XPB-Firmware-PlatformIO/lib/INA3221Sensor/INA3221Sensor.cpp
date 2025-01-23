@@ -7,14 +7,17 @@
 
 INA3221Sensor::INA3221Sensor(uint8_t address)
 #if defined(RPI_PICO)
-  : ina(address, &Wire1) {}
-#elif defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
-  : ina(address, &Wire) {}
+  : ina(address, &Wire1) {
+#elif defined(SEEED_XIAO_RP2040)
+  : ina(address, &Wire) {
+#elif defined(SEEED_XIAO_RP2350)
+  : ina(address, &Wire1) {
 #else
-  : ina(address, &Wire) {}
+  : ina(address, &Wire) {
 #endif
+}
 
-bool INA3221Sensor::begin(float shuntResistorCHA=0.050, float shuntResistorCHB=0.050) {
+bool INA3221Sensor::begin(float shuntResistorCHA, float shuntResistorCHB) {
   /* when using RPI_PICO, the I2C have to set to Wire1, the actual I2C is Wire1, but on seeed_xiao_rp2040, they mapped it to Wire0 */
   #if defined(RPI_PICO)
     Wire1.setSDA(6);
@@ -24,6 +27,11 @@ bool INA3221Sensor::begin(float shuntResistorCHA=0.050, float shuntResistorCHB=0
   #elif defined(SEEED_XIAO_RP2040)
     Wire.setClock(400000); // Set I2C to 400KHz
     Wire.begin();
+  #elif defined(SEEED_XIAO_RP2350)
+    Wire1.setSDA(pin_i2c_sda);
+    Wire1.setSCL(pin_i2c_scl);
+    Wire1.setClock(1000000); // Note: 1MHz works while 400KHz doesn't work.
+    Wire1.begin();
   #else
     Wire.setSDA(pin_i2c_sda);
     Wire.setSCL(pin_i2c_scl);
@@ -34,15 +42,14 @@ bool INA3221Sensor::begin(float shuntResistorCHA=0.050, float shuntResistorCHB=0
   if (!ina.begin()) {
     Serial.println("could not connect. Fix and Reboot");
     return false;
-  } else {
-    // Serial.println("INA3221 Found");
-    disableChannel(2); // Disable unused channel 2
-    setShuntResistors(shuntResistorCHA, shuntResistorCHB); // 20 mR shunt resistors for channels 0 and 1, 20mR=0.020
-    Serial.printf("> Set Shunt-Resistors: %f, %f\n", ina.getShuntR(0), ina.getShuntR(1));
-    setAverage(1); //get 4 samples and average them
-    delay(100);
-    return true;
   }
+
+  disableChannel(2); // Disable unused channel 2
+  setShuntResistors(shuntResistorCHA, shuntResistorCHB);
+  Serial.printf("> Set Shunt-Resistors: %f, %f\n", ina.getShuntR(0), ina.getShuntR(1));
+  setAverage(1); //get 4 samples and average them
+  delay(100);
+  return true;
 }
 
 void INA3221Sensor::setAverage(int average) {

@@ -345,6 +345,10 @@ void setup(void)
             {
                 // Print error message
                 Serial.println("INA3221 initialization failed. Please check the wiring and try again.");
+                // Print the SDA and SCL pin number
+                Serial.printf("> SDA1: %d, SCL1: %d\n", PIN_WIRE1_SDA, PIN_WIRE1_SCL);
+                Serial.printf("> SDA0: %d, SCL0: %d\n", PIN_WIRE0_SDA, PIN_WIRE0_SCL);
+                Serial.printf("> SDA: %d, SCL: %d\n", SDA, SCL);
                 delay(1000);
                 // Since not all XIAO boards have built-in LED, so we don't use LED blink here.
                 // Need to find another way to indicate the error besides Serial print. Maybe LCD screen?
