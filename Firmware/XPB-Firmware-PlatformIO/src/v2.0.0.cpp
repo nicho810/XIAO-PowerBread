@@ -23,8 +23,8 @@
  * - INA3221_RT Library: https://github.com/RobTillaart/INA3221_RT/tree/master
  * - LVGL: https://github.com/lvgl/lvgl
  * - LovyanGFX: https://github.com/lovyan03/LovyanGFX
- * 
- * About the LCD Driver Library: 
+ *
+ * About the LCD Driver Library:
  * A modified version of Adafruit_ST7735&Adafruit_GFX library for v1.x
  * LovyanGFX is used starting from v2.x to make UI response faster.
  * We are grateful to the developers and contributors of these libraries.
@@ -46,10 +46,10 @@
 #include <semphr.h>
 
 // RTOS Tasks
-#include "dialReadTask.h" // dial read task
-#include "serialTask.h"   // serial task
+#include "dialReadTask.h"     // dial read task
+#include "serialTask.h"       // serial task
 #include "sensorUpdateTask.h" // sensor update task
-#include "lvglTask.h" // LVGL task
+#include "lvglTask.h"         // LVGL task
 // LCD
 #include <LovyanGFX.h>
 #include <LGFX_XPB_XIAO_RP2040.hpp> //only for RP2040
@@ -59,29 +59,43 @@ static LGFX_Sprite sprite(&tft); // スプライトを使う場合はLGFX_Sprite
 #define screen_width 80
 #define screen_height 160
 
-
 // LVGL UI & Input Device Declaration
-lv_obj_t *ui_container = NULL; // Global container for the chart UI
+lv_obj_t *ui_container = NULL;   // Global container for the chart UI
 static lv_indev_drv_t indev_drv; // Input device driver
 
 // LVGL Input Device Keyboard read function
 static void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
 {
-    if (last_key_pressed)
+    // Take semaphore with a short timeout
+    if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(10)) == pdTRUE)
     {
-        data->state = LV_INDEV_STATE_PRESSED;
-        data->key = last_key;
+        if (last_key_pressed)
+        {
+            data->state = LV_INDEV_STATE_PRESSED;
+            data->key = last_key;
+            // Serial.print("Key pressed: ");
+            // Serial.print(last_key);
+            // Serial.print(", State: PRESSED");
+            // Serial.println();
+        }
+        else
+        {
+            data->state = LV_INDEV_STATE_RELEASED;
+            data->key = last_key;
+        }
+
+        // Reset the key press state after it's been read
+        last_key_pressed = false;
+
+        xSemaphoreGive(xSemaphore);
     }
     else
     {
+        // If we couldn't get the semaphore, maintain previous state
         data->state = LV_INDEV_STATE_RELEASED;
-        data->key = last_key; // Pass the last key that was pressed
+        data->key = 0;
     }
-
-    // Reset the key press state after it's been read
-    last_key_pressed = false;
 }
-
 
 // LVGL Display flushing function
 void xpb_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -114,7 +128,10 @@ volatile int lastDialStatus = 0;
 // System Config
 #include "sysConfig.h"
 SysConfig sysConfig;
-sysConfig_data cfg_data_default; // default config data
+sysConfig_data tmp_cfg_data;
+// sysConfig_data cfg_data_default; // default config data
+
+ConfigMode configMode;
 
 // Global variables
 volatile function_mode current_functionMode = dataMonitor;
@@ -150,7 +167,7 @@ float avgS[2] = {0}, avgM[2] = {0}, avgH[2] = {0}, peak[2] = {0}; // Average val
 // Task buffers and stacks
 StaticTask_t xTaskBuffer_UI, xTaskBuffer_Serial, xTaskBuffer_Dial, xTaskBuffer_Sensor;
 StackType_t xStack_UI[STACK_SIZE_UI];
-StackType_t xStack_Serial[STACK_SIZE_SERIAL]; 
+StackType_t xStack_Serial[STACK_SIZE_SERIAL];
 StackType_t xStack_Dial[STACK_SIZE_DIAL];
 StackType_t xStack_Sensor[STACK_SIZE_SENSOR];
 
@@ -160,54 +177,28 @@ TaskHandle_t xSerialTaskHandle = NULL;
 TaskHandle_t xDialTaskHandle = NULL;
 TaskHandle_t xSensorTaskHandle = NULL;
 
-// Semaphores
+// Add this near the top of the file with other declarations
+extern SemaphoreHandle_t configStateMutex;
+
+// Other semaphores
 SemaphoreHandle_t lvglMutex = NULL;
 SemaphoreHandle_t xSemaphore = NULL;
 StaticSemaphore_t xMutexBuffer;
-
-
 
 void setup(void)
 {
     // Serial Init
     Serial.begin(115200);
-    Serial.print(F("Hello! XPB-PIO Test"));
+    Serial.println("==========[XIAO-PowerBread Boot Info]===========");
 
     // Dial init
     dial.init();
 
-    // load default config data
-    sysConfig.loadConfig_from(cfg_data_default); // load default config data
-    // Load config from EEPROM
-    // sysConfig.begin_EEPROM();
-    // sysConfig.init_EEPROM(0); //0=no force write, 1=force write
-    Serial.println(sysConfig.output_all_config_data_in_String()); // print all config data
-
-    // Apply the cfg_data to the variables
-    float shuntResistorCHA = sysConfig.cfg_data.shuntResistorCHA / 1000.0f;
-    float shuntResistorCHB = sysConfig.cfg_data.shuntResistorCHB / 1000.0f;
-    highLightChannel = sysConfig.cfg_data.default_channel;                 // 0=channel A, 1=channel B, it used when only show one channel data
-    current_functionMode = (function_mode)sysConfig.cfg_data.default_mode; // 0=dataMonitor, 1=dataMonitorChart, 2=dataMonitorCount, 3=dataChart
-    // current_functionMode = (function_mode)1;
-
-    // INA3221 Init
-    if (!inaSensor.begin(shuntResistorCHA, shuntResistorCHB))
-    {
-        while (1)
-        {
-            // Print error message
-            Serial.println("INA3221 initialization failed. Please check the wiring and try again.");
-            delay(1000);
-            // Since not all XIAO boards have built-in LED, so we don't use LED blink here.
-            // Need to find another way to indicate the error besides Serial print. Maybe LCD screen?
-            // Todo: Add LCD error message
-        }
-    }
-
+    // LCD Init
     tft.init();
     tft.setColorDepth(16);         // RGB565
     tft.setRotation(tft_Rotation); // Set initial hardware rotation = 0
-    tft.fillScreen(0x0000); // Black screen
+    tft.fillScreen(0x0000);        // Black screen
 
     // LVGL LCD Init
     lv_init();
@@ -229,6 +220,8 @@ void setup(void)
     lv_disp_drv_register(&disp_drv);
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(lv_scr_act(), LV_OPA_COVER, LV_PART_MAIN);
+    lv_disp_t *disp = lv_disp_get_default();
+    disp->driver->monitor_cb = NULL; // LVGL optimization settings -> Disable monitor callback
 
     // LVGL Input Device Declaration
     lv_indev_drv_init(&indev_drv);
@@ -247,6 +240,9 @@ void setup(void)
     // Create LVGL mutex
     lvglMutex = xSemaphoreCreateMutex();
 
+    // Create config mode state mutex
+    configStateMutex = xSemaphoreCreateMutex();
+
     // semaphore init
     xSemaphore = xSemaphoreCreateMutexStatic(&xMutexBuffer);
     if (xSemaphore == NULL)
@@ -256,13 +252,106 @@ void setup(void)
             ;
     }
 
-    // Create tasks with optimized priorities
+
+    // Load the config data
+    // Option 1: From default config data
+    // sysConfig.loadConfig_from(cfg_data_default); 
+    // Option 2: from EEPROM
+    sysConfig.begin_EEPROM();
+    sysConfig.init_EEPROM(0); // 0=no force write, 1=force write
+    sysConfig.loadConfig_from_EEPROM();
+
+    // Print all config data
+    Serial.println(sysConfig.output_all_config_data_in_String()); 
+
+    // Check if user want to enter the config mode, 2 = The dial is turned down by user when boot up -> Enter the config mode
+    if (dial.readDialStatus() == 2)
+    {
+        configMode.enterConfigMode();
+        tmp_cfg_data = sysConfig.cfg_data; // copy cfg_data to tmp_cfg_data for later use(making changes to the config data)
+        Serial.println("> Entering config mode.");
+    }
+    // Create tasks (Create here because we still need it to update the UI even in config mode)
     xSensorTaskHandle = xTaskCreateStatic(sensorUpdateTask, "Sensor_Update", STACK_SIZE_SENSOR, NULL, 3, xStack_Sensor, &xTaskBuffer_Sensor);
     xLvglTaskHandle = xTaskCreateStatic(lvglTask, "UI_Update", STACK_SIZE_UI, NULL, 4, xStack_UI, &xTaskBuffer_UI);
     xDialTaskHandle = xTaskCreateStatic(dialReadTask, "Dial_Read", STACK_SIZE_DIAL, NULL, 2, xStack_Dial, &xTaskBuffer_Dial);
     xSerialTaskHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print", STACK_SIZE_SERIAL, NULL, 1, xStack_Serial, &xTaskBuffer_Serial);
 
-    Serial.println("-----------[Boot info end]------------");
+    // Other things to do when in config mode
+    if (configMode.configState.isActive == true)
+    {
+        // init the config mode UI
+        if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
+        {
+            lv_obj_clean(lv_scr_act());
+            ui_container = configMode_initUI(tft_Rotation); // init the config mode UI
+            forceUpdate_flag = 1;                           // set flag to force update to flush the UI
+            lv_disp_t *disp = lv_disp_get_default();
+            lv_refr_now(disp);
+            xSemaphoreGive(lvglMutex);
+        }
+
+        // Wait for the user to exit the config mode
+        while (configMode.configState.isActive)
+        {
+            vTaskDelay(pdMS_TO_TICKS(500)); // Small delay to avoid busy-looping
+        }
+
+        // save the config data to EEPROM
+        sysConfig.saveConfig_to_EEPROM(tmp_cfg_data);
+        Serial.println("> Config data saved to EEPROM.");
+        sysConfig.loadConfig_from_EEPROM(); // load the config data from EEPROM again and apply it to the variables
+        Serial.println(sysConfig.output_all_config_data_in_String());
+        Serial.flush();
+
+        // apply the config data to the variables
+        float shuntResistorCHA = sysConfig.cfg_data.shuntResistorCHA / 1000.0f;
+        float shuntResistorCHB = sysConfig.cfg_data.shuntResistorCHB / 1000.0f;
+        highLightChannel = sysConfig.cfg_data.default_channel;                 // 0=channel A, 1=channel B, it used when only show one channel data
+        current_functionMode = (function_mode)sysConfig.cfg_data.default_mode; // 0=dataMonitor, 1=dataMonitorChart, 2=dataMonitorCount, 3=dataChart
+        // current_functionMode = (function_mode)1;
+
+        // INA3221 Init
+        if (!inaSensor.begin(shuntResistorCHA, shuntResistorCHB))
+        {
+            while (1)
+            {
+                // Print error message
+                Serial.println("INA3221 initialization failed. Please check the wiring and try again.");
+                delay(1000);
+                // Since not all XIAO boards have built-in LED, so we don't use LED blink here.
+                // Need to find another way to indicate the error besides Serial print. Maybe LCD screen?
+                // Todo: Add LCD error message
+            }
+        }
+
+        configMode.exitConfigMode();
+        Serial.println("> Exiting config mode.");
+        Serial.flush(); // Ensure the message is sent
+    }
+    else // if not in config mode, apply the config data to the variables, and init the INA3221
+    {
+        // apply the config data to the variables
+        float shuntResistorCHA = sysConfig.cfg_data.shuntResistorCHA / 1000.0f;
+        float shuntResistorCHB = sysConfig.cfg_data.shuntResistorCHB / 1000.0f;
+        highLightChannel = sysConfig.cfg_data.default_channel;                 // 0=channel A, 1=channel B, it used when only show one channel data
+        current_functionMode = (function_mode)sysConfig.cfg_data.default_mode; // 0=dataMonitor, 1=dataMonitorChart, 2=dataMonitorCount, 3=dataChart
+        // current_functionMode = (function_mode)1;
+
+        // INA3221 Init
+        if (!inaSensor.begin(shuntResistorCHA, shuntResistorCHB))
+        {
+            while (1)
+            {
+                // Print error message
+                Serial.println("INA3221 initialization failed. Please check the wiring and try again.");
+                delay(1000);
+                // Since not all XIAO boards have built-in LED, so we don't use LED blink here.
+                // Need to find another way to indicate the error besides Serial print. Maybe LCD screen?
+                // Todo: Add LCD error message
+            }
+        }
+    }
 
     // Init the default UI
     if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
@@ -283,19 +372,23 @@ void setup(void)
             ui_container = dataMonitor_initUI(tft_Rotation);
             break;
         }
-        forceUpdate_flag = 1; // set flag to force update to flush the UI
+
+        // Initialize with invalid values to force first update
+        latestSensorData.channel0.busCurrent = -999.0f;
+        latestSensorData.channel1.busCurrent = -999.0f;
+        latestSensorData.channel0.busVoltage = -999.0f;
+        latestSensorData.channel1.busVoltage = -999.0f;
+
+        forceUpdate_flag = true;             // Make sure this is set to true
+        functionMode_ChangeRequested = true; // Add this line
 
         lv_disp_t *disp = lv_disp_get_default();
         lv_refr_now(disp);
         xSemaphoreGive(lvglMutex);
     }
 
-    // Add LVGL optimization settings
-    lv_disp_t *disp = lv_disp_get_default();
-    disp->driver->monitor_cb = NULL; // Disable monitor callback
-
     // Start the scheduler
-    // vTaskStartScheduler(); //Note: no need to call this, it will cause a crash
+    // vTaskStartScheduler(); //Note: no need to call this, it will cause a crash, keep this note here as reminder.
 }
 
 void loop()

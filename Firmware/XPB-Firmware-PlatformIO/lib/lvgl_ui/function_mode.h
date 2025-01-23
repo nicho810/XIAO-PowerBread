@@ -12,4 +12,6 @@ enum function_mode
     // analogInputMonitor,
 };
 
+
+
 #endif // FUNCTION_MODE_H
