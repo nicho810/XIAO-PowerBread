@@ -321,6 +321,13 @@ void setup(void)
         {
             vTaskDelay(pdMS_TO_TICKS(500)); // Small delay to avoid busy-looping
         }
+        // save the config data to EEPROM
+        sysConfig.saveConfig_to_EEPROM(tmp_cfg_data);
+        Serial.println("Config data saved to EEPROM");
+        sysConfig.loadConfig_from_EEPROM();//load the config data from EEPROM again and apply it to the variables
+        Serial.println(sysConfig.output_all_config_data_in_String());
+        Serial.flush();
+        
         configMode.exitConfigMode();
         Serial.println("Exiting config mode...");
         Serial.flush(); // Ensure the message is sent
