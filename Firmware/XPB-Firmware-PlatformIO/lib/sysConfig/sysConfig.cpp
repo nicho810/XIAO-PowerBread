@@ -74,7 +74,7 @@ void SysConfig::init_EEPROM(int force_write) {
             saveConfig_to_EEPROM(cfg_data);
         } else {
             //load config from EEPROM
-            Serial.println("Loading config from EEPROM");
+            Serial.println("> Loading config from EEPROM.");
             loadConfig_from_EEPROM();
         }
     }
@@ -82,6 +82,7 @@ void SysConfig::init_EEPROM(int force_write) {
 
 String SysConfig::output_all_config_data_in_String() {
     String output = "\n";
+    output += "----------[Config Data]----------\n";
     output += "cfg_version: " + String(cfg_data.cfg_version) + "\n";
     output += "default_mode: " + String(cfg_data.default_mode) + "\n";
     output += "default_channel: " + String(cfg_data.default_channel) + "\n";
@@ -94,6 +95,7 @@ String SysConfig::output_all_config_data_in_String() {
     output += "chart_updateInterval: " + String(cfg_data.chart_updateInterval) + "\n";
     output += "chart_scaleMode: " + String(cfg_data.chart_scaleMode) + "\n";
     output += "chart_scale: " + String(cfg_data.chart_scale) + "\n";
+    output += "--------[Config Data end]--------\n";
     return output;
 }
 

@@ -20,7 +20,7 @@ bool INA3221Sensor::begin(float shuntResistorCHA=0.050, float shuntResistorCHB=0
     // Serial.println("INA3221 Found");
     disableChannel(2); // Disable unused channel 2
     setShuntResistors(shuntResistorCHA, shuntResistorCHB); // 20 mR shunt resistors for channels 0 and 1, 20mR=0.020
-    Serial.printf("Shunt Resistors: %f, %f\n", ina.getShuntR(0), ina.getShuntR(1));
+    Serial.printf("> Set Shunt-Resistors: %f, %f\n", ina.getShuntR(0), ina.getShuntR(1));
     setAverage(1); //get 4 samples and average them
     delay(100);
     return true;

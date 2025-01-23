@@ -129,7 +129,7 @@ volatile int lastDialStatus = 0;
 #include "sysConfig.h"
 SysConfig sysConfig;
 sysConfig_data tmp_cfg_data;
-//sysConfig_data cfg_data_default; // default config data
+// sysConfig_data cfg_data_default; // default config data
 
 ConfigMode configMode;
 
@@ -187,7 +187,7 @@ StaticSemaphore_t xMutexBuffer;
 
 void setup(void)
 {
-    //delay for debug, remove this when releasing.
+    // delay for debug, remove this when releasing.
     delay(1500);
 
     // Serial Init
@@ -197,36 +197,7 @@ void setup(void)
     // Dial init
     dial.init();
 
-    // load default config data
-    // sysConfig.loadConfig_from(cfg_data_default); // load default config data
-    // Load config from EEPROM
-    sysConfig.begin_EEPROM();
-    sysConfig.init_EEPROM(0); //0=no force write, 1=force write
-    sysConfig.loadConfig_from_EEPROM();
-
-    Serial.println(sysConfig.output_all_config_data_in_String()); // print all config data
-
-    // Apply the cfg_data to the variables
-    float shuntResistorCHA = sysConfig.cfg_data.shuntResistorCHA / 1000.0f;
-    float shuntResistorCHB = sysConfig.cfg_data.shuntResistorCHB / 1000.0f;
-    highLightChannel = sysConfig.cfg_data.default_channel;                 // 0=channel A, 1=channel B, it used when only show one channel data
-    current_functionMode = (function_mode)sysConfig.cfg_data.default_mode; // 0=dataMonitor, 1=dataMonitorChart, 2=dataMonitorCount, 3=dataChart
-    // current_functionMode = (function_mode)1;
-
-    // INA3221 Init
-    if (!inaSensor.begin(shuntResistorCHA, shuntResistorCHB))
-    {
-        while (1)
-        {
-            // Print error message
-            Serial.println("INA3221 initialization failed. Please check the wiring and try again.");
-            delay(1000);
-            // Since not all XIAO boards have built-in LED, so we don't use LED blink here.
-            // Need to find another way to indicate the error besides Serial print. Maybe LCD screen?
-            // Todo: Add LCD error message
-        }
-    }
-
+    // LCD Init
     tft.init();
     tft.setColorDepth(16);         // RGB565
     tft.setRotation(tft_Rotation); // Set initial hardware rotation = 0
@@ -284,12 +255,24 @@ void setup(void)
             ;
     }
 
+
+    // Load the config data
+    // Option 1: From default config data
+    // sysConfig.loadConfig_from(cfg_data_default); 
+    // Option 2: from EEPROM
+    sysConfig.begin_EEPROM();
+    sysConfig.init_EEPROM(0); // 0=no force write, 1=force write
+    sysConfig.loadConfig_from_EEPROM();
+
+    // Print all config data
+    Serial.println(sysConfig.output_all_config_data_in_String()); 
+
     // Check if user want to enter the config mode, 2 = The dial is turned down by user when boot up -> Enter the config mode
     if (dial.readDialStatus() == 2)
     {
         configMode.enterConfigMode();
-        tmp_cfg_data = sysConfig.cfg_data;  //copy cfg_data to tmp_cfg_data for later use(making changes to the config data)
-        Serial.println("Entering config mode...");
+        tmp_cfg_data = sysConfig.cfg_data; // copy cfg_data to tmp_cfg_data for later use(making changes to the config data)
+        Serial.println("> Entering config mode.");
     }
     // Create tasks (Create here because we still need it to update the UI even in config mode)
     xSensorTaskHandle = xTaskCreateStatic(sensorUpdateTask, "Sensor_Update", STACK_SIZE_SENSOR, NULL, 3, xStack_Sensor, &xTaskBuffer_Sensor);
@@ -297,15 +280,10 @@ void setup(void)
     xDialTaskHandle = xTaskCreateStatic(dialReadTask, "Dial_Read", STACK_SIZE_DIAL, NULL, 2, xStack_Dial, &xTaskBuffer_Dial);
     xSerialTaskHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print", STACK_SIZE_SERIAL, NULL, 1, xStack_Serial, &xTaskBuffer_Serial);
 
-    // Serial.println("-----------[Boot info end]------------");
-
     // Other things to do when in config mode
     if (configMode.configState.isActive == true)
     {
-        // Stop other unrelevant tasks
-        // vTaskSuspend(xSensorTaskHandle);
-        // vTaskSuspend(xSerialTaskHandle);
-
+        // init the config mode UI
         if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
         {
             lv_obj_clean(lv_scr_act());
@@ -321,22 +299,62 @@ void setup(void)
         {
             vTaskDelay(pdMS_TO_TICKS(500)); // Small delay to avoid busy-looping
         }
+
         // save the config data to EEPROM
         sysConfig.saveConfig_to_EEPROM(tmp_cfg_data);
-        Serial.println("Config data saved to EEPROM");
-        sysConfig.loadConfig_from_EEPROM();//load the config data from EEPROM again and apply it to the variables
+        Serial.println("> Config data saved to EEPROM.");
+        sysConfig.loadConfig_from_EEPROM(); // load the config data from EEPROM again and apply it to the variables
         Serial.println(sysConfig.output_all_config_data_in_String());
         Serial.flush();
-        
+
+        // apply the config data to the variables
+        float shuntResistorCHA = sysConfig.cfg_data.shuntResistorCHA / 1000.0f;
+        float shuntResistorCHB = sysConfig.cfg_data.shuntResistorCHB / 1000.0f;
+        highLightChannel = sysConfig.cfg_data.default_channel;                 // 0=channel A, 1=channel B, it used when only show one channel data
+        current_functionMode = (function_mode)sysConfig.cfg_data.default_mode; // 0=dataMonitor, 1=dataMonitorChart, 2=dataMonitorCount, 3=dataChart
+        // current_functionMode = (function_mode)1;
+
+        // INA3221 Init
+        if (!inaSensor.begin(shuntResistorCHA, shuntResistorCHB))
+        {
+            while (1)
+            {
+                // Print error message
+                Serial.println("INA3221 initialization failed. Please check the wiring and try again.");
+                delay(1000);
+                // Since not all XIAO boards have built-in LED, so we don't use LED blink here.
+                // Need to find another way to indicate the error besides Serial print. Maybe LCD screen?
+                // Todo: Add LCD error message
+            }
+        }
+
         configMode.exitConfigMode();
-        Serial.println("Exiting config mode...");
+        Serial.println("> Exiting config mode.");
         Serial.flush(); // Ensure the message is sent
-
-        // resume the other tasks
-        //  vTaskResume(xSerialTaskHandle);
     }
+    else // if not in config mode, apply the config data to the variables, and init the INA3221
+    {
+        // apply the config data to the variables
+        float shuntResistorCHA = sysConfig.cfg_data.shuntResistorCHA / 1000.0f;
+        float shuntResistorCHB = sysConfig.cfg_data.shuntResistorCHB / 1000.0f;
+        highLightChannel = sysConfig.cfg_data.default_channel;                 // 0=channel A, 1=channel B, it used when only show one channel data
+        current_functionMode = (function_mode)sysConfig.cfg_data.default_mode; // 0=dataMonitor, 1=dataMonitorChart, 2=dataMonitorCount, 3=dataChart
+        // current_functionMode = (function_mode)1;
 
-    // Load the config data from EEPROM
+        // INA3221 Init
+        if (!inaSensor.begin(shuntResistorCHA, shuntResistorCHB))
+        {
+            while (1)
+            {
+                // Print error message
+                Serial.println("INA3221 initialization failed. Please check the wiring and try again.");
+                delay(1000);
+                // Since not all XIAO boards have built-in LED, so we don't use LED blink here.
+                // Need to find another way to indicate the error besides Serial print. Maybe LCD screen?
+                // Todo: Add LCD error message
+            }
+        }
+    }
 
     // Init the default UI
     if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
@@ -357,15 +375,15 @@ void setup(void)
             ui_container = dataMonitor_initUI(tft_Rotation);
             break;
         }
-        
+
         // Initialize with invalid values to force first update
         latestSensorData.channel0.busCurrent = -999.0f;
         latestSensorData.channel1.busCurrent = -999.0f;
         latestSensorData.channel0.busVoltage = -999.0f;
         latestSensorData.channel1.busVoltage = -999.0f;
-        
-        forceUpdate_flag = true;  // Make sure this is set to true
-        functionMode_ChangeRequested = true;  // Add this line
+
+        forceUpdate_flag = true;             // Make sure this is set to true
+        functionMode_ChangeRequested = true; // Add this line
 
         lv_disp_t *disp = lv_disp_get_default();
         lv_refr_now(disp);
@@ -373,7 +391,7 @@ void setup(void)
     }
 
     // Start the scheduler
-    // vTaskStartScheduler(); //Note: no need to call this, it will cause a crash
+    // vTaskStartScheduler(); //Note: no need to call this, it will cause a crash, keep this note here as reminder.
 }
 
 void loop()
@@ -399,6 +417,3 @@ void vApplicationTickHook(void)
 {
     // it use for checking task states when debugging
 }
-
-
-
