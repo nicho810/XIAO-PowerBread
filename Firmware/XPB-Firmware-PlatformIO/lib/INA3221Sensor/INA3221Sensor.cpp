@@ -16,7 +16,7 @@ INA3221Sensor::INA3221Sensor(uint8_t address)
 }
 
 bool INA3221Sensor::begin() {
-  /* when using RPI_PICO, the I2C have to set to Wire1, the actual I2C is Wire1, but on seeed_xiao_rp2040, they mapped it to Wire0 */
+  /* when using RPI_PICO, the I2C have to set to Wire1, the actual I2C is Wire1, but on seeed_xiao_rp2040, they mapped it to Wire */
   #if defined(SEEED_XIAO_RP2040)
     Wire1.setSDA(pin_i2c_sda);
     Wire1.setSCL(pin_i2c_scl);
@@ -27,11 +27,19 @@ bool INA3221Sensor::begin() {
     Wire1.setSCL(pin_i2c_scl);
     Wire1.setClock(1000000); // Note: 1MHz works while 400KHz doesn't work.
     Wire1.begin();
-  #elif defined(SEEED_XIAO_ESP32C3) || defined(SEEED_XIAO_ESP32S3) || defined(SEEED_XIAO_ESP32C6)
+  #elif defined(SEEED_XIAO_ESP32C3) || defined(SEEED_XIAO_ESP32C6)
     // Wire.setSDA(pin_i2c_sda);
     // Wire.setSCL(pin_i2c_scl);
     Wire.setClock(400000); // Set I2C to 400KHz
     Wire.begin();
+  #elif defined(SEEED_XIAO_ESP32S3)
+    // Wire.setSDA(pin_i2c_sda);
+    // Wire.setSCL(pin_i2c_scl);
+    // Wire.setClock(400000); // Set I2C to 400KHz
+    // Wire.setPins(pin_i2c_sda, pin_i2c_scl);
+    if (!Wire.begin(pin_i2c_sda, pin_i2c_scl, 400000)) {
+      Serial.println("Failed to initialize I2C");
+    }
   #endif
 
   if (!ina.begin()) {

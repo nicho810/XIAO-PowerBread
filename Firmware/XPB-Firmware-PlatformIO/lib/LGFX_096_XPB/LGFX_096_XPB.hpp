@@ -18,7 +18,9 @@ class LGFX : public lgfx::LGFX_Device
       auto cfg = _bus_instance.config();
       #if defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
       cfg.spi_host   = 0;
-      #elif defined(SEEED_XIAO_ESP32C3) || defined(SEEED_XIAO_ESP32S3) || defined(SEEED_XIAO_ESP32C6)
+      #elif defined(SEEED_XIAO_ESP32C3) || defined(SEEED_XIAO_ESP32C6)
+      cfg.spi_host   = SPI2_HOST;
+      #elif defined(SEEED_XIAO_ESP32S3)
       cfg.spi_host   = SPI2_HOST;
       #endif
       cfg.spi_mode   = 0;
