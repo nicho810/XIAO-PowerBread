@@ -38,6 +38,8 @@ bool INA3221Sensor::begin() {
     Serial.println("could not connect. Fix and Reboot");
     return false;
   }
+
+  // setParameter(0.050, 0.050);
   
   delay(100);
   return true;
@@ -65,7 +67,7 @@ void INA3221Sensor::setShuntResistors(float shunt0, float shunt1) {
 }
 
 void INA3221Sensor::setAverage(int average) {
-    ina.setAverage(average);
+    ina.setAverage(average); //when average is 1, it means 4 samples are taken and averaged
 }
 
 DualChannelData INA3221Sensor::readCurrentSensors() {

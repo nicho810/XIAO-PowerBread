@@ -33,7 +33,7 @@ public:
     void disableChannel(int channel);
     void setAverage(int average);
     DualChannelData readCurrentSensors();
-    void setParameter(float shuntResistorCHA, float shuntResistorCHB);
+    void setParameter(float shuntResistorCHA = 0.050, float shuntResistorCHB = 0.050);
 
 private:
     INA3221 ina;
