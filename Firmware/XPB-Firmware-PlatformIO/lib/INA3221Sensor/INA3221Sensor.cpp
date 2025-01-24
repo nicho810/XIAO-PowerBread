@@ -15,7 +15,7 @@ INA3221Sensor::INA3221Sensor(uint8_t address)
 #endif
 }
 
-bool INA3221Sensor::begin(float shuntResistorCHA, float shuntResistorCHB) {
+bool INA3221Sensor::begin() {
   /* when using RPI_PICO, the I2C have to set to Wire1, the actual I2C is Wire1, but on seeed_xiao_rp2040, they mapped it to Wire0 */
   #if defined(SEEED_XIAO_RP2040)
     Wire1.setSDA(pin_i2c_sda);
@@ -27,9 +27,9 @@ bool INA3221Sensor::begin(float shuntResistorCHA, float shuntResistorCHB) {
     Wire1.setSCL(pin_i2c_scl);
     Wire1.setClock(1000000); // Note: 1MHz works while 400KHz doesn't work.
     Wire1.begin();
-  #else
-    Wire.setSDA(pin_i2c_sda);
-    Wire.setSCL(pin_i2c_scl);
+  #elif defined(SEEED_XIAO_ESP32C3) || defined(SEEED_XIAO_ESP32S3) || defined(SEEED_XIAO_ESP32C6)
+    // Wire.setSDA(pin_i2c_sda);
+    // Wire.setSCL(pin_i2c_scl);
     Wire.setClock(400000); // Set I2C to 400KHz
     Wire.begin();
   #endif
@@ -38,17 +38,16 @@ bool INA3221Sensor::begin(float shuntResistorCHA, float shuntResistorCHB) {
     Serial.println("could not connect. Fix and Reboot");
     return false;
   }
-
-  disableChannel(2); // Disable unused channel 2
-  setShuntResistors(shuntResistorCHA, shuntResistorCHB);
-  Serial.printf("> Set Shunt-Resistors: %f, %f\n", ina.getShuntR(0), ina.getShuntR(1));
-  setAverage(1); //get 4 samples and average them
+  
   delay(100);
   return true;
 }
 
-void INA3221Sensor::setAverage(int average) {
-  ina.setAverage(average);//get 4 samples and average them
+void INA3221Sensor::setParameter(float shuntResistorCHA, float shuntResistorCHB) {
+  disableChannel(2); // Disable unused channel 2
+  setShuntResistors(shuntResistorCHA, shuntResistorCHB);
+  Serial.printf("> Shunt-Resistors: %f, %f\n", ina.getShuntR(0), ina.getShuntR(1));
+  setAverage(1); //get 4 samples and average them
 }
 
 void INA3221Sensor::disableChannel(int channel) {
@@ -63,6 +62,10 @@ void INA3221Sensor::setShuntResistors(float shunt0, float shunt1) {
   // Print the shunt resistors
   // Serial.printf("Shunt Resistors: %f, %f\n", ina.getShuntR(0), ina.getShuntR(1));
   // Serial.printf("Shunt Resistors: %f, %f\n", prevINAData.channel0.shuntResistor, prevINAData.channel1.shuntResistor);
+}
+
+void INA3221Sensor::setAverage(int average) {
+    ina.setAverage(average);
 }
 
 DualChannelData INA3221Sensor::readCurrentSensors() {
