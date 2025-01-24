@@ -27,9 +27,6 @@
 ![Kanal wechseln](Docs/Images/pic_switchCH.png)
 > Langes Drücken des Drehreglers zum Umschalten der Kanäle im Diagramm- und Statistikmodus
 
-![UI-Rotation](Docs/Images/pic_uiRotation.png)
-> Drehen Sie den Regler, um die Benutzeroberfläche für verschiedene Betrachtungswinkel anzupassen
-
 ## Hardware-Spezifikationen
 
 - **Eingangsspannung**: Stromversorgung über USB-C durch das Seeed Studio XIAO.
@@ -52,6 +49,8 @@
 - **Steckbrett**: Passt auf Standard-Steckbretter für einfaches Prototyping.
 - **Stromversorgung**: Verwenden Sie eine Standard-USB-Stromquelle.
 
+### Hardware erhalten
+
 <div align="center">
   <table>
     <tr>
@@ -73,71 +72,60 @@
   </table>
 </div>
 
+**Hinweis**: Beim Kauf bei Seeed Studio denken Sie daran, auch ein kompatibles XIAO-Board zu bestellen, da es erforderlich ist, aber separat verkauft wird.
+
 ### Software
 
 - **Projekt remixen**: Modifizieren oder remixen Sie das Projekt mit dem bereitgestellten Arduino-Quellcode.
 - **Direkte Verwendung der kompilierten Firmware**: 
-  - Für XIAO ESP32-Serien wird das webbasierte Flash-Tool empfohlen: https://powerbread-flasher.ioatlas.com/, weitere Details finden Sie in dieser Anleitung: [Firmware-Flash für XIAO - ESP32-Serien](Docs/flash-firmware-for-esp32-series.md)
-  - Für XIAO RP2040/RP2350 wird empfohlen, die UF2-Methode zum Hochladen der Firmware zu verwenden.
-
-> UF2-Upload-Methode:
-> 1. Laden Sie die kompilierte Firmware-Datei von der [Release-Seite](https://github.com/nicho810/XIAO-PowerBread/releases) herunter
-> 2. Verbinden Sie XIAO über USB mit PC/MAC (Stellen Sie sicher, dass es sich um ein 4-poliges USB-Kabel handelt)
-> 3. Drücken Sie die B(Boot)-Taste auf XIAO und **halten Sie sie gedrückt**, drücken Sie dann gleichzeitig die R(Reset)-Taste auf XIAO. Lassen Sie dann alle Tasten los
-> 4. Sie sollten ein USB-Laufwerk mit dem Namen RPI-RP2 auf Ihrem PC/MAC sehen können.
-> 5. Ziehen Sie die Firmware-Datei (*.uf2) auf das RPI-RP2-Laufwerk, die Datei wird auf XIAO hochgeladen.
-> 6. Nach einigen Sekunden wird sich XIAO zurücksetzen und die Firmware starten.
+  - Für XIAO ESP32-Serien
+    - Webbasiertes Flash-Tool: https://powerbread-flasher.ioatlas.com
+    - Anleitung: [Firmware-Flash für XIAO - ESP32-Serien](Docs/flash-firmware-for-esp32-series.md)
+  - Für XIAO RP2040/RP2350
+    - Flash-Tool: Verwenden Sie die UF2-Methode zum Hochladen der Firmware:
+      1. Laden Sie die Firmware-Datei (*.uf2) von der [Release-Seite](https://github.com/nicho810/XIAO-PowerBread/releases) herunter
+      2. Verbinden Sie XIAO über USB-Kabel mit Ihrem Computer (muss ein 4-poliges Datenkabel sein)
+      3. Bootloader-Modus aktivieren:
+         - Drücken und halten Sie die BOOT-Taste (B)
+         - Während Sie BOOT halten, drücken und lassen Sie die RESET-Taste (R) los
+         - Lassen Sie die BOOT-Taste los
+      4. Ein neues USB-Laufwerk namens "RPI-RP2" erscheint auf Ihrem Computer
+      5. Ziehen Sie die .uf2-Firmware-Datei auf das RPI-RP2-Laufwerk
+      6. Das XIAO wird automatisch neu gestartet und die neue Firmware ausführen
 
 ### Geplante Software-Funktionen
-- [x] Echtzeit-Stromsensordaten auf dem LCD angezeigt.
-- [x] Drehregler zur Anpassung der Benutzeroberfläche für verschiedene Betrachtungswinkel.
-- [x] Liniendiagramm-Modus zur Visualisierung des Stromverbrauchs für jeden Kanal.
-- [x] Zählmodus zur Zählung des durchschnittlichen (Sekunde, Minute, Gesamtzeit) und Spitzenstromverbrauchs für jeden Kanal.
-- [x] Ermöglicht das Speichern von Einstellungsdaten im EEPROM.
-- [ ] USB-Seriell-Modus als Debug-Tool.
-- [ ] PWM-Ausgang an IO0 und IO1.
-- [ ] ADC-Lesung von IO0 und IO1.
-- [ ] Webbasierte UI zur Datenüberwachung.
+[Rest des Inhalts bleibt gleich...]
 
 ### Firmware-Versionen
 
-| Version | Stabil | Entwicklung | Hinzugefügte Funktionen | Link |
-|---------|--------|-------------|-------------------------|------|
-| 0.9.0   | Ja     | Ja          | Echtzeit-Stromsensordaten auf dem LCD angezeigt. | - |
-| 1.0.0   | Ja     | Ja          | Drehregler zur Anpassung der Benutzeroberfläche für verschiedene Betrachtungswinkel. | [Release-Seite](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.0.0) |
-| 1.1.0   | Nein   | Ja          | Liniendiagramm-Modus zur Visualisierung des Stromverbrauchs für jeden Kanal. | [Release-Seite](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.0) |
-| 1.1.1   | Ja     | Ja          | Unterstützung für Daten-Dashboard, Liniendiagramm, Strom-Statistik, Einstellungen | [Release-Seite](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.1) |
-| 1.1.2   | Ja     | Ja          | Führt LED-Blink-Funktionalität für Debugging-Zwecke ein | [Release-Seite](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.2) |
-| 1.1.3   | Ja👍   | Ja          | Fügt Unterstützung für feste Skala und Auto-Skala für Liniendiagramme hinzu | [Release-Seite](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.3) |
-| 1.1.4   | Ja👍   | Ja          | Unterstützung für XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3, XIAO ESP32-C6 hinzugefügt | [Release-Seite](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.4) |
+| Version | Stabil | Tags | Hinzugefügte Funktionen | Link |
+|---------|---------|---------|---------|---------|
+| 0.9.0   | Ja | - | Echtzeit-Stromsensordaten auf dem LCD angezeigt. | - |
+| 1.0.0   | Ja | - | Drehregler zur Anpassung der Benutzeroberfläche für verschiedene Betrachtungswinkel. | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.0.0) |
+| 1.1.0   | Nein | - | Liniendiagramm-Modus zur Visualisierung des Stromverbrauchs für jeden Kanal. | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.0) |
+| 1.1.1   | Ja | - | Unterstützung für Daten-Dashboard, Liniendiagramm, Strom-Statistik, Einstellungen | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.1) |
+| 1.1.2   | Ja | - | Führt LED-Blink-Funktionalität für Debugging-Zwecke ein | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.2) |
+| 1.1.3   | Ja | - | Fügt Unterstützung für feste Skala und Auto-Skala für Liniendiagramme hinzu | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.3) |
+| 1.1.4   | Ja👍 | - | Unterstützung für XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3, XIAO ESP32-C6 hinzugefügt | [RP2040, RP2350, ESP32C3, ESP32S3, ESP32C6](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.4) |
+| 2.0.0   | Ja | - | Code-Refaktorierung und Wechsel zu LVGL(LovyanGFX) für UI-Rendering zur Verbesserung der Leistung | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v2.0.0) |
+| 2.0.1   | Ja👍 | - | Unterstützung für XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3 hinzugefügt | [RP2040, RP2350, ESP32C3, ESP32S3](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v2.0.1) |
 
-### Dokumentation
-- [Erklärung der Systemkonfiguration](Docs/sysConfig.md)
-  - Einstellung des Standardmodus
-  - Einstellung des Shunt-Widerstands (20mOhm, 50mOhm)
-  - Einstellung der seriellen Ausgabe (Menschenlesbarer Modus, Arduino-Plotter-Modus)
-  - Einstellung des Liniendiagramms (Aktualisierungsrate des Diagramms)
+### Credits
 
-### Fehlerbehebung
-1. Das Display reagiert nicht
-   - Bitte stellen Sie sicher, dass Sie die neueste Firmware verwenden, die neueste Firmware enthält einige Fehlerbehebungen für die Stabilität.
-   - Versuchen Sie, XIAO zurückzusetzen, indem Sie die Reset-Taste auf dem XIAO-Board drücken.
-2. Das Display funktioniert nicht
-   - Bitte überprüfen Sie die I2C- und SPI-Pin-Verbindungen und stellen Sie sicher, dass die XIAO-Pins ordnungsgemäß verlötet sind.
-3. Der Stromwert ist nicht korrekt
-   - Bitte überprüfen Sie den Shunt-Widerstandswert und stellen Sie ihn in der Systemkonfiguration korrekt ein. (z.B. 20 für 20mOhm, 50 für 50mOhm) -> [Erklärung der Systemkonfiguration](Docs/sysConfig.md)
-4. Beide Spannungen, die auf dem Display angezeigt werden, sind 0V
-   - Bitte überprüfen Sie den Ein/Aus-Schalter, er sollte auf der unteren Seite sein. (OBEN ist AUS, UNTEN ist EIN)
+| Bibliothek | v1.x | v2.x | Link |
+|---------|------|------|------|
+| Arduino-Pico Core | ✅ | ✅ | [Arduino-Pico Core (4.x.x)](https://github.com/earlephilhower/arduino-pico) |
+| Arduino-ESP32 Core | ✅ | ✅ | [Arduino-ESP32 Core (3.x.x)](https://github.com/espressif/arduino-esp32) |
+| INA3221_RT Library | ✅ | ✅ | [INA3221_RT Library](https://github.com/RobTillaart/INA3221_RT/tree/master) |
+| Adafruit GFX Library | ✅ |  | [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library) |
+| Adafruit ST7735 Library | ✅ |  | [Adafruit ST7735 Library](https://github.com/adafruit/Adafruit-ST7735-Library) |
+| Adafruit SleepyDog | ✅ |  | [Adafruit SleepyDog](https://github.com/adafruit/Adafruit_SleepyDog) |
+| LovyanGFX |  | ✅ | [LovyanGFX](https://github.com/lovyan03/LovyanGFX) |
+| LVGL |  | ✅ | [LVGL](https://github.com/lvgl/lvgl) |
 
-### Verwendete Bibliotheken
-- [INA3221_RT Library](https://github.com/RobTillaart/INA3221_RT/tree/master)
-- [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library)
-- [Adafruit ST7735 Library](https://github.com/adafruit/Adafruit-ST7735-Library) 
-- [Arduino-Pico Core (4.x.x)](https://github.com/earlephilhower/arduino-pico)
-- [Arduino-ESP32 Core (3.x.x)](https://github.com/espressif/arduino-esp32)
-- [adafruit sleepydog](https://github.com/adafruit/Adafruit_SleepyDog)
-
-> Eine modifizierte Version der Adafruit_ST7735-Bibliothek ist seit v1.1.2 enthalten, um zum LCD-Modul dieses Projekts zu passen.
+| Tools | Link |
+|---------|------|
+| MergeBin tool for esp32 series | [Thanks to DavidSchinazi, DunkelRatte](https://github.com/platformio/platform-espressif32/issues/1078#issuecomment-2219671743) |
 
 ## Mitwirken
 

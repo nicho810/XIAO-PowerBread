@@ -21,14 +21,11 @@
 7. **Centrale électrique compacte** : Cette conception compacte fournit des sorties 3,3V et 5V, optimisant l'espace de votre plaque d'essai sans compromettre la puissance.
 8. **Fonctions d'interface utilisateur multiples** : L'interface peut basculer entre la surveillance des données, le graphique linéaire et le mode statistique.
 
-![fonction](Docs/Images/pic_functions.png)
+![function](Docs/Images/pic_functions.png)
 > Fonctions d'interface utilisateur multiples
 
 ![switchCH](Docs/Images/pic_switchCH.png)
 > Appuyez longuement sur la molette pour changer de canal en mode graphique et statistique
-
-![uiRotate](Docs/Images/pic_uiRotation.png)
-> Tournez la molette pour ajuster l'interface utilisateur selon différents angles de vue
 
 ## Spécifications matérielles
 
@@ -39,7 +36,7 @@
 - **Affichage** : Écran LCD pour la surveillance de l'alimentation en temps réel.
 - **Dimensions du PCB** : Conçu pour une intégration parfaite avec les plaques d'essai standard tout en minimisant l'utilisation de l'espace.
 
-![chemin d'alimentation](Docs/Images/pic_outputSwitch.png)
+![power path](Docs/Images/pic_outputSwitch.png)
 
 ![XIAO PowerBread](Docs/Images/pic_hardwareSpec.png)
 
@@ -47,7 +44,7 @@
 
 ### Matériel
 
-- **Carte XIAO** : Le [XIAO RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html) est recommandé, vous pouvez également utiliser : [XIAO RP2350](https://www.seeedstudio.com/Seeed-XIAO-RP2350-p-5944.html), [XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html), [XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html), [XIAO ESP32-C6](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C6-p-5884.html). (Assurez-vous de flasher le firmware compatible avec votre type de carte)
+- **Carte XIAO** : Le [XIAO RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html) est hautement recommandé, vous pouvez également utiliser : [XIAO RP2350](https://www.seeedstudio.com/Seeed-XIAO-RP2350-p-5944.html), [XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html), [XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html), [XIAO ESP32-C6](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C6-p-5884.html). (Assurez-vous de flasher le firmware compatible avec votre type de carte)
 - **Carte XIAO PowerBread** : Clonez ou remixez la conception à partir de ce dépôt. Vous pouvez également obtenir le matériel sur [Seeed Studio](https://www.seeedstudio.com/XIAO-PowerBread-p-6318.html) ou [Tindie](https://www.tindie.com/products/35842/).
 - **Plaque d'essai** : S'adapte aux plaques d'essai standard pour un prototypage facile.
 - **Alimentation** : Utilisez une source d'alimentation USB standard.
@@ -75,20 +72,26 @@
   </table>
 </div>
 
+**Note** : Lors de l'achat chez Seeed Studio, n'oubliez pas de commander également une carte XIAO compatible, car elle est requise mais vendue séparément.
+
 ### Logiciel
 
 - **Remixer le projet** : Modifiez ou remixez le projet en utilisant le code source Arduino fourni.
 - **Utiliser directement le firmware compilé** :
-  - Pour les séries XIAO ESP32, il est recommandé d'utiliser l'outil de flash web : https://powerbread-flasher.ioatlas.com/, consultez ce tutoriel pour plus de détails : [Flash du firmware pour les séries XIAO - ESP32](Docs/flash-firmware-for-esp32-series.md)
-  - Pour XIAO RP2040/RP2350, il est recommandé d'utiliser la méthode UF2 pour télécharger le firmware.
-
-> Méthode de téléchargement UF2 :
-> 1. Téléchargez le fichier firmware compilé depuis la [page des versions](https://github.com/nicho810/XIAO-PowerBread/releases)
-> 2. Connectez XIAO au PC/MAC via USB (assurez-vous qu'il s'agit d'un câble USB à 4 broches)
-> 3. Appuyez sur le bouton B (Boot) du XIAO et maintenez-le enfoncé, puis appuyez simultanément sur le bouton R (Reset) du XIAO. Relâchez ensuite tous les boutons
-> 4. Vous devriez voir un lecteur USB nommé RPI-RP2 sur votre PC/MAC.
-> 5. Faites glisser et déposez le fichier firmware (*.uf2) sur le lecteur RPI-RP2, le fichier sera téléchargé sur XIAO.
-> 6. Après quelques secondes, le XIAO se réinitialisera et démarrera avec le firmware.
+  - Pour les séries XIAO ESP32
+    - Outil de flash web : https://powerbread-flasher.ioatlas.com
+    - Tutoriel : [Flash du firmware pour les séries XIAO - ESP32](Docs/flash-firmware-for-esp32-series.md)
+  - Pour XIAO RP2040/RP2350
+    - Outil de flash : Utilisez la méthode UF2 pour télécharger le firmware :
+      1. Téléchargez le fichier firmware (*.uf2) depuis la [page des versions](https://github.com/nicho810/XIAO-PowerBread/releases)
+      2. Connectez XIAO à votre ordinateur via un câble USB (doit être un câble de données à 4 broches)
+      3. Entrez en mode bootloader :
+         - Appuyez et maintenez le bouton BOOT (B)
+         - Tout en maintenant BOOT, appuyez et relâchez le bouton RESET (R)
+         - Relâchez le bouton BOOT
+      4. Un nouveau lecteur USB nommé "RPI-RP2" apparaîtra sur votre ordinateur
+      5. Faites glisser et déposez le fichier firmware .uf2 sur le lecteur RPI-RP2
+      6. Le XIAO redémarrera automatiquement et exécutera le nouveau firmware
 
 ### Fonctionnalités logicielles prévues
 - [x] Données du capteur de courant en temps réel affichées sur l'écran LCD.
@@ -103,15 +106,17 @@
 
 ### Versions du firmware
 
-| Version | Stable | Développement | Fonctionnalités ajoutées | Lien |
-|---------|--------|---------------|--------------------------|------|
-| 0.9.0   | Oui    | Oui           | Données du capteur de courant en temps réel affichées sur l'écran LCD. | - |
-| 1.0.0   | Oui    | Oui           | Molette pour ajuster l'interface utilisateur selon différents angles de vue. | [Page des versions](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.0.0) |
-| 1.1.0   | Non    | Oui           | Mode graphique linéaire pour visualiser l'utilisation de l'énergie pour chaque canal. | [Page des versions](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.0) |
-| 1.1.1   | Oui    | Oui           | Prise en charge du tableau de bord de données, du graphique linéaire, des statistiques de courant, des paramètres | [Page des versions](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.1) |
-| 1.1.2   | Oui    | Oui           | Introduit la fonctionnalité de clignotement LED à des fins de débogage | [Page des versions](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.2) |
-| 1.1.3   | Oui👍   | Oui           | Ajout du support d'échelle fixe et d'échelle automatique pour le graphique linéaire | [Page des versions](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.3) |
-| 1.1.4   | Oui👍   | Oui           | Ajout du support pour XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3, XIAO ESP32-C6 | [Page des versions](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.4) |
+| Version | Stable | Tags | Fonctionnalités ajoutées | Lien |
+|---------|---------|---------|---------|---------|
+| 0.9.0   | Oui | - | Données du capteur de courant en temps réel affichées sur l'écran LCD. | - |
+| 1.0.0   | Oui | - | Molette pour ajuster l'interface utilisateur selon différents angles de vue. | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.0.0) |
+| 1.1.0   | Non | - | Mode graphique linéaire pour visualiser l'utilisation de l'énergie pour chaque canal. | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.0) |
+| 1.1.1   | Oui | - | Support du tableau de bord de données, du graphique linéaire, des statistiques de courant, des paramètres | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.1) |
+| 1.1.2   | Oui | - | Introduit la fonctionnalité de clignotement LED à des fins de débogage | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.2) |
+| 1.1.3   | Oui | - | Ajout du support d'échelle fixe et d'échelle automatique pour le graphique linéaire | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.3) |
+| 1.1.4   | Oui👍 | - | Ajout du support pour XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3, XIAO ESP32-C6 | [RP2040, RP2350, ESP32C3, ESP32S3, ESP32C6](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.4) |
+| 2.0.0   | Oui | - | Refactorisation du code et passage à LVGL(LovyanGFX) pour le rendu de l'interface utilisateur pour améliorer les performances | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v2.0.0) |
+| 2.0.1   | Oui👍 | - | Ajout du support pour XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3 | [RP2040, RP2350, ESP32C3, ESP32S3](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v2.0.1) |
 
 ### Documentation
 - [Explication de la configuration du système](Docs/sysConfig.md)
@@ -131,15 +136,22 @@
 4. Les deux tensions affichées sur l'écran sont de 0V
    - Vérifiez l'interrupteur d'alimentation, il doit être en position basse. (Position HAUTE est OFF, position BASSE est ON)
 
-### Bibliothèques utilisées
-- [Bibliothèque INA3221_RT](https://github.com/RobTillaart/INA3221_RT/tree/master)
-- [Bibliothèque Adafruit GFX](https://github.com/adafruit/Adafruit-GFX-Library)
-- [Bibliothèque Adafruit ST7735](https://github.com/adafruit/Adafruit-ST7735-Library) 
-- [Arduino-Pico Core (4.0.x)](https://github.com/earlephilhower/arduino-pico)
-- [adafruit sleepydog](https://github.com/adafruit/Adafruit_SleepyDog)
-- [Arduino-ESP32 Core (3.x.x)](https://github.com/espressif/arduino-esp32)
+### Crédits
 
-> Une version modifiée de la bibliothèque Adafruit_ST7735 est incluse depuis la v1.1.2 pour s'adapter au module LCD utilisé dans ce projet.
+| Bibliothèque | v1.x | v2.x | Lien |
+|---------|------|------|------|
+| Arduino-Pico Core | ✅ | ✅ | [Arduino-Pico Core (4.x.x)](https://github.com/earlephilhower/arduino-pico) |
+| Arduino-ESP32 Core | ✅ | ✅ | [Arduino-ESP32 Core (3.x.x)](https://github.com/espressif/arduino-esp32) |
+| INA3221_RT Library | ✅ | ✅ | [INA3221_RT Library](https://github.com/RobTillaart/INA3221_RT/tree/master) |
+| Adafruit GFX Library | ✅ |  | [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library) |
+| Adafruit ST7735 Library | ✅ |  | [Adafruit ST7735 Library](https://github.com/adafruit/Adafruit-ST7735-Library) |
+| Adafruit SleepyDog | ✅ |  | [Adafruit SleepyDog](https://github.com/adafruit/Adafruit_SleepyDog) |
+| LovyanGFX |  | ✅ | [LovyanGFX](https://github.com/lovyan03/LovyanGFX) |
+| LVGL |  | ✅ | [LVGL](https://github.com/lvgl/lvgl) |
+
+| Outils | Lien |
+|---------|------|
+| Outil MergeBin pour les séries esp32 | [Merci à DavidSchinazi, DunkelRatte](https://github.com/platformio/platform-espressif32/issues/1078#issuecomment-2219671743) |
 
 ## Contribuer
 

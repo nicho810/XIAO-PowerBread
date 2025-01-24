@@ -116,9 +116,10 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
 | 1.1.0     | No  | - | Line chart mode to visualize power usage for each channel. | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.0) |
 | 1.1.1     | Yes  | - | support Data-Dashboard, Line-chart, current-Statistic，Setting | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.1) |
 | 1.1.2     | Yes | - | Introduces LED blink functionality for debugging purposes | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.2) |
-| 1.1.3     | Yes👍 | - | Add fixed-scale and auto-scale support for line-chart | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.3) |
-| 1.1.4     | Yes👍 | - | Add support for XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3, XIAO ESP32-C6 | [MultiPlatform](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.4) |
-| 2.0.0     | Yes👍 | - | refactor code and switch to LVGL(LovyanGFX) for UI rendering to improve the performance.| [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v2.0.0) |
+| 1.1.3     | Yes | - | Add fixed-scale and auto-scale support for line-chart | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.3) |
+| 1.1.4     | Yes👍 | - | Add support for XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3, XIAO ESP32-C6 | [RP2040, RP2350, ESP32C3, ESP32S3, ESP32C6](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.4) |
+| 2.0.0     | Yes | - | refactor code and switch to LVGL(LovyanGFX) for UI rendering to improve the performance.| [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v2.0.0) |
+| 2.0.1     | Yes👍 | - | Add support for XIAO RP2350, XIAO ESP32-C3, XIAO ESP32-S3 | [RP2040, RP2350, ESP32C3, ESP32S3](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v2.0.1) |
 
 ### Documentation
 - [System Config Explanation](Docs/sysConfig.md)
@@ -139,7 +140,8 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
    - Pls check the power-on switch, it should be on the down side. (UP side is OFF, DOWN side is ON)
 
 
-### Libraries Used
+### Credits
+
 | Library | v1.x | v2.x | Link |
 |---------|------|------|------|
 | Arduino-Pico Core | ✅ | ✅ | [Arduino-Pico Core (4.x.x)](https://github.com/earlephilhower/arduino-pico) |
@@ -151,6 +153,11 @@ English | [Deutsch](README_DE.md) | [Français](README_FR.md) | [日本語](READ
 | LovyanGFX |  | ✅ | [LovyanGFX](https://github.com/lovyan03/LovyanGFX) |
 | LVGL |  | ✅ | [LVGL](https://github.com/lvgl/lvgl) |
 
+
+| Tools | Link |
+|---------|------|
+| MergeBin tool for esp32 series | [Thanks to DavidSchinazi, DunkelRatte](https://github.com/platformio/platform-espressif32/issues/1078#issuecomment-2219671743) |
+ 
 
 
 ## Contributing

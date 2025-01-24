@@ -3,9 +3,7 @@
 
 #include <Arduino.h>
 #include <EEPROM.h>
-#include "FreeRTOS.h"
-#include "task.h"
-#include "semphr.h"
+#include "boardConfig.h"
 #include "sysConfig_user.h"
 
 struct sysConfig_addr

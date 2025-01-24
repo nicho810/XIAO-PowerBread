@@ -1,17 +1,17 @@
 #include "dialSwitch.h"
-#define dial_pin 28
+
 
 void DialFunction::init() {
-  pinMode(dial_pin, INPUT);
+  pinMode(pin_dial, INPUT);
   analogReadResolution(10); //10 bit ADC resolution
 }
 
 int DialFunction::read() {
-  return analogRead(dial_pin);
+  return analogRead(pin_dial);
 }
 
 int DialFunction::readDialStatus() {
-    #if defined(SEEED_XIAO_C6)
+    #if defined(SEEED_XIAO_ESP32C6)
         /*
          * Dial Analog Value Table on XIAO ESP32-C6
          * ----------------------
@@ -26,7 +26,7 @@ int DialFunction::readDialStatus() {
         int dial_threshold_press = 50;     // press ~116
         int dial_threshold_up = 300;       // up ~348
         int dial_threshold_max = 400;
-    #elif defined(SEEED_XIAO_C3) || defined(SEEED_XIAO_S3)
+    #elif defined(SEEED_XIAO_ESP32C3) || defined(SEEED_XIAO_ESP32S3)
         /*
          * Dial Analog Value Table on XIAO ESP32-C3 or XIAO ESP32-S3
          * ----------------------

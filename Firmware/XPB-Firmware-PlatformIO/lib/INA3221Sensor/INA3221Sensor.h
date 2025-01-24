@@ -9,6 +9,7 @@
 
 #include <Wire.h>
 #include "INA3221.h"
+#include "boardConfig.h"
 
 struct INAData {
   float busVoltage;
@@ -26,12 +27,13 @@ struct DualChannelData {
 
 class INA3221Sensor {
 public:
-    INA3221Sensor(uint8_t address = 0x40);
-    bool begin(float shuntResistorCHA, float shuntResistorCHB);
+    INA3221Sensor(uint8_t address = 0x40);  // Constructor only stores address
+    bool begin();
     void setShuntResistors(float shunt0, float shunt1);
     void disableChannel(int channel);
     void setAverage(int average);
     DualChannelData readCurrentSensors();
+    void setParameter(float shuntResistorCHA = 0.050, float shuntResistorCHB = 0.050);
 
 private:
     INA3221 ina;
