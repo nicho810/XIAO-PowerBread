@@ -189,8 +189,25 @@ void setup(void)
     // Dial init
     dial.init();
 
+    // INA3221 Init
+    if (!inaSensor.begin())
+    {
+        while (1)
+        {
+            // Print error message
+            Serial.println("INA3221 initialization failed. Please check the wiring and try again.");
+            delay(1000);
+            // Since not all XIAO boards have built-in LED, so we don't use LED blink here.
+            // Need to find another way to indicate the error besides Serial print. Maybe LCD screen?
+            // Todo: Add LCD error message
+        }
+    }
+
     // LCD Init
-    tft.init();
+    if (!tft.begin()) {  // Add error checking for LCD initialization
+        Serial.println("LCD initialization failed!");
+        while(1) delay(100);
+    }
     tft.setColorDepth(16);         // RGB565
     tft.setRotation(tft_Rotation); // Set initial hardware rotation = 0
     tft.fillScreen(0x0000);        // Black screen
@@ -306,19 +323,7 @@ void setup(void)
         current_functionMode = (function_mode)sysConfig.cfg_data.default_mode; // 0=dataMonitor, 1=dataMonitorChart, 2=dataMonitorCount, 3=dataChart
         // current_functionMode = (function_mode)1;
 
-        // INA3221 Init
-        if (!inaSensor.begin(shuntResistorCHA, shuntResistorCHB))
-        {
-            while (1)
-            {
-                // Print error message
-                Serial.println("INA3221 initialization failed. Please check the wiring and try again.");
-                delay(1000);
-                // Since not all XIAO boards have built-in LED, so we don't use LED blink here.
-                // Need to find another way to indicate the error besides Serial print. Maybe LCD screen?
-                // Todo: Add LCD error message
-            }
-        }
+        inaSensor.setParameter(shuntResistorCHA, shuntResistorCHB); // apply the config data to the INA3221
 
         configMode.exitConfigMode();
         Serial.println("> Exiting config mode.");
@@ -333,19 +338,7 @@ void setup(void)
         current_functionMode = (function_mode)sysConfig.cfg_data.default_mode; // 0=dataMonitor, 1=dataMonitorChart, 2=dataMonitorCount, 3=dataChart
         // current_functionMode = (function_mode)1;
 
-        // INA3221 Init
-        if (!inaSensor.begin(shuntResistorCHA, shuntResistorCHB))
-        {
-            while (1)
-            {
-                // Print error message
-                Serial.println("INA3221 initialization failed. Please check the wiring and try again.");
-                delay(1000);
-                // Since not all XIAO boards have built-in LED, so we don't use LED blink here.
-                // Need to find another way to indicate the error besides Serial print. Maybe LCD screen?
-                // Todo: Add LCD error message
-            }
-        }
+        inaSensor.setParameter(shuntResistorCHA, shuntResistorCHB); // apply the config data to the INA3221
     }
 
     // Init the default UI
@@ -400,6 +393,8 @@ extern "C" void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskNa
         ;
 }
 
+#if defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
+
 extern "C" void vApplicationIdleHook(void)
 {
     // it use for checking task states when debugging
@@ -409,3 +404,7 @@ void vApplicationTickHook(void)
 {
     // it use for checking task states when debugging
 }
+
+#elif defined(SEEED_XIAO_ESP32C3) || defined(SEEED_XIAO_ESP32S3) || defined(SEEED_XIAO_ESP32C6)
+//no need for these hooks on ESP32 series
+#endif
