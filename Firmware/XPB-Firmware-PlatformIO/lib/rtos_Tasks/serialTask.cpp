@@ -2,6 +2,7 @@
 #include "sysConfig.h"
 
 extern ConfigMode configMode;
+extern SysConfig sysConfig;
 
 extern SemaphoreHandle_t xSemaphore;
 extern DualChannelData latestSensorData;
@@ -18,10 +19,10 @@ void serialPrintTask(void *pvParameters)
         pdMS_TO_TICKS(10)    // 4 - 10ms
     };
 
-    uint8_t intervalIndex = 0;
+    uint8_t intervalIndex = min(sysConfig.cfg_data.serial_printInterval, (uint8_t)4);
     const TickType_t xPrintInterval = xPrintIntervals[intervalIndex];
-    const bool serialEnabled = true;
-    const uint8_t serialMode = 0;
+    const bool serialEnabled = sysConfig.cfg_data.serial_enable;
+    const uint8_t serialMode = sysConfig.cfg_data.serial_mode;
 
     while (1)
     {
@@ -57,6 +58,7 @@ void serialPrintTask(void *pvParameters)
                                      sensorData.channel1.busCurrent, sensorData.channel1.busPower);
                         }
                         Serial.print(buffer);
+                        Serial.flush();
                     }
                     xLastPrintTime = xCurrentTime;
                 }
