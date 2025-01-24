@@ -53,5 +53,10 @@
 
 /* End of freeRTS dependency */
 
+/* Note:
+ * 1. The SPI peripheral(0 or SPI1_HOST) configuration is different for each board. it defined in the LGFX_096_XPB.hpp
+ * 2. The I2C peripheral(Wire or Wire1) configuration is different for each board. it defined in the INA3221Sensor.cpp
+ */
+
 
 #endif
