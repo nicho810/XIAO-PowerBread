@@ -33,13 +33,7 @@ bool INA3221Sensor::begin() {
     Wire.setClock(400000); // Set I2C to 400KHz
     Wire.begin();
   #elif defined(SEEED_XIAO_ESP32S3)
-    // Wire.setSDA(pin_i2c_sda);
-    // Wire.setSCL(pin_i2c_scl);
-    // Wire.setClock(400000); // Set I2C to 400KHz
-    // Wire.setPins(pin_i2c_sda, pin_i2c_scl);
-    if (!Wire.begin(pin_i2c_sda, pin_i2c_scl, 400000)) {
-      Serial.println("Failed to initialize I2C");
-    }
+    Wire.begin(pin_i2c_sda, pin_i2c_scl, 400000);
   #endif
 
   if (!ina.begin()) {

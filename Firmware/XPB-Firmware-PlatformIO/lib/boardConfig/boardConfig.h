@@ -2,7 +2,7 @@
 #define boardConfig_h
 
 /* Pin definition for each board */
-#if defined(SEEED_XIAO_ESP32C3) || defined(SEEED_XIAO_ESP32C6)
+#if defined(SEEED_XIAO_ESP32C3) || defined(SEEED_XIAO_ESP32C6) || defined(SEEED_XIAO_ESP32S3)
 #define pin_dial D2 //D2
 #define pin_lcd_sclk D8 //D8
 #define pin_lcd_miso -1 //-1
@@ -12,17 +12,6 @@
 #define pin_lcd_rst D3 //D3
 #define pin_i2c_sda D4 //D4
 #define pin_i2c_scl D5 //D5
-
-#elif defined(SEEED_XIAO_ESP32S3)
-#define pin_dial 3 //D2
-#define pin_lcd_sclk 7 //D8
-#define pin_lcd_miso -1 //-1
-#define pin_lcd_mosi 9 //D10
-#define pin_lcd_dc 8 //D9
-#define pin_lcd_cs -1 //-1
-#define pin_lcd_rst 4 //D3
-#define pin_i2c_sda 5 //D4, Usecase: Wire1.setSDA(pin_i2c_sda);
-#define pin_i2c_scl 6 //D5, Usecase: Wire1.setSCL(pin_i2c_scl);
 
 
 /* board = SEEED_XIAO_RP2040 */

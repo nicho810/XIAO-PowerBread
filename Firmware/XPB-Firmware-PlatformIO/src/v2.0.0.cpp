@@ -150,8 +150,8 @@ float avgS[2] = {0}, avgM[2] = {0}, avgH[2] = {0}, peak[2] = {0}; // Average val
 #if defined(SEEED_XIAO_ESP32C3) || defined(SEEED_XIAO_ESP32S3) || defined(SEEED_XIAO_ESP32C6)
 #define STACK_SIZE_UI 4096
 #define STACK_SIZE_SERIAL 4096
-#define STACK_SIZE_DIAL 2048
-#define STACK_SIZE_SENSOR 2048
+#define STACK_SIZE_DIAL 4096
+#define STACK_SIZE_SENSOR 4096
 #elif defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
 #define STACK_SIZE_UI 2048
 #define STACK_SIZE_SERIAL 1024
