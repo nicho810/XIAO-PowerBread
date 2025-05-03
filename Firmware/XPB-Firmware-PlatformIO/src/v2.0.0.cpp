@@ -47,12 +47,11 @@
 #include "lvglTask.h"         // LVGL task
 // LCD
 #include <LovyanGFX.h>
-#include <LGFX_096_XPB.hpp>
+// #include <LGFX_096_XPB.hpp>
+#include <LGFX_114_XPM.hpp>
 #include <lvgl.h>
-static LGFX tft;                 // LGFXのインスタンスを作成。
-static LGFX_Sprite sprite(&tft); // スプライトを使う場合はLGFX_Spriteのインスタンスを作成。
-#define screen_width 80
-#define screen_height 160
+static LGFX tft;                 // Create LGFX instance
+static LGFX_Sprite sprite(&tft); // Create LGFX_Sprite instance
 
 // LVGL UI & Input Device Declaration
 lv_obj_t *ui_container = NULL;   // Global container for the chart UI
@@ -216,7 +215,7 @@ void setup(void)
     lv_init();
     // LVGL declaration
     static lv_disp_draw_buf_t draw_buf;
-    const int buf1_size = screen_width * 80; // Screen buffer
+    const int buf1_size = 135 * 120; // Screen buffer
     static lv_color_t buf1[buf1_size];
     static lv_color_t buf2[buf1_size];                       // Add second buffer
     lv_disp_draw_buf_init(&draw_buf, buf1, buf2, buf1_size); // Initialize the display buffer with dual buffering, decrease the buffer if want to save memory.

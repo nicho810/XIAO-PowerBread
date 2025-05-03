@@ -190,24 +190,13 @@ lv_obj_t *dataMonitor_initUI(int rotation)
     int8_t widget_x1, widget_y1, widget_x2, widget_y2;
 
     // Set dimensions based on rotation
-    if (rotation % 2 == 0)
-    { // Portrait
-        container_width = 80;
-        container_height = 160;
-        widget_x1 = 0;
-        widget_y1 = 41;
-        widget_x2 = 0;
-        widget_y2 = -41;
-    }
-    else
-    { // Landscape
-        container_width = 160;
-        container_height = 80;
-        widget_x1 = -41;
-        widget_y1 = 0;
-        widget_x2 = 41;
-        widget_y2 = 0;
-    }
+    container_width = screen_width;
+    container_height = screen_height;
+    widget_x1 = 0;
+    widget_y1 = 41;
+    widget_x2 = 0;
+    widget_y2 = -41;
+    
 
     // Create and configure container with updated dimensions
     lv_obj_t *ui_container = lv_obj_create(lv_scr_act());
@@ -221,9 +210,19 @@ lv_obj_t *dataMonitor_initUI(int rotation)
     lv_obj_t *dataMonitor_A = widget_DataMonitor_create(widget_x1, widget_y1, "Channel A", xpb_color_ChannelA);
     lv_obj_t *dataMonitor_B = widget_DataMonitor_create(widget_x2, widget_y2, "Channel B", xpb_color_ChannelB);
 
+    // Create a rect with no fill, sizes is equal to screen for test.
+    lv_obj_t *rect = lv_obj_create(ui_container);
+    lv_obj_align(rect, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_size(rect, container_width, container_height);
+    lv_obj_set_style_bg_opa(rect, LV_OPA_TRANSP, LV_PART_MAIN); // Make background transparent
+    lv_obj_set_style_border_width(rect, 1, LV_PART_MAIN); // no border
+    lv_obj_set_style_radius(rect, 0, LV_PART_MAIN);
+
+
     // Set parent to ui_container
     lv_obj_set_parent(dataMonitor_A, ui_container);
     lv_obj_set_parent(dataMonitor_B, ui_container);
+    lv_obj_set_parent(rect, ui_container);
 
     // Add event handling
     setup_container_events(ui_container);

@@ -3,6 +3,7 @@
 
 #include "lvgl.h"
 #include "xpb_color_palette.h"
+#include "boardConfig.h"
 #include <cstdio>
 
 lv_obj_t *widget_DataChart_create(uint16_t x, uint16_t y, lv_color_t color, lv_color_t color_dark);
