@@ -32,7 +32,15 @@ void sensorUpdateTask(void *pvParameters)
 
         if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(5)) == pdTRUE)
         {
-            if (configMode.configState.isActive)
+            bool isInConfigMode = false;
+            
+            // Safely check if we're in config mode
+            if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(5)) == pdTRUE) {
+                isInConfigMode = configMode.configState.isActive;
+                xSemaphoreGive(configStateMutex);
+            }
+            
+            if (isInConfigMode)
             {
                 // Take LVGL mutex with shorter timeout for config mode
                 if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(2)) == pdTRUE)
@@ -47,7 +55,6 @@ void sensorUpdateTask(void *pvParameters)
                         if (last_cursor != configMode.configState.cursor ||
                             last_status != configMode.configState.cursorStatus)
                         {
-
                             update_configMode(item_area,
                                               configMode.configState.cursor,
                                               configMode.configState.cursorLast,
@@ -66,12 +73,17 @@ void sensorUpdateTask(void *pvParameters)
                     }
                     else if (configMode.configState.cursorStatus == -1)
                     {
-                        configMode.configState.isActive = false; // set to false to exit config mode
+                        configMode.exitConfigMode(); // Use the proper function to exit config mode
                     }
                     xSemaphoreGive(lvglMutex);
                 }
+                
+                // Ignore any UI change requests while in config mode
+                functionMode_ChangeRequested = false;
+                highLightChannel_ChangeRequested = false;
+                forceUpdate_flag = false;
             }
-            else if (!configMode.configState.isActive) // Only process sensor updates when not in config mode
+            else // Only process sensor updates when not in config mode
             {
                 DualChannelData newSensorData = inaSensor.readCurrentSensors();
 

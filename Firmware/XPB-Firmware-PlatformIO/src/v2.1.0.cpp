@@ -136,21 +136,17 @@ void setup(void)
 {
     // Serial Init
     Serial.begin(115200);
+    delay(3000);
     Serial.println("==========[XIAO-PowerBread Boot Info]===========");
 
     // Dial init
     dial.init();
 
     // INA3221 Init
-    if (!inaSensor.begin())
-    {
-        while (1)
-        {
-            // Print error message
-            Serial.println("INA3221 initialization failed. Please check the wiring and try again.");
+    if (!inaSensor.begin()){
+        while (1){
+            Serial.println("INA3221 initialization failed. Please check the wiring and try again."); // Print error message
             delay(1000);
-            // Since not all XIAO boards have built-in LED, so we don't use LED blink here.
-            // Need to find another way to indicate the error besides Serial print. Maybe LCD screen?
             // Todo: Add LCD error message
         }
     }
@@ -166,17 +162,16 @@ void setup(void)
 
     // LVGL LCD Init
     lv_init();
-    // LVGL declaration
     static lv_disp_draw_buf_t draw_buf;
-    const int buf1_size = 135 * 120; // Screen buffer
-    static lv_color_t buf1[buf1_size];
-    static lv_color_t buf2[buf1_size];                       // Add second buffer
+    const int buf1_size = screen_width * (screen_width/2); // half screen buffer size
+    static lv_color_t buf1[buf1_size]; // buffer 1
+    static lv_color_t buf2[buf1_size]; // buffer 2
     lv_disp_draw_buf_init(&draw_buf, buf1, buf2, buf1_size); // Initialize the display buffer with dual buffering, decrease the buffer if want to save memory.
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
     disp_drv.hor_res = screen_width;
     disp_drv.ver_res = screen_height;
-    disp_drv.flush_cb = xpb_disp_flush; // attach the flush callback function
+    disp_drv.flush_cb = lvgl_disp_flush; // attach the flush callback function
     disp_drv.draw_buf = &draw_buf;
     disp_drv.full_refresh = 0; // 0=Enable partial updates for better performance
     disp_drv.direct_mode = 0;  // Direct mode is not supported, set to 0
@@ -194,8 +189,7 @@ void setup(void)
     lv_indev_t *kb_indev = lv_indev_drv_register(&indev_drv);
 
     // Set it as default input device (optional)
-    if (kb_indev)
-    {
+    if (kb_indev){
         lv_group_t *g = lv_group_create();
         lv_group_set_default(g);
         lv_indev_set_group(kb_indev, g);
@@ -209,11 +203,9 @@ void setup(void)
 
     // semaphore init
     xSemaphore = xSemaphoreCreateMutexStatic(&xMutexBuffer);
-    if (xSemaphore == NULL)
-    {
+    if (xSemaphore == NULL){
         Serial.println("Error creating semaphore");
-        while (1)
-            ;
+        while (1) delay(100);
     }
 
 
@@ -234,41 +226,74 @@ void setup(void)
     xDialTaskHandle = xTaskCreateStatic(dialReadTask, "Dial_Read", STACK_SIZE_DIAL, NULL, 2, xStack_Dial, &xTaskBuffer_Dial);
     xSerialTaskHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print", STACK_SIZE_SERIAL, NULL, 1, xStack_Serial, &xTaskBuffer_Serial);
 
-    // Initialize default UI first
-    if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
-    {
+
+    // Check the key status for config mode entry
+    if (dial.readDialStatus() == 2) { // When "Down" key is pressed, enter config mode
+        configMode.enterConfigMode();
+        tmp_cfg_data = sysConfig.cfg_data; // Copy the config data to tmp_cfg_data
+        Serial.println("> Entering config mode.");
+
+        // Initialize config mode UI and handle user inputs
+        configMode.handleConfigMode(ui_container, sysConfig, tmp_cfg_data);
+
+        // Block here until config mode is exited by the user
+        while (configMode.configState.isActive) {
+            // Just delay to allow other tasks to run - we don't want to do any UI changes here
+            delay(100); // Short delay to prevent watchdog timeout
+        }
+
+        // Save the config data to EEPROM
+        sysConfig.saveConfig_to_EEPROM(tmp_cfg_data);
+        Serial.println("> Config data saved to EEPROM.");
+        sysConfig.loadConfig_from_EEPROM();
+        Serial.println(sysConfig.output_all_config_data_in_String());
+        Serial.flush();
+        
+        // Set flag to force UI refresh with the correct mode
+        functionMode_ChangeRequested = true;
+    }
+
+    configMode.applyConfigData(sysConfig, shuntResistorCHA, shuntResistorCHB, highLightChannel, current_functionMode);
+    inaSensor.setParameter(shuntResistorCHA, shuntResistorCHB);
+
+
+    // // Apply config data
+    // if (configMode.configState.isActive) {
+    //     configMode.handleConfigMode(ui_container, sysConfig, tmp_cfg_data);
+
+    //     configMode.exitConfigMode();
+    //     Serial.println("> Exiting config mode.");
+    //     Serial.flush();
+    // } else {
+    //     configMode.applyConfigData(sysConfig, shuntResistorCHA, shuntResistorCHB, highLightChannel, current_functionMode);
+    //     inaSensor.setParameter(shuntResistorCHA, shuntResistorCHB);
+    // }
+
+
+    // Initialize default UI first (do this after config mode is handled)
+    if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE) {
+        // Clean the screen first
         lv_obj_clean(lv_scr_act());
-        ui_container = dataMonitor_initUI(tft_Rotation);
+        
+        // Use the correct UI based on current function mode
+        switch (current_functionMode) {
+        case dataMonitor:
+            ui_container = dataMonitor_initUI(tft_Rotation);
+            break;
+        case dataMonitorChart:
+            ui_container = dataMonitorChart_initUI(tft_Rotation, highLightChannel);
+            break;
+        case dataMonitorCount:
+            ui_container = dataMonitorCount_initUI(tft_Rotation, highLightChannel);
+            break;
+        default:
+            ui_container = dataMonitor_initUI(tft_Rotation);
+            break;
+        }
+        
         xSemaphoreGive(lvglMutex);
     }
 
-    // Now check for config mode entry
-    if (dial.readDialStatus() == 2) {
-        configMode.enterConfigMode();
-        tmp_cfg_data = sysConfig.cfg_data;
-        Serial.println("> Entering config mode.");
-        
-        // Initialize config mode UI
-        if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
-        {
-            lv_obj_clean(lv_scr_act());
-            ui_container = configMode_initUI(tft_Rotation);
-            xSemaphoreGive(lvglMutex);
-        }
-    }
-
-    // Apply config data
-    if (configMode.configState.isActive) {
-        configMode.handleConfigMode(ui_container, sysConfig, tmp_cfg_data);
-        configMode.applyConfigData(sysConfig, shuntResistorCHA, shuntResistorCHB, highLightChannel, current_functionMode);
-        inaSensor.setParameter(shuntResistorCHA, shuntResistorCHB);
-        configMode.exitConfigMode();
-        Serial.println("> Exiting config mode.");
-        Serial.flush();
-    } else {
-        configMode.applyConfigData(sysConfig, shuntResistorCHA, shuntResistorCHB, highLightChannel, current_functionMode);
-        inaSensor.setParameter(shuntResistorCHA, shuntResistorCHB);
-    }
 
     // Initialize with invalid values to force first update
     latestSensorData.channel0.busCurrent = -999.0f;

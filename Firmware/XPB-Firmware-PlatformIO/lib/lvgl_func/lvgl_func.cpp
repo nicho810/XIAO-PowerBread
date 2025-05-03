@@ -9,7 +9,7 @@ extern SemaphoreHandle_t xSemaphore;
 extern volatile bool last_key_pressed;
 extern volatile uint32_t last_key;
 
-void xpb_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
+void lvgl_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
     uint32_t w = (area->x2 - area->x1 + 1);
     uint32_t h = (area->y2 - area->y1 + 1);

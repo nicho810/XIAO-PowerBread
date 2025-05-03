@@ -30,8 +30,9 @@ bool INA3221Sensor::begin() {
   #elif defined(SEEED_XIAO_ESP32C3) || defined(SEEED_XIAO_ESP32C6)
     // Wire.setSDA(pin_i2c_sda);
     // Wire.setSCL(pin_i2c_scl);
-    Wire.setClock(400000); // Set I2C to 400KHz
-    Wire.begin();
+    // Wire.setClock(400000); // Set I2C to 400KHz
+    // Wire.begin();
+    Wire.begin(pin_i2c_sda, pin_i2c_scl, 400000);
   #elif defined(SEEED_XIAO_ESP32S3)
     Wire.begin(pin_i2c_sda, pin_i2c_scl, 400000);
   #endif

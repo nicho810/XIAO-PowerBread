@@ -3,7 +3,21 @@
 #include "INA3221Sensor.h"
 
 void ConfigMode::handleConfigMode(lv_obj_t*& ui_container, SysConfig& sysConfig, sysConfig_data& tmp_cfg_data) {
-    // init the config mode UI
+    // Lock the config state mutex to ensure other tasks see the correct state
+    if (xSemaphoreTake(configStateMutex, portMAX_DELAY) == pdTRUE) {
+        // Ensure the isActive flag is set
+        configState.isActive = true;
+        configState.cursor = 0;
+        configState.cursorLast = 0;
+        configState.cursorStatus = 0;
+        xSemaphoreGive(configStateMutex);
+    }
+    
+    // Reset any pending UI change flags before creating the config UI
+    functionMode_ChangeRequested = false;
+    highLightChannel_ChangeRequested = false;
+    
+    // Init the config mode UI
     if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE) {
         lv_obj_clean(lv_scr_act());
         ui_container = configMode_initUI(tft_Rotation);
@@ -12,18 +26,6 @@ void ConfigMode::handleConfigMode(lv_obj_t*& ui_container, SysConfig& sysConfig,
         lv_refr_now(disp);
         xSemaphoreGive(lvglMutex);
     }
-
-    // Wait for the user to exit the config mode
-    while (configState.isActive) {
-        vTaskDelay(pdMS_TO_TICKS(500));
-    }
-
-    // save the config data to EEPROM
-    sysConfig.saveConfig_to_EEPROM(tmp_cfg_data);
-    Serial.println("> Config data saved to EEPROM.");
-    sysConfig.loadConfig_from_EEPROM();
-    Serial.println(sysConfig.output_all_config_data_in_String());
-    Serial.flush();
 }
 
 void ConfigMode::applyConfigData(SysConfig& sysConfig, float& shuntResistorCHA, float& shuntResistorCHB, uint8_t& highLightChannel, volatile function_mode& current_functionMode) {
@@ -37,7 +39,15 @@ bool ConfigMode::enterConfigMode() {
     if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
         bool wasActive = configState.isActive;
         configState.isActive = true;
+        configState.cursor = 0;     // Reset cursor position
+        configState.cursorLast = 0; // Reset last cursor position
+        configState.cursorStatus = 0; // Reset cursor status
         xSemaphoreGive(configStateMutex);
+        
+        // Reset any pending UI change requests
+        functionMode_ChangeRequested = false;
+        highLightChannel_ChangeRequested = false;
+        
         return !wasActive;
     }
     return false;
@@ -51,6 +61,10 @@ bool ConfigMode::exitConfigMode() {
         configState.cursorLast = 0;
         configState.cursorStatus = 0;
         xSemaphoreGive(configStateMutex);
+        
+        // Set flag to rebuild the UI with the current function mode
+        functionMode_ChangeRequested = true;
+        
         return wasActive;
     }
     return false;
@@ -84,8 +98,3 @@ bool ConfigMode::updateConfigState(const ConfigModeState *state) {
     return false;
 }
 
-// // If configMode_initUI is a UI function, move its implementation here
-// lv_obj_t* configMode_initUI(int rotation) {
-//     // ... implementation ...
-//     return nullptr; // Replace with actual UI object
-// }
