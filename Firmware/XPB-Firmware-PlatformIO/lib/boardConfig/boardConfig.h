@@ -80,6 +80,7 @@
 
 #if defined(Proj_XIAOPowerMonitor)
 
+//LCD definition
 #define screen_width 135
 #define screen_height 240
 
