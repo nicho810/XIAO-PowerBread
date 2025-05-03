@@ -1,9 +1,6 @@
 #include <Arduino.h>
 #include "sysConfig.h"
 
-SemaphoreHandle_t configStateMutex = NULL;
-
-
 void SysConfig::saveConfig_to_EEPROM(sysConfig_data data) {
     EEPROM.write(cfg_addr.default_mode, data.default_mode);
     EEPROM.write(cfg_addr.default_channel, data.default_channel);
@@ -135,58 +132,58 @@ void SysConfig::decrementConfigValue(int cursor, sysConfig_data& tmp_cfg_data) {
 
 
 
-// Helper functions to safely modify state
-bool ConfigMode::enterConfigMode() {
-    if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-        bool wasActive = configState.isActive;
-        configState.isActive = true;
-        xSemaphoreGive(configStateMutex);
-        return !wasActive; // Return true if state changed
-    }
-    return false;
-}
+// // Helper functions to safely modify state
+// bool ConfigMode::enterConfigMode() {
+//     if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+//         bool wasActive = configState.isActive;
+//         configState.isActive = true;
+//         xSemaphoreGive(configStateMutex);
+//         return !wasActive; // Return true if state changed
+//     }
+//     return false;
+// }
 
-bool ConfigMode::exitConfigMode() {
-    if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-        bool wasActive = configState.isActive;
-        configState.isActive = false;
-        configState.cursor = 0;
-        configState.cursorLast = 0;
-        configState.cursorStatus = 0;
-        xSemaphoreGive(configStateMutex);
-        return wasActive; // Return true if state changed
-    }
-    return false;
-}
+// bool ConfigMode::exitConfigMode() {
+//     if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+//         bool wasActive = configState.isActive;
+//         configState.isActive = false;
+//         configState.cursor = 0;
+//         configState.cursorLast = 0;
+//         configState.cursorStatus = 0;
+//         xSemaphoreGive(configStateMutex);
+//         return wasActive; // Return true if state changed
+//     }
+//     return false;
+// }
 
-void ConfigMode::updateConfigCursor(int8_t newCursor) {
-    if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-        if (newCursor >= 0 && newCursor < configState.cursorMax) {
-            configState.cursorLast = configState.cursor;
-            configState.cursor = newCursor;
-        }
-        xSemaphoreGive(configStateMutex);
-    }
-}
+// void ConfigMode::updateConfigCursor(int8_t newCursor) {
+//     if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+//         if (newCursor >= 0 && newCursor < configState.cursorMax) {
+//             configState.cursorLast = configState.cursor;
+//             configState.cursor = newCursor;
+//         }
+//         xSemaphoreGive(configStateMutex);
+//     }
+// }
 
-bool ConfigMode::getConfigState(ConfigModeState *state)
-{
-    if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE)
-    {
-        memcpy(state, &configState, sizeof(ConfigModeState));
-        xSemaphoreGive(configStateMutex);
-        return true;
-    }
-    return false;
-}
+// bool ConfigMode::getConfigState(ConfigModeState *state)
+// {
+//     if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE)
+//     {
+//         memcpy(state, &configState, sizeof(ConfigModeState));
+//         xSemaphoreGive(configStateMutex);
+//         return true;
+//     }
+//     return false;
+// }
 
-bool ConfigMode::updateConfigState(const ConfigModeState *state)
-{
-    if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE)
-    {
-        memcpy(&configState, state, sizeof(ConfigModeState));
-        xSemaphoreGive(configStateMutex);
-        return true;
-    }
-    return false;
-}
+// bool ConfigMode::updateConfigState(const ConfigModeState *state)
+// {
+//     if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE)
+//     {
+//         memcpy(&configState, state, sizeof(ConfigModeState));
+//         xSemaphoreGive(configStateMutex);
+//         return true;
+//     }
+//     return false;
+// }

@@ -62,7 +62,7 @@ static lv_indev_drv_t indev_drv; // Input device driver
 // UIs
 #include "lvgl_ui.h"
 #include "lvgl_ui_updateFunc.h"
-#include "xpb_color_palette.h"
+
 
 // Dial Switch
 #include "dialSwitch.h"
@@ -76,9 +76,14 @@ SysConfig sysConfig;
 sysConfig_data tmp_cfg_data;
 // sysConfig_data cfg_data_default; // default config data
 
-ConfigMode configMode;
+// Config Mode functions
+#include "configMode.h"
 
 // Global variables
+ConfigMode configMode;
+SemaphoreHandle_t configStateMutex = NULL;
+float shuntResistorCHA = 0.0f;
+float shuntResistorCHB = 0.0f;
 volatile function_mode current_functionMode = dataMonitor;
 volatile bool functionMode_ChangeRequested = true;
 volatile bool highLightChannel_ChangeRequested = false;
@@ -121,9 +126,6 @@ TaskHandle_t xLvglTaskHandle = NULL;
 TaskHandle_t xSerialTaskHandle = NULL;
 TaskHandle_t xDialTaskHandle = NULL;
 TaskHandle_t xSensorTaskHandle = NULL;
-
-// Add this near the top of the file with other declarations
-extern SemaphoreHandle_t configStateMutex;
 
 // Other semaphores
 SemaphoreHandle_t lvglMutex = NULL;
@@ -226,100 +228,60 @@ void setup(void)
     // Print all config data
     Serial.println(sysConfig.output_all_config_data_in_String()); 
 
-    // Check if user want to enter the config mode, 2 = The dial is turned down by user when boot up -> Enter the config mode
-    if (dial.readDialStatus() == 2)
-    {
-        configMode.enterConfigMode();
-        tmp_cfg_data = sysConfig.cfg_data; // copy cfg_data to tmp_cfg_data for later use(making changes to the config data)
-        Serial.println("> Entering config mode.");
-    }
-    // Create tasks (Create here because we still need it to update the UI even in config mode)
+    // Create tasks first
     xSensorTaskHandle = xTaskCreateStatic(sensorUpdateTask, "Sensor_Update", STACK_SIZE_SENSOR, NULL, 3, xStack_Sensor, &xTaskBuffer_Sensor);
     xLvglTaskHandle = xTaskCreateStatic(lvglTask, "UI_Update", STACK_SIZE_UI, NULL, 4, xStack_UI, &xTaskBuffer_UI);
     xDialTaskHandle = xTaskCreateStatic(dialReadTask, "Dial_Read", STACK_SIZE_DIAL, NULL, 2, xStack_Dial, &xTaskBuffer_Dial);
     xSerialTaskHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print", STACK_SIZE_SERIAL, NULL, 1, xStack_Serial, &xTaskBuffer_Serial);
 
-    // Other things to do when in config mode
-    if (configMode.configState.isActive == true)
-    {
-        // init the config mode UI
-        if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
-        {
-            lv_obj_clean(lv_scr_act());
-            ui_container = configMode_initUI(tft_Rotation); // init the config mode UI
-            forceUpdate_flag = 1;                           // set flag to force update to flush the UI
-            lv_disp_t *disp = lv_disp_get_default();
-            lv_refr_now(disp);
-            xSemaphoreGive(lvglMutex);
-        }
-
-        // Wait for the user to exit the config mode
-        while (configMode.configState.isActive)
-        {
-            vTaskDelay(pdMS_TO_TICKS(500)); // Small delay to avoid busy-looping
-        }
-
-        // save the config data to EEPROM
-        sysConfig.saveConfig_to_EEPROM(tmp_cfg_data);
-        Serial.println("> Config data saved to EEPROM.");
-        sysConfig.loadConfig_from_EEPROM(); // load the config data from EEPROM again and apply it to the variables
-        Serial.println(sysConfig.output_all_config_data_in_String());
-        Serial.flush();
-
-        // apply the config data to the variables
-        float shuntResistorCHA = sysConfig.cfg_data.shuntResistorCHA / 1000.0f;
-        float shuntResistorCHB = sysConfig.cfg_data.shuntResistorCHB / 1000.0f;
-        highLightChannel = sysConfig.cfg_data.default_channel;                 // 0=channel A, 1=channel B, it used when only show one channel data
-        current_functionMode = (function_mode)sysConfig.cfg_data.default_mode; // 0=dataMonitor, 1=dataMonitorChart, 2=dataMonitorCount, 3=dataChart
-        // current_functionMode = (function_mode)1;
-
-        inaSensor.setParameter(shuntResistorCHA, shuntResistorCHB); // apply the config data to the INA3221
-
-        configMode.exitConfigMode();
-        Serial.println("> Exiting config mode.");
-        Serial.flush(); // Ensure the message is sent
-    }
-    else // if not in config mode, apply the config data to the variables, and init the INA3221
-    {
-        // apply the config data to the variables
-        float shuntResistorCHA = sysConfig.cfg_data.shuntResistorCHA / 1000.0f;
-        float shuntResistorCHB = sysConfig.cfg_data.shuntResistorCHB / 1000.0f;
-        highLightChannel = sysConfig.cfg_data.default_channel;                 // 0=channel A, 1=channel B, it used when only show one channel data
-        current_functionMode = (function_mode)sysConfig.cfg_data.default_mode; // 0=dataMonitor, 1=dataMonitorChart, 2=dataMonitorCount, 3=dataChart
-        // current_functionMode = (function_mode)1;
-
-        inaSensor.setParameter(shuntResistorCHA, shuntResistorCHB); // apply the config data to the INA3221
-    }
-
-    // Init the default UI
+    // Initialize default UI first
     if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
     {
         lv_obj_clean(lv_scr_act());
-        switch (current_functionMode)
+        ui_container = dataMonitor_initUI(tft_Rotation);
+        xSemaphoreGive(lvglMutex);
+    }
+
+    // Now check for config mode entry
+    if (dial.readDialStatus() == 2) {
+        configMode.enterConfigMode();
+        tmp_cfg_data = sysConfig.cfg_data;
+        Serial.println("> Entering config mode.");
+        
+        // Initialize config mode UI
+        if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
         {
-        case dataMonitor:
-            ui_container = dataMonitor_initUI(tft_Rotation);
-            break;
-        case dataMonitorChart:
-            ui_container = dataMonitorChart_initUI(tft_Rotation, highLightChannel);
-            break;
-        case dataMonitorCount:
-            ui_container = dataMonitorCount_initUI(tft_Rotation, highLightChannel);
-            break;
-        default:
-            ui_container = dataMonitor_initUI(tft_Rotation);
-            break;
+            lv_obj_clean(lv_scr_act());
+            ui_container = configMode_initUI(tft_Rotation);
+            xSemaphoreGive(lvglMutex);
         }
+    }
 
-        // Initialize with invalid values to force first update
-        latestSensorData.channel0.busCurrent = -999.0f;
-        latestSensorData.channel1.busCurrent = -999.0f;
-        latestSensorData.channel0.busVoltage = -999.0f;
-        latestSensorData.channel1.busVoltage = -999.0f;
+    // Apply config data
+    if (configMode.configState.isActive) {
+        configMode.handleConfigMode(ui_container, sysConfig, tmp_cfg_data);
+        configMode.applyConfigData(sysConfig, shuntResistorCHA, shuntResistorCHB, highLightChannel, current_functionMode);
+        inaSensor.setParameter(shuntResistorCHA, shuntResistorCHB);
+        configMode.exitConfigMode();
+        Serial.println("> Exiting config mode.");
+        Serial.flush();
+    } else {
+        configMode.applyConfigData(sysConfig, shuntResistorCHA, shuntResistorCHB, highLightChannel, current_functionMode);
+        inaSensor.setParameter(shuntResistorCHA, shuntResistorCHB);
+    }
 
-        forceUpdate_flag = true;             // Make sure this is set to true
-        functionMode_ChangeRequested = true; // Add this line
+    // Initialize with invalid values to force first update
+    latestSensorData.channel0.busCurrent = -999.0f;
+    latestSensorData.channel1.busCurrent = -999.0f;
+    latestSensorData.channel0.busVoltage = -999.0f;
+    latestSensorData.channel1.busVoltage = -999.0f;
 
+    forceUpdate_flag = true;
+    functionMode_ChangeRequested = true;
+
+    // Force a display refresh
+    if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
+    {
         lv_disp_t *disp = lv_disp_get_default();
         lv_refr_now(disp);
         xSemaphoreGive(lvglMutex);

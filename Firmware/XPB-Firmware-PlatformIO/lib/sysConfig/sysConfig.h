@@ -133,26 +133,4 @@ public:
   String output_all_config_data_in_String();
 };
 
-// Config mode state
-struct ConfigModeState
-{
-  bool isActive;
-  int8_t cursor;
-  int8_t cursorLast;
-  int8_t cursorStatus;
-  int8_t cursorMax;
-};
-
-class ConfigMode
-{
-public:
-  ConfigMode() : configState{false, 0, 0, 0, 11} {} // when added new config, update cursorMax here !!!
-  ConfigModeState configState;
-  bool enterConfigMode();
-  bool exitConfigMode();
-  void updateConfigCursor(int8_t newCursor);
-  bool getConfigState(ConfigModeState *state);
-  bool updateConfigState(const ConfigModeState *state);
-};
-
 #endif

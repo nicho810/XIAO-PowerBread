@@ -1,7 +1,7 @@
 #include "serialTask.h"
 #include "sysConfig.h"
-
-extern ConfigMode configMode;
+#include "configMode.h"
+// extern ConfigMode configMode;
 extern SysConfig sysConfig;
 
 extern SemaphoreHandle_t xSemaphore;
