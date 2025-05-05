@@ -132,6 +132,13 @@ SemaphoreHandle_t lvglMutex = NULL;
 SemaphoreHandle_t xSemaphore = NULL;
 StaticSemaphore_t xMutexBuffer;
 
+//Variable for 
+volatile bool configModeExitRequested = false;
+
+// Add a timeout mechanism to the main loop waiting for config mode exit
+unsigned long configModeStartTime = millis();
+const unsigned long CONFIG_MODE_TIMEOUT = 60000; // 1 minute timeout
+
 void setup(void)
 {
     // Serial Init
@@ -238,8 +245,34 @@ void setup(void)
 
         // Block here until config mode is exited by the user
         while (configMode.configState.isActive) {
-            // Just delay to allow other tasks to run - we don't want to do any UI changes here
-            delay(100); // Short delay to prevent watchdog timeout
+            // Check if exit was requested by another task
+            if (configModeExitRequested) {
+                Serial.println("> Processing config mode exit request");
+                Serial.flush();
+                
+                // Clear the flag first
+                configModeExitRequested = false;
+                
+                // Safe exit from the main thread
+                configMode.exitConfigMode();
+                
+                Serial.println("> Config mode exited successfully");
+                Serial.flush();
+                
+                // Break out of the waiting loop
+                break;
+            }
+            
+            // Timeout check
+            if (millis() - configModeStartTime > CONFIG_MODE_TIMEOUT) {
+                Serial.println("> Config mode timeout - forcing exit");
+                Serial.flush();
+                configMode.exitConfigMode();
+                break;
+            }
+            
+            // Just delay to allow other tasks to run
+            delay(50);
         }
 
         // Save the config data to EEPROM

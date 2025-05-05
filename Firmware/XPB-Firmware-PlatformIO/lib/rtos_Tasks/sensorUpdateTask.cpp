@@ -2,6 +2,7 @@
 #include "sysConfig.h"
 
 extern ConfigMode configMode;
+extern volatile bool configModeExitRequested; // Use the global variable
 
 // Sensor Update Task
 void sensorUpdateTask(void *pvParameters)
@@ -25,6 +26,7 @@ void sensorUpdateTask(void *pvParameters)
     // Add these static variables at the start of sensorUpdateTask
     static bool buffersInitialized = false;
     static int sampleCount[2] = {0, 0};
+
 
     while (1)
     {
@@ -73,7 +75,17 @@ void sensorUpdateTask(void *pvParameters)
                     }
                     else if (configMode.configState.cursorStatus == -1)
                     {
-                        configMode.exitConfigMode(); // Use the proper function to exit config mode
+                        // IMPORTANT: Just set a flag and don't call exitConfigMode directly from here
+                        // Release the LVGL mutex first
+                        xSemaphoreGive(lvglMutex);
+                        
+                        // Set a global flag to indicate exit request
+                        configModeExitRequested = true;
+                        Serial.println("> Config mode exit requested by sensor task");
+                        Serial.flush();
+                        
+                        // Skip the rest of this update cycle
+                        continue;
                     }
                     xSemaphoreGive(lvglMutex);
                 }

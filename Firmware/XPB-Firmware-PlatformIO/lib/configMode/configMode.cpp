@@ -36,7 +36,7 @@ void ConfigMode::applyConfigData(SysConfig& sysConfig, float& shuntResistorCHA, 
 }
 
 bool ConfigMode::enterConfigMode() {
-    if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+    if (xSemaphoreTake(configStateMutex, portMAX_DELAY) == pdTRUE) {
         bool wasActive = configState.isActive;
         configState.isActive = true;
         configState.cursor = 0;     // Reset cursor position
@@ -54,7 +54,7 @@ bool ConfigMode::enterConfigMode() {
 }
 
 bool ConfigMode::exitConfigMode() {
-    if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+    if (xSemaphoreTake(configStateMutex, portMAX_DELAY) == pdTRUE) {
         bool wasActive = configState.isActive;
         configState.isActive = false;
         configState.cursor = 0;
@@ -71,7 +71,7 @@ bool ConfigMode::exitConfigMode() {
 }
 
 void ConfigMode::updateConfigCursor(int8_t newCursor) {
-    if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+    if (xSemaphoreTake(configStateMutex, portMAX_DELAY) == pdTRUE) {
         if (newCursor >= 0 && newCursor < configState.cursorMax) {
             configState.cursorLast = configState.cursor;
             configState.cursor = newCursor;
@@ -81,7 +81,7 @@ void ConfigMode::updateConfigCursor(int8_t newCursor) {
 }
 
 bool ConfigMode::getConfigState(ConfigModeState *state) {
-    if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+    if (xSemaphoreTake(configStateMutex, portMAX_DELAY) == pdTRUE) {
         memcpy(state, &configState, sizeof(ConfigModeState));
         xSemaphoreGive(configStateMutex);
         return true;
@@ -90,7 +90,7 @@ bool ConfigMode::getConfigState(ConfigModeState *state) {
 }
 
 bool ConfigMode::updateConfigState(const ConfigModeState *state) {
-    if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+    if (xSemaphoreTake(configStateMutex, portMAX_DELAY) == pdTRUE) {
         memcpy(&configState, state, sizeof(ConfigModeState));
         xSemaphoreGive(configStateMutex);
         return true;
