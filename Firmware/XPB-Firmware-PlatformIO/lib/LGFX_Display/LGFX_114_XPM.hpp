@@ -47,13 +47,14 @@ class LGFX : public lgfx::LGFX_Device
       _panel_instance.config(cfg);
     }
 
-    {
-      auto cfg = _light_instance.config();
-      cfg.pin_bl      = -1;
-      cfg.pwm_channel = 1;
-      _light_instance.config(cfg);
-      _panel_instance.setLight(&_light_instance);
-    }
+    // No backlight, so dont need the code below
+    // {
+    //   auto cfg = _light_instance.config();
+    //   cfg.pin_bl      = -1;
+    //   cfg.pwm_channel = 1;
+    //   _light_instance.config(cfg);
+    //   _panel_instance.setLight(&_light_instance);
+    // }
 
     setPanel(&_panel_instance);
   }
