@@ -3,9 +3,9 @@
 // Purpose: demo polling 3 channels
 // URL: https://github.com/RobTillaart/INA3221_RT
 
-#include "INA3221Sensor.h"
+#include "CurrentSensor_INA3221.h"
 
-INA3221Sensor::INA3221Sensor(uint8_t address)
+CurrentSensor_INA3221::CurrentSensor_INA3221(uint8_t address)
 #if defined(SEEED_XIAO_RP2040)
   : ina(address, &Wire1) {
 #elif defined(SEEED_XIAO_RP2350)
@@ -15,7 +15,7 @@ INA3221Sensor::INA3221Sensor(uint8_t address)
 #endif
 }
 
-bool INA3221Sensor::begin() {
+bool CurrentSensor_INA3221::begin() {
   /* when using RPI_PICO, the I2C have to set to Wire1, the actual I2C is Wire1, but on seeed_xiao_rp2040, they mapped it to Wire */
   #if defined(SEEED_XIAO_RP2040)
     Wire1.setSDA(pin_i2c_sda);
@@ -48,18 +48,18 @@ bool INA3221Sensor::begin() {
   return true;
 }
 
-void INA3221Sensor::setParameter(float shuntResistorCHA, float shuntResistorCHB) {
+void CurrentSensor_INA3221::setParameter(float shuntResistorCHA, float shuntResistorCHB) {
   disableChannel(2); // Disable unused channel 2
   setShuntResistors(shuntResistorCHA, shuntResistorCHB);
   Serial.printf("> Shunt-Resistors: %f, %f\n", ina.getShuntR(0), ina.getShuntR(1));
   setAverage(1); //get 4 samples and average them
 }
 
-void INA3221Sensor::disableChannel(int channel) {
+void CurrentSensor_INA3221::disableChannel(int channel) {
   ina.disableChannel(channel);
 }
 
-void INA3221Sensor::setShuntResistors(float shunt0, float shunt1) {
+void CurrentSensor_INA3221::setShuntResistors(float shunt0, float shunt1) {
   ina.setShuntR(0, shunt0);
   ina.setShuntR(1, shunt1);
   prevINAData.channel0.shuntResistor = shunt0;
@@ -69,11 +69,11 @@ void INA3221Sensor::setShuntResistors(float shunt0, float shunt1) {
   // Serial.printf("Shunt Resistors: %f, %f\n", prevINAData.channel0.shuntResistor, prevINAData.channel1.shuntResistor);
 }
 
-void INA3221Sensor::setAverage(int average) {
+void CurrentSensor_INA3221::setAverage(int average) {
     ina.setAverage(average); //when average is 1, it means 4 samples are taken and averaged
 }
 
-DualChannelData INA3221Sensor::readCurrentSensors() {
+DualChannelData CurrentSensor_INA3221::readCurrentSensors() {
   DualChannelData INAData;
 
   //passing shuntResister value

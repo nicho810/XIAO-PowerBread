@@ -3,7 +3,11 @@
 #include <Arduino.h>
 #include "boardConfig.h"
 #include <lvgl.h>
-#include "INA3221Sensor.h"
+#if defined(Proj_XIAOPowerBread)
+#include "CurrentSensor_INA3221.h"
+#elif defined(Proj_XIAOPowerMonitor)
+#include "CurrentSensor_INA226.h"
+#endif
 #include "lvgl_ui.h"
 #include "lvgl_ui_updateFunc.h"
 #include "function_mode.h"
@@ -15,7 +19,11 @@ void sensorUpdateTask(void *pvParameters);
 // External variable declarations
 extern SemaphoreHandle_t lvglMutex;
 extern SemaphoreHandle_t xSemaphore;
-extern INA3221Sensor inaSensor;
+#if defined(Proj_XIAOPowerBread)
+extern CurrentSensor_INA3221 c_Sensor;
+#elif defined(Proj_XIAOPowerMonitor)
+extern CurrentSensor_DualINA226 c_Sensor;
+#endif
 extern DualChannelData latestSensorData;
 extern lv_obj_t *ui_container;
 extern volatile function_mode current_functionMode;

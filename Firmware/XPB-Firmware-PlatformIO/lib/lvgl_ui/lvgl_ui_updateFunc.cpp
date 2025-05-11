@@ -1,5 +1,5 @@
 #include "lvgl_ui_updateFunc.h"
-#include "INA3221Sensor.h"
+#include "currentSensor.h"
 #include "sysConfig.h"
 
 extern sysConfig_data tmp_cfg_data;
@@ -38,7 +38,7 @@ void update_monitor_data(lv_obj_t *monitor_container, uint8_t channel, DualChann
 
     static char str_buf[8];  // Single buffer for all string conversions
     
-    const INAData* data = channel ? &newSensorData.channel1 : &newSensorData.channel0;
+    const currentSensorData* data = channel ? &newSensorData.channel1 : &newSensorData.channel0;
 
     // Direct child access using indices
     lv_obj_t* voltage_label = lv_obj_get_child(monitor_container, 2);

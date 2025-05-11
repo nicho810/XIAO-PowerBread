@@ -96,8 +96,14 @@ volatile int newRotation = 0;
 volatile int tft_Rotation = 0; // default rotation.
 
 // Current sensor
-#include "INA3221Sensor.h"
-INA3221Sensor inaSensor;
+#if defined(Proj_XIAOPowerBread)
+#include "CurrentSensor_INA3221.h"
+CurrentSensor_INA3221 c_Sensor;
+#elif defined(Proj_XIAOPowerMonitor)
+#include "CurrentSensor_INA226.h"
+CurrentSensor_DualINA226 c_Sensor;
+#endif
+
 DualChannelData latestSensorData;                                 // Add a global variable to store the latest sensor data
 float avgS[2] = {0}, avgM[2] = {0}, avgH[2] = {0}, peak[2] = {0}; // Average values for each channel
 
@@ -149,10 +155,10 @@ void setup(void)
     // Dial init
     dial.init();
 
-    // INA3221 Init
-    if (!inaSensor.begin()){
+    // Current Sensor Init
+    if (!c_Sensor.begin()){
         while (1){
-            Serial.println("INA3221 initialization failed. Please check the wiring and try again."); // Print error message
+            Serial.println("Current Sensor initialization failed. Please check the wiring and try again."); // Print error message
             delay(1000);
             // Todo: Add LCD error message
         }
@@ -286,7 +292,7 @@ void setup(void)
     }
 
     configMode.applyConfigData(sysConfig, shuntResistorCHA, shuntResistorCHB, highLightChannel, current_functionMode);
-    inaSensor.setParameter(shuntResistorCHA, shuntResistorCHB);
+    c_Sensor.setParameter(shuntResistorCHA, shuntResistorCHB);
 
 
     // // Apply config data

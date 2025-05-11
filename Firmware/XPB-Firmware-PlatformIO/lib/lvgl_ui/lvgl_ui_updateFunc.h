@@ -3,7 +3,7 @@
 
 #include "lvgl.h"
 #include "xpb_color_palette.h"
-#include "INA3221Sensor.h"
+#include "currentSensor.h"
 
 void update_monitor_data(lv_obj_t *monitor_container, uint8_t channel, DualChannelData newSensorData);
 void update_chart_data(lv_obj_t *chart_container, int32_t new_value);

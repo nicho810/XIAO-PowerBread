@@ -97,7 +97,7 @@ void sensorUpdateTask(void *pvParameters)
             }
             else // Only process sensor updates when not in config mode
             {
-                DualChannelData newSensorData = inaSensor.readCurrentSensors();
+                DualChannelData newSensorData = c_Sensor.readCurrentSensors();
 
                 // if the function mode is changed, reinit the ui
                 if (functionMode_ChangeRequested)
@@ -118,7 +118,7 @@ void sensorUpdateTask(void *pvParameters)
                         case dataMonitor:
                             ui_container = dataMonitor_initUI(tft_Rotation);
                             // Force immediate sensor read and update for dataMonitor mode
-                            latestSensorData = inaSensor.readCurrentSensors();
+                            latestSensorData = c_Sensor.readCurrentSensors();
                             if (lv_obj_t *container0 = lv_obj_get_child(ui_container, 0))
                             {
                                 if (lv_obj_t *container1 = lv_obj_get_child(ui_container, 1))

@@ -1,6 +1,6 @@
 #include "configMode.h"
 #include "lvgl_ui.h"
-#include "INA3221Sensor.h"
+#include "currentSensor.h"
 
 void ConfigMode::handleConfigMode(lv_obj_t*& ui_container, SysConfig& sysConfig, sysConfig_data& tmp_cfg_data) {
     // Lock the config state mutex to ensure other tasks see the correct state

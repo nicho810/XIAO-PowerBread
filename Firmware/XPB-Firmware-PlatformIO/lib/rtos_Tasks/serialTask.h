@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include "boardConfig.h"
-#include "INA3221Sensor.h" // Adjust path as needed
+#include "CurrentSensor_INA3221.h" // Adjust path as needed
 
 void serialPrintTask(void *pvParameters);
 
