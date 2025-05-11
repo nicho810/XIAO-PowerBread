@@ -43,6 +43,9 @@ void SysConfig::begin_EEPROM() {
 }
 
 void SysConfig::init_EEPROM(int force_write) {
+    //begin EEPROM
+    begin_EEPROM();
+
     //if force_write is true, will write default config to EEPROM
     if (force_write) {
         Serial.println("Force write default config to EEPROM");
@@ -131,59 +134,3 @@ void SysConfig::decrementConfigValue(int cursor, sysConfig_data& tmp_cfg_data) {
 }
 
 
-
-// // Helper functions to safely modify state
-// bool ConfigMode::enterConfigMode() {
-//     if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-//         bool wasActive = configState.isActive;
-//         configState.isActive = true;
-//         xSemaphoreGive(configStateMutex);
-//         return !wasActive; // Return true if state changed
-//     }
-//     return false;
-// }
-
-// bool ConfigMode::exitConfigMode() {
-//     if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-//         bool wasActive = configState.isActive;
-//         configState.isActive = false;
-//         configState.cursor = 0;
-//         configState.cursorLast = 0;
-//         configState.cursorStatus = 0;
-//         xSemaphoreGive(configStateMutex);
-//         return wasActive; // Return true if state changed
-//     }
-//     return false;
-// }
-
-// void ConfigMode::updateConfigCursor(int8_t newCursor) {
-//     if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-//         if (newCursor >= 0 && newCursor < configState.cursorMax) {
-//             configState.cursorLast = configState.cursor;
-//             configState.cursor = newCursor;
-//         }
-//         xSemaphoreGive(configStateMutex);
-//     }
-// }
-
-// bool ConfigMode::getConfigState(ConfigModeState *state)
-// {
-//     if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE)
-//     {
-//         memcpy(state, &configState, sizeof(ConfigModeState));
-//         xSemaphoreGive(configStateMutex);
-//         return true;
-//     }
-//     return false;
-// }
-
-// bool ConfigMode::updateConfigState(const ConfigModeState *state)
-// {
-//     if (xSemaphoreTake(configStateMutex, pdMS_TO_TICKS(10)) == pdTRUE)
-//     {
-//         memcpy(&configState, state, sizeof(ConfigModeState));
-//         xSemaphoreGive(configStateMutex);
-//         return true;
-//     }
-//     return false;
-// }

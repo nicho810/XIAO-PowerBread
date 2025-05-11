@@ -220,7 +220,6 @@ void setup(void)
     // Option 1: From default config data
     // sysConfig.loadConfig_from(cfg_data_default); 
     // Option 2: from EEPROM
-    sysConfig.begin_EEPROM();
     sysConfig.init_EEPROM(0); // 0=no force write, 1=force write
     sysConfig.loadConfig_from_EEPROM();
 
@@ -303,7 +302,7 @@ void setup(void)
     // }
 
 
-    // Initialize default UI first (do this after config mode is handled)
+    // Initialize default UI
     if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE) {
         // Clean the screen first
         lv_obj_clean(lv_scr_act());
@@ -323,10 +322,8 @@ void setup(void)
             ui_container = dataMonitor_initUI(tft_Rotation);
             break;
         }
-        
         xSemaphoreGive(lvglMutex);
     }
-
 
     // Initialize with invalid values to force first update
     latestSensorData.channel0.busCurrent = -999.0f;
@@ -334,10 +331,9 @@ void setup(void)
     latestSensorData.channel0.busVoltage = -999.0f;
     latestSensorData.channel1.busVoltage = -999.0f;
 
+    // Force a display refresh
     forceUpdate_flag = true;
     functionMode_ChangeRequested = true;
-
-    // Force a display refresh
     if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
     {
         lv_disp_t *disp = lv_disp_get_default();
