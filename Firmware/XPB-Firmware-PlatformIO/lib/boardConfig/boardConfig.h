@@ -91,7 +91,7 @@
 #define pin_dial pin_button //XPM use 3 buttons to replace dial switch.
 
 #define pin_lcd_sclk D8 //D8
-#define pin_lcd_miso -1 //-1
+#define pin_lcd_miso D9 //Actually not used
 #define pin_lcd_mosi D10 //D10
 #define pin_lcd_dc D9 //D9
 #define pin_lcd_cs D3 //D3

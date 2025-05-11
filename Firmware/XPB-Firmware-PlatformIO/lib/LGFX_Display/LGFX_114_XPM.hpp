@@ -9,7 +9,7 @@ class LGFX : public lgfx::LGFX_Device
 {
   lgfx::Panel_ST7789 _panel_instance;
   lgfx::Bus_SPI       _bus_instance;
-  lgfx::Light_PWM     _light_instance;
+  // lgfx::Light_PWM     _light_instance;
 
   public:
   LGFX(void)
@@ -18,17 +18,32 @@ class LGFX : public lgfx::LGFX_Device
       auto cfg = _bus_instance.config();
       #if defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
       cfg.spi_host   = 0;
+      cfg.spi_mode   = 0;
+      cfg.freq_write = 80000000;
+      cfg.pin_sclk   = pin_lcd_sclk;
+      cfg.pin_miso   = -1;
+      cfg.pin_mosi   = pin_lcd_mosi;
+      cfg.pin_dc     = pin_lcd_dc;
       #elif defined(SEEED_XIAO_ESP32C3) || defined(SEEED_XIAO_ESP32C6)
       cfg.spi_host   = SPI2_HOST;
-      #elif defined(SEEED_XIAO_ESP32S3)
-      cfg.spi_host   = SPI2_HOST;
-      #endif
+      cfg.dma_channel = SPI_DMA_CH_AUTO;
       cfg.spi_mode   = 0;
       cfg.freq_write = 80000000;
       cfg.pin_sclk   = pin_lcd_sclk;
       cfg.pin_miso   = pin_lcd_miso;
       cfg.pin_mosi   = pin_lcd_mosi;
       cfg.pin_dc     = pin_lcd_dc;
+      cfg.spi_3wire  = true;
+      // SPI.begin(pin_lcd_sclk, -1, pin_lcd_mosi); // Explicitly initialize SPI
+      #elif defined(SEEED_XIAO_ESP32S3)
+      cfg.spi_host   = SPI2_HOST;
+      cfg.spi_mode   = 0;
+      cfg.freq_write = 80000000;
+      cfg.pin_sclk   = pin_lcd_sclk;
+      cfg.pin_miso   = -1;
+      cfg.pin_mosi   = pin_lcd_mosi;
+      cfg.pin_dc     = pin_lcd_dc;
+      #endif
       _bus_instance.config(cfg);
       _panel_instance.setBus(&_bus_instance);
     }
