@@ -1,4 +1,4 @@
-#include "lvglTask.h"
+#include "task_lvgl.h"
 
 void lvglTask(void *parameter)
 {

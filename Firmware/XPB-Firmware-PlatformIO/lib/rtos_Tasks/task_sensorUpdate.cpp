@@ -1,4 +1,4 @@
-#include "sensorUpdateTask.h"
+#include "task_sensorUpdate.h"
 #include "sysConfig.h"
 
 extern ConfigMode configMode;

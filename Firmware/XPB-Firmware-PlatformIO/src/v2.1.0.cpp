@@ -41,10 +41,10 @@
 #include <Arduino.h>
 
 // RTOS Tasks
-#include "dialReadTask.h"     // dial read task
-#include "serialTask.h"       // serial task
-#include "sensorUpdateTask.h" // sensor update task
-#include "lvglTask.h"         // LVGL task
+#include "task_dialRead.h"     // dial read task
+#include "task_serial.h"       // serial task
+#include "task_sensorUpdate.h" // sensor update task
+#include "task_lvgl.h"         // LVGL task
 // LCD
 #include <LovyanGFX.h>
 // #include <LGFX_096_XPB.hpp>
