@@ -19,7 +19,8 @@ bool CurrentSensor_INA226::begin() {
     Serial.println("could not connect INA226. Fix and Reboot");
     return false;
   }
-  
+  Serial.printf("Init INA226(address: 0x%02X) success.\n", ina226.getAddress());
+
   delay(100);
   return true;
 }
