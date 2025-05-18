@@ -15,10 +15,11 @@ static void format_value(char* buf, size_t buf_size, float value) {
     }
 }
 
-void update_chart_data(lv_obj_t *chart_container, int32_t new_value)
+void update_chart_data(lv_obj_t *chart_container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue)
 {
     if (!chart_container) return;
 
+    int32_t new_value = intValue;
     // Get chart directly - it's the first child
     lv_obj_t *chart = lv_obj_get_child(chart_container, 0);
     if (!chart) return;
@@ -32,7 +33,7 @@ void update_chart_data(lv_obj_t *chart_container, int32_t new_value)
     lv_chart_refresh(chart);
 }
 
-void update_monitor_data(lv_obj_t *monitor_container, uint8_t channel, DualChannelData newSensorData)
+void update_monitor_data(lv_obj_t *monitor_container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue)
 {
     if (!monitor_container) return;
 
@@ -57,7 +58,7 @@ void update_monitor_data(lv_obj_t *monitor_container, uint8_t channel, DualChann
     lv_label_set_text(power_label, str_buf);
 }
 
-void update_count_data(lv_obj_t *count_container, uint8_t channel, float updateValue)
+void update_count_data(lv_obj_t *count_container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue)
 {
     if (!count_container) return;
 
@@ -67,7 +68,7 @@ void update_count_data(lv_obj_t *count_container, uint8_t channel, float updateV
     lv_obj_t* value_label = lv_obj_get_child(count_container, 2);
     if (!value_label) return;
     
-    format_value(str_buf, sizeof(str_buf), updateValue);
+    format_value(str_buf, sizeof(str_buf), floatValue);
     lv_label_set_text(value_label, str_buf);
 }
 

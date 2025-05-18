@@ -113,31 +113,32 @@ void sensorUpdateTask(void *pvParameters)
                         }
 
                         // Create new UI
-                        switch (current_functionMode)
-                        {
-                        case dataMonitor:
-                            ui_container = dataMonitor_initUI(tft_Rotation);
-                            // Force immediate sensor read and update for dataMonitor mode
-                            latestSensorData = c_Sensor.readCurrentSensors();
-                            if (lv_obj_t *container0 = lv_obj_get_child(ui_container, 0))
-                            {
-                                if (lv_obj_t *container1 = lv_obj_get_child(ui_container, 1))
-                                {
-                                    update_monitor_data(container0, 0, latestSensorData);
-                                    update_monitor_data(container1, 1, latestSensorData);
-                                }
-                            }
-                            break;
-                        case dataMonitorChart:
-                            ui_container = dataMonitorChart_initUI(tft_Rotation, highLightChannel);
-                            break;
-                        case dataMonitorCount:
-                            ui_container = dataMonitorCount_initUI(tft_Rotation, highLightChannel);
-                            break;
-                        default:
-                            ui_container = dataMonitor_initUI(tft_Rotation);
-                            break;
-                        }
+                        initUI(current_functionMode, ui_container, highLightChannel, latestSensorData, 0.0f, 0);
+                        // switch (current_functionMode)
+                        // {
+                        // case dataMonitor:
+                        //     ui_container = dataMonitor_initUI(tft_Rotation);
+                        //     // Force immediate sensor read and update for dataMonitor mode
+                        //     latestSensorData = c_Sensor.readCurrentSensors();
+                        //     if (lv_obj_t *container0 = lv_obj_get_child(ui_container, 0))
+                        //     {
+                        //         if (lv_obj_t *container1 = lv_obj_get_child(ui_container, 1))
+                        //         {
+                        //             update_monitor_data(container0, 0, latestSensorData);
+                        //             update_monitor_data(container1, 1, latestSensorData);
+                        //         }
+                        //     }
+                        //     break;
+                        // case dataMonitorChart:
+                        //     ui_container = dataMonitorChart_initUI(tft_Rotation, highLightChannel);
+                        //     break;
+                        // case dataMonitorCount:
+                        //     ui_container = dataMonitorCount_initUI(tft_Rotation, highLightChannel);
+                        //     break;
+                        // default:
+                        //     ui_container = dataMonitor_initUI(tft_Rotation);
+                        //     break;
+                        // }
 
                         // Reset latest sensor data to force next update
                         latestSensorData.channel0.busCurrent = -999.0f;
@@ -152,7 +153,7 @@ void sensorUpdateTask(void *pvParameters)
                 }
 
                 // Calculate averages for dataMonitorCount mode
-                if (current_functionMode == dataMonitorCount)
+                if (current_functionMode == Mode_3)
                 {
                     for (int ch = 0; ch < 2; ch++)
                     {
@@ -195,8 +196,8 @@ void sensorUpdateTask(void *pvParameters)
                         shouldUpdate = true;
                     }
                     // Always update for Chart and Count modes
-                    else if (current_functionMode == dataMonitorChart ||
-                             current_functionMode == dataMonitorCount)
+                    else if (current_functionMode == Mode_2 ||
+                             current_functionMode == Mode_3)
                     {
                         shouldUpdate = true;
                     }
@@ -222,24 +223,24 @@ void sensorUpdateTask(void *pvParameters)
                         {
                             switch (current_functionMode)
                             {
-                            case dataMonitor:
+                            case Mode_1: //basic monitor
                                 if (lv_obj_t *container1 = lv_obj_get_child(ui_container, 1))
                                 {
-                                    update_monitor_data(container0, 0, latestSensorData);
-                                    update_monitor_data(container1, 1, latestSensorData);
+                                    update_monitor_data(container0, 0, latestSensorData, 0.0f, 0);
+                                    update_monitor_data(container1, 1, latestSensorData, 0.0f, 0);
                                 }
                                 break;
 
-                            case dataMonitorChart:
+                            case Mode_2: //chart
                                 if (lv_obj_t *container1 = lv_obj_get_child(ui_container, 1))
                                 {
-                                    update_monitor_data(container0, highLightChannel, latestSensorData);
+                                    update_monitor_data(container0, highLightChannel, latestSensorData, 0.0f, 0);
                                     float currentValue = (highLightChannel == 0) ? latestSensorData.channel0.busCurrent : latestSensorData.channel1.busCurrent;
-                                    update_chart_data(container1, currentValue);
+                                    update_chart_data(container1, highLightChannel, latestSensorData, 0, currentValue);
                                 }
                                 break;
 
-                            case dataMonitorCount:
+                            case Mode_3: //count
                                 if (highLightChannel_ChangeRequested)
                                 {
                                     avgS[highLightChannel] = 0;
@@ -247,15 +248,15 @@ void sensorUpdateTask(void *pvParameters)
                                     avgH[highLightChannel] = 0;
                                     peak[highLightChannel] = 0;
                                 }
-                                update_monitor_data(container0, highLightChannel, latestSensorData);
+                                update_monitor_data(container0, highLightChannel, latestSensorData, 0.0f, 0);
                                 lv_obj_t *container1 = lv_obj_get_child(ui_container, 1);
-                                update_count_data(container1, highLightChannel, avgS[highLightChannel]);
+                                update_count_data(container1, highLightChannel, latestSensorData, avgS[highLightChannel], 0);
                                 container1 = lv_obj_get_child(ui_container, 2);
-                                update_count_data(container1, highLightChannel, avgM[highLightChannel]);
+                                update_count_data(container1, highLightChannel, latestSensorData, avgM[highLightChannel], 0);
                                 container1 = lv_obj_get_child(ui_container, 3);
-                                update_count_data(container1, highLightChannel, avgH[highLightChannel]);
+                                update_count_data(container1, highLightChannel, latestSensorData, avgH[highLightChannel], 0);
                                 container1 = lv_obj_get_child(ui_container, 4);
-                                update_count_data(container1, highLightChannel, peak[highLightChannel]);
+                                update_count_data(container1, highLightChannel, latestSensorData, peak[highLightChannel], 0);
                                 break;
                             }
                         }

@@ -131,26 +131,26 @@ static void key_event_cb(lv_event_t *e)
                     {
                     case LV_KEY_UP: // Dial turned up (status 1)
                         // Serial.println("UP key pressed");
-                        if (current_functionMode > dataMonitor)
+                        if (current_functionMode > Mode_1)
                         {
                             current_functionMode = static_cast<function_mode>(current_functionMode - 1);
                         }
                         else
                         {
-                            current_functionMode = dataMonitorCount;
+                            current_functionMode = Mode_3;
                         }
                         functionMode_ChangeRequested = true;
                         break;
 
                     case LV_KEY_DOWN: // Dial turned down (status 2)
                         // Serial.println("DOWN key pressed");
-                        if (current_functionMode < dataMonitorCount)
+                        if (current_functionMode < Mode_3)
                         {
                             current_functionMode = static_cast<function_mode>(current_functionMode + 1);
                         }
                         else
                         {
-                            current_functionMode = dataMonitor;
+                            current_functionMode = Mode_1;
                         }
                         functionMode_ChangeRequested = true;
                         break;
@@ -160,10 +160,10 @@ static void key_event_cb(lv_event_t *e)
                         highLightChannel = (highLightChannel + 1) % 2;
                         highLightChannel_ChangeRequested = true;
 
-                        if (current_functionMode == dataMonitorChart ||
-                            current_functionMode == dataMonitorCount)
+                        if (current_functionMode == Mode_2 ||
+                            current_functionMode == Mode_3)
                         {
-                            functionMode_ChangeRequested = true;
+                            functionMode_ChangeRequested = true; //it actual purpose is re-init the ui
                         }
                         break;
 
@@ -182,7 +182,46 @@ static void key_event_cb(lv_event_t *e)
     }
 }
 
-lv_obj_t *dataMonitor_initUI(int rotation)
+// Define UI handlers for each mode
+const UIModeHandlers UI_MODE_HANDLERS[] = {
+    // Mode_1 (Basic Monitor)
+    {
+        .init_handler = dataMonitor_initUI,
+        .update_handler = update_monitor_data
+    },
+    // Mode_2 (Chart)
+    {
+        .init_handler = dataMonitorChart_initUI,
+        .update_handler = update_monitor_data
+    },
+    // Mode_3 (Count)
+    {
+        .init_handler = dataMonitorCount_initUI,
+        .update_handler = update_count_data
+    },
+    // Mode_4 (Reserved)
+    {
+        .init_handler = dataMonitor_initUI,
+        .update_handler = update_monitor_data
+    }
+};
+
+// Generic UI initialization function
+void initUI(function_mode mode, lv_obj_t* container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue) {
+    if (mode >= 0 && mode < sizeof(UI_MODE_HANDLERS)/sizeof(UI_MODE_HANDLERS[0])) {
+        UI_MODE_HANDLERS[mode].init_handler(container, channel, newSensorData, floatValue, intValue);
+    }
+}
+
+// Update UI based on mode
+void updateUI(function_mode mode, lv_obj_t* container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue) {
+    if (mode >= 0 && mode < sizeof(UI_MODE_HANDLERS)/sizeof(UI_MODE_HANDLERS[0])) {
+        UI_MODE_HANDLERS[mode].update_handler(container, channel, newSensorData, floatValue, intValue);
+    }
+}
+
+
+void dataMonitor_initUI(lv_obj_t *ui_container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue)
 {
     cleanupAndWait();
 
@@ -199,7 +238,7 @@ lv_obj_t *dataMonitor_initUI(int rotation)
     
 
     // Create and configure container with updated dimensions
-    lv_obj_t *ui_container = lv_obj_create(lv_scr_act());
+    // lv_obj_t *ui_container = lv_obj_create(lv_scr_act());
     lv_obj_clear_flag(ui_container, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_size(ui_container, container_width, container_height);
     lv_obj_align(ui_container, LV_ALIGN_CENTER, 0, 0);
@@ -227,17 +266,17 @@ lv_obj_t *dataMonitor_initUI(int rotation)
     // Add event handling
     setup_container_events(ui_container);
 
-    return ui_container;
+    // return ui_container;
 }
 
-lv_obj_t *dataMonitorChart_initUI(int rotation, uint8_t channel)
+void dataMonitorChart_initUI(lv_obj_t *ui_container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue)
 {
     cleanupAndWait();
 
     uint16_t container_width = 80, container_height = 160;
 
     // Create main container with correct dimensions
-    lv_obj_t *ui_container = lv_obj_create(lv_scr_act());
+    // lv_obj_t *ui_container = lv_obj_create(lv_scr_act());
     lv_obj_clear_flag(ui_container, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_size(ui_container, container_width, container_height);
     lv_obj_center(ui_container);
@@ -245,7 +284,8 @@ lv_obj_t *dataMonitorChart_initUI(int rotation, uint8_t channel)
     lv_obj_set_style_border_width(ui_container, 0, LV_PART_MAIN); // no border
 
     // Adjust widget positions based on rotation
-    int monitor_y = (rotation % 2 == 0) ? -41 : 0;
+    int rotation = tft_Rotation;
+    int monitor_y = (rotation % 2 == 0) ? -41 : 0;  
     int chart_y = (rotation % 2 == 0) ? 41 : 0;
     int monitor_x = (rotation % 2 == 0) ? 0 : -41;
     int chart_x = (rotation % 2 == 0) ? 0 : 41;
@@ -269,17 +309,17 @@ lv_obj_t *dataMonitorChart_initUI(int rotation, uint8_t channel)
     // Add event handling
     setup_container_events(ui_container);
 
-    return ui_container;
+    // return ui_container;
 }
 
-lv_obj_t *dataMonitorCount_initUI(int rotation, uint8_t channel)
+void dataMonitorCount_initUI(lv_obj_t *ui_container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue)
 {
     cleanupAndWait();
 
     uint16_t container_width = 80, container_height = 160;
 
     // Create main container with correct dimensions
-    lv_obj_t *ui_container = lv_obj_create(lv_scr_act());
+    // lv_obj_t *ui_container = lv_obj_create(lv_scr_act());
     lv_obj_clear_flag(ui_container, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_size(ui_container, container_width, container_height);
     lv_obj_center(ui_container);
@@ -287,6 +327,7 @@ lv_obj_t *dataMonitorCount_initUI(int rotation, uint8_t channel)
     lv_obj_set_style_border_width(ui_container, 0, LV_PART_MAIN); // no border
 
     // Adjust positions based on rotation
+    int rotation = tft_Rotation;
     int monitor_y = (rotation % 2 == 0) ? -41 : 0;
     int base_y = (rotation % 2 == 0) ? 10 : -30;
     int x_offset = (rotation % 2 == 0) ? 0 : -20;
@@ -331,7 +372,7 @@ lv_obj_t *dataMonitorCount_initUI(int rotation, uint8_t channel)
     // Add event handling
     setup_container_events(ui_container);
 
-    return ui_container;
+    // return ui_container;
 }
 
 lv_obj_t *configMode_initUI(int rotation)

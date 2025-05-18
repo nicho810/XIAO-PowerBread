@@ -8,23 +8,39 @@
 #include "lvgl_ui_widget.h"
 #include "function_mode.h"
 #include "configMode.h"
+#include "currentSensor.h"
+#include "lvgl_ui_updateFunc.h"
 
-// Add this global variable declaration
+// Global variables
 extern volatile bool menu_is_visible;
-
-// External declarations for global variables
 extern volatile bool functionMode_ChangeRequested;
 extern volatile bool highLightChannel_ChangeRequested;
 extern volatile function_mode current_functionMode;
-extern SemaphoreHandle_t xSemaphore;  // Declare the external semaphore
+extern SemaphoreHandle_t xSemaphore;
+extern uint8_t highLightChannel;
+
+// Generic UI initialization function
+void initUI(function_mode mode, lv_obj_t* container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue);
+void updateUI(function_mode mode, lv_obj_t* container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue);
+
+// UI update function type definition
+typedef void (*ui_update_func)(lv_obj_t* container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue);
+
+
+// Structure to hold UI update functions for each mode
+struct UIModeHandlers {
+    ui_update_func init_handler;
+    ui_update_func update_handler;
+};
+
+// Declare the handlers array
+extern const UIModeHandlers UI_MODE_HANDLERS[];
 
 // UI initialization functions
 lv_obj_t* configMode_initUI(int rotation);
-lv_obj_t* dataMonitor_initUI(int rotation);
-lv_obj_t* dataMonitorCount_initUI(int rotation, uint8_t channel);
-lv_obj_t* dataMonitorChart_initUI(int rotation, uint8_t channel);
-
-extern uint8_t highLightChannel;
+void dataMonitor_initUI(lv_obj_t *ui_container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue);
+void dataMonitorCount_initUI(lv_obj_t *ui_container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue);
+void dataMonitorChart_initUI(lv_obj_t *ui_container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue);
 
 static void key_event_cb(lv_event_t * e);
 

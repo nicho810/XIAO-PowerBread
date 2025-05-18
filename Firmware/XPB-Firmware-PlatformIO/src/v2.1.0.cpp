@@ -84,7 +84,7 @@ ConfigMode configMode;
 SemaphoreHandle_t configStateMutex = NULL;
 float shuntResistorCHA = 0.0f;
 float shuntResistorCHB = 0.0f;
-volatile function_mode current_functionMode = dataMonitor;
+volatile function_mode current_functionMode = Mode_1;  //mode_1: basic monitor, mode_2: chart, mode_3: count
 volatile bool functionMode_ChangeRequested = true;
 volatile bool highLightChannel_ChangeRequested = false;
 uint8_t highLightChannel = 0;
@@ -292,7 +292,7 @@ void setup(void)
     }
 
     configMode.applyConfigData(sysConfig, shuntResistorCHA, shuntResistorCHB, highLightChannel, current_functionMode);
-    c_Sensor.setParameter(shuntResistorCHA, shuntResistorCHB);
+    c_Sensor.setParameter(10, 10);
 
 
     // // Apply config data
@@ -313,21 +313,27 @@ void setup(void)
         // Clean the screen first
         lv_obj_clean(lv_scr_act());
         
+        Serial.println("Initializing UI...");
+        Serial.flush();
         // Use the correct UI based on current function mode
-        switch (current_functionMode) {
-        case dataMonitor:
-            ui_container = dataMonitor_initUI(tft_Rotation);
-            break;
-        case dataMonitorChart:
-            ui_container = dataMonitorChart_initUI(tft_Rotation, highLightChannel);
-            break;
-        case dataMonitorCount:
-            ui_container = dataMonitorCount_initUI(tft_Rotation, highLightChannel);
-            break;
-        default:
-            ui_container = dataMonitor_initUI(tft_Rotation);
-            break;
-        }
+        initUI(current_functionMode, ui_container, highLightChannel, latestSensorData, 0.0f, 0);
+
+        Serial.println("UI initialized.");
+        Serial.flush();
+        // switch (current_functionMode) {
+        // case dataMonitor:
+        //     ui_container = dataMonitor_initUI(tft_Rotation);
+        //     break;
+        // case dataMonitorChart:
+        //     ui_container = dataMonitorChart_initUI(tft_Rotation, highLightChannel);
+        //     break;
+        // case dataMonitorCount:
+        //     ui_container = dataMonitorCount_initUI(tft_Rotation, highLightChannel);
+        //     break;
+        // default:
+        //     ui_container = dataMonitor_initUI(tft_Rotation);
+        //     break;
+        // }
         xSemaphoreGive(lvglMutex);
     }
 
