@@ -29,8 +29,8 @@ void ConfigMode::handleConfigMode(lv_obj_t*& ui_container, SysConfig& sysConfig,
 }
 
 void ConfigMode::applyConfigData(SysConfig& sysConfig, float& shuntResistorCHA, float& shuntResistorCHB, uint8_t& highLightChannel, volatile function_mode& current_functionMode) {
-    shuntResistorCHA = sysConfig.cfg_data.shuntResistorCHA / 1000.0f;
-    shuntResistorCHB = sysConfig.cfg_data.shuntResistorCHB / 1000.0f;
+    shuntResistorCHA = sysConfig.cfg_data.shuntResistorCHA / 1000.0f;  // Convert from mΩ to Ω
+    shuntResistorCHB = sysConfig.cfg_data.shuntResistorCHB / 1000.0f;  // Convert from mΩ to Ω
     highLightChannel = sysConfig.cfg_data.default_channel;
     current_functionMode = (function_mode)sysConfig.cfg_data.default_mode;
 }

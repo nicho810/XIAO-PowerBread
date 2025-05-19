@@ -19,6 +19,8 @@ volatile bool menu_is_visible = false;
 static uint32_t last_key_time = 0;
 const uint32_t KEY_DEBOUNCE_MS = 50;  // Minimum time between key events
 
+
+
 // Add event handling to the container
 static void setup_container_events(lv_obj_t *container)
 {
@@ -163,7 +165,7 @@ static void key_event_cb(lv_event_t *e)
                         if (current_functionMode == Mode_2 ||
                             current_functionMode == Mode_3)
                         {
-                            functionMode_ChangeRequested = true; //it actual purpose is re-init the ui
+                            functionMode_ChangeRequested = true;
                         }
                         break;
 
@@ -221,52 +223,74 @@ void updateUI(function_mode mode, lv_obj_t* container, uint8_t channel, DualChan
 }
 
 
-void dataMonitor_initUI(lv_obj_t *ui_container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue)
-{
-    cleanupAndWait();
+void dataMonitor_initUI(lv_obj_t *ui_container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue) {
+    // Guard against reentrant calls
+    if (ui_initialization_in_progress) {
+        Serial.println("WARNING: UI initialization already in progress, skipping");
+        return;
+    }
+    ui_initialization_in_progress = true;
 
-    uint8_t container_width, container_height;
-    int8_t widget_x1, widget_y1, widget_x2, widget_y2;
+    Serial.println("Starting dataMonitor_initUI");
+    Serial.flush();
 
-    // Set dimensions based on rotation
-    container_width = screen_width;
-    container_height = screen_height;
-    widget_x1 = 0;
-    widget_y1 = 41;
-    widget_x2 = 0;
-    widget_y2 = -41;
+    if (!ui_container || !lv_obj_is_valid(ui_container)) {
+        Serial.println("ERROR: Invalid container in dataMonitor_initUI!");
+        ui_initialization_in_progress = false;
+        return;
+    }
+
+    // Store monitors as static to prevent deallocation
+    static lv_obj_t *dataMonitor_A = NULL;
+    static lv_obj_t *dataMonitor_B = NULL;
+
+    // Clear existing objects but keep the container
+    lv_obj_clean(ui_container);
     
+    Serial.println("Creating Channel A monitor");
+    Serial.flush();
 
-    // Create and configure container with updated dimensions
-    // lv_obj_t *ui_container = lv_obj_create(lv_scr_act());
-    lv_obj_clear_flag(ui_container, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_size(ui_container, container_width, container_height);
-    lv_obj_align(ui_container, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_set_style_bg_color(ui_container, xpb_color_Background, LV_PART_MAIN);
-    lv_obj_set_style_border_width(ui_container, 0, LV_PART_MAIN); // no border
+    // Create Channel A monitor with error checking
+    dataMonitor_A = widget_DataMonitor_create(0, 41, "Channel A", xpb_color_ChannelA);
+    if (!dataMonitor_A || !lv_obj_is_valid(dataMonitor_A)) {
+        Serial.println("ERROR: Failed to create Channel A monitor!");
+        ui_initialization_in_progress = false;
+        return;
+    }
+    
+    Serial.println("Creating Channel B monitor");
+    Serial.flush();
 
-    // Create widgets with updated positions
-    lv_obj_t *dataMonitor_A = widget_DataMonitor_create(widget_x1, widget_y1, "Channel A", xpb_color_ChannelA);
-    lv_obj_t *dataMonitor_B = widget_DataMonitor_create(widget_x2, widget_y2, "Channel B", xpb_color_ChannelB);
+    // Create Channel B monitor with error checking
+    dataMonitor_B = widget_DataMonitor_create(0, -41, "Channel B", xpb_color_ChannelB);
+    if (!dataMonitor_B || !lv_obj_is_valid(dataMonitor_B)) {
+        Serial.println("ERROR: Failed to create Channel B monitor!");
+        ui_initialization_in_progress = false;
+        return;
+    }
 
-    // Create a rect with no fill, sizes is equal to screen for test.
-    lv_obj_t *rect = lv_obj_create(ui_container);
-    lv_obj_align(rect, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_set_size(rect, container_width, container_height);
-    lv_obj_set_style_bg_opa(rect, LV_OPA_TRANSP, LV_PART_MAIN); // Make background transparent
-    lv_obj_set_style_border_width(rect, 1, LV_PART_MAIN); // no border
-    lv_obj_set_style_radius(rect, 0, LV_PART_MAIN);
+    // Set parents with validation
+    if (lv_obj_is_valid(ui_container) && lv_obj_is_valid(dataMonitor_A)) {
+        lv_obj_set_parent(dataMonitor_A, ui_container);
+        Serial.println("Channel A monitor parented");
+        Serial.flush();
+    }
 
+    if (lv_obj_is_valid(ui_container) && lv_obj_is_valid(dataMonitor_B)) {
+        lv_obj_set_parent(dataMonitor_B, ui_container);
+        Serial.println("Channel B monitor parented");
+        Serial.flush();
+    }
 
-    // Set parent to ui_container
-    lv_obj_set_parent(dataMonitor_A, ui_container);
-    lv_obj_set_parent(dataMonitor_B, ui_container);
-    lv_obj_set_parent(rect, ui_container);
+    // Force a refresh to ensure everything is displayed
+    lv_disp_t *disp = lv_disp_get_default();
+    if (disp) {
+        lv_refr_now(disp);
+    }
 
-    // Add event handling
-    setup_container_events(ui_container);
-
-    // return ui_container;
+    Serial.println("DataMonitor UI initialization complete");
+    Serial.flush();
+    ui_initialization_in_progress = false;
 }
 
 void dataMonitorChart_initUI(lv_obj_t *ui_container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue)

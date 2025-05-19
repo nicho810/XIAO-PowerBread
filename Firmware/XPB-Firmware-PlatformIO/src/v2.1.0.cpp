@@ -39,6 +39,7 @@
 // Board
 #include "boardConfig.h"
 #include <Arduino.h>
+#include "global_variables.h"
 
 // RTOS Tasks
 #include "task_dialRead.h"     // dial read task
@@ -108,11 +109,11 @@ DualChannelData latestSensorData;                                 // Add a globa
 float avgS[2] = {0}, avgM[2] = {0}, avgH[2] = {0}, peak[2] = {0}; // Average values for each channel
 
 // FreeRTOS Task Declarations
-#if defined(SEEED_XIAO_ESP32C3) || defined(SEEED_XIAO_ESP32S3) || defined(SEEED_XIAO_ESP32C6)
-#define STACK_SIZE_UI 4096
-#define STACK_SIZE_SERIAL 4096
-#define STACK_SIZE_DIAL 4096
-#define STACK_SIZE_SENSOR 4096
+#if defined(SEEED_XIAO_ESP32C3)
+#define STACK_SIZE_UI 8192        // Increased from 4096
+#define STACK_SIZE_SERIAL 2048    // Reduced from 4096
+#define STACK_SIZE_DIAL 2048      // Reduced from 4096
+#define STACK_SIZE_SENSOR 2048    // Reduced from 4096
 #elif defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
 #define STACK_SIZE_UI 2048
 #define STACK_SIZE_SERIAL 1024
@@ -136,7 +137,9 @@ TaskHandle_t xSensorTaskHandle = NULL;
 // Other semaphores
 SemaphoreHandle_t lvglMutex = NULL;
 SemaphoreHandle_t xSemaphore = NULL;
-StaticSemaphore_t xMutexBuffer;
+StaticSemaphore_t xMutexBuffer_lvgl;
+StaticSemaphore_t xMutexBuffer_config;
+StaticSemaphore_t xMutexBuffer_main;
 
 //Variable for 
 volatile bool configModeExitRequested = false;
@@ -144,6 +147,13 @@ volatile bool configModeExitRequested = false;
 // Add a timeout mechanism to the main loop waiting for config mode exit
 unsigned long configModeStartTime = millis();
 const unsigned long CONFIG_MODE_TIMEOUT = 60000; // 1 minute timeout
+
+
+// Modify your task creation priorities
+#define TASK_PRIORITY_UI_INIT    3  // Reduced from 4
+#define TASK_PRIORITY_LVGL       3  // Keep same as UI init
+#define TASK_PRIORITY_SENSOR     2  // Keep as is
+#define TASK_PRIORITY_SERIAL     1  // Keep as is
 
 void setup(void)
 {
@@ -173,27 +183,112 @@ void setup(void)
     tft.setRotation(tft_Rotation); // Set initial hardware rotation = 0
     tft.fillScreen(0x0000);        // Black screen
 
-    // LVGL LCD Init
+    // Initialize all mutexes first
+    Serial.println("Initializing mutexes...");
+    Serial.flush();
+
+    // Modify mutex creation to include inheritance
+    lvglMutex = xSemaphoreCreateMutexStatic(&xMutexBuffer_lvgl);
+    configStateMutex = xSemaphoreCreateMutexStatic(&xMutexBuffer_config);
+    xSemaphore = xSemaphoreCreateMutexStatic(&xMutexBuffer_main);
+    
+    if (lvglMutex == NULL || configStateMutex == NULL || xSemaphore == NULL) {
+        Serial.println("ERROR: Failed to create mutexes!");
+        while(1) delay(100);
+    }
+
+    Serial.println("All mutexes initialized successfully");
+    Serial.flush();
+
+    // Now proceed with LVGL initialization
+    Serial.printf("Free heap before LVGL init: %d\n", ESP.getFreeHeap());
+    Serial.printf("Largest free block: %d\n", ESP.getMaxAllocHeap());
+    Serial.flush();
+
+    Serial.println("Checking LVGL status...");
+    Serial.flush();
+
+    // Initialize LVGL
     lv_init();
+    Serial.println("LVGL core initialized");
+    Serial.flush();
+
+    // Initialize display buffer with smaller size
     static lv_disp_draw_buf_t draw_buf;
-    const int buf1_size = screen_width * (screen_width/2); // half screen buffer size
-    static lv_color_t buf1[buf1_size]; // buffer 1
-    static lv_color_t buf2[buf1_size]; // buffer 2
-    lv_disp_draw_buf_init(&draw_buf, buf1, buf2, buf1_size); // Initialize the display buffer with dual buffering, decrease the buffer if want to save memory.
+    static lv_color_t buf1[screen_width * 10];
+    static lv_color_t buf2[screen_width * 10];
+    lv_disp_draw_buf_init(&draw_buf, buf1, buf2, screen_width * 10);
+    Serial.println("Display buffer initialized");
+    Serial.flush();
+
+    // Initialize display driver
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
     disp_drv.hor_res = screen_width;
     disp_drv.ver_res = screen_height;
-    disp_drv.flush_cb = lvgl_disp_flush; // attach the flush callback function
+    disp_drv.flush_cb = lvgl_disp_flush;
     disp_drv.draw_buf = &draw_buf;
-    disp_drv.full_refresh = 0; // 0=Enable partial updates for better performance
-    disp_drv.direct_mode = 0;  // Direct mode is not supported, set to 0
-    disp_drv.antialiasing = 1; // Enable antialiasing for better quality but slower performance (just a bit?)
-    lv_disp_drv_register(&disp_drv);
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(lv_scr_act(), LV_OPA_COVER, LV_PART_MAIN);
-    lv_disp_t *disp = lv_disp_get_default();
-    disp->driver->monitor_cb = NULL; // LVGL optimization settings -> Disable monitor callback
+    disp_drv.full_refresh = 1;
+    disp_drv.direct_mode = 0;
+    disp_drv.antialiasing = 0;
+
+    // Register the driver
+    lv_disp_t * disp = lv_disp_drv_register(&disp_drv);
+    if (!disp) {
+        Serial.println("ERROR: Failed to register display driver!");
+        while(1) delay(100);
+    }
+    Serial.println("Display driver registered");
+    Serial.flush();
+
+    // Create a default group for input devices
+    lv_group_t * g = lv_group_create();
+    if (!g) {
+        Serial.println("ERROR: Failed to create input group!");
+        while(1) delay(100);
+    }
+    lv_group_set_default(g);
+    Serial.println("Input group created");
+    Serial.flush();
+
+    // Now try to initialize the screen
+    Serial.println("Initializing screen...");
+    Serial.flush();
+
+    // Take the mutex AFTER it's been created
+    if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(1000)) != pdTRUE) {
+        Serial.println("ERROR: Failed to take LVGL mutex!");
+        while(1) delay(100);
+    }
+
+    // Initialize basic screen
+    lv_obj_t * scr = lv_scr_act();
+    if (!scr) {
+        Serial.println("ERROR: Failed to get active screen!");
+        xSemaphoreGive(lvglMutex);
+        while(1) delay(100);
+    }
+
+    lv_obj_set_style_bg_color(scr, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, LV_PART_MAIN);
+
+    // Create a test label
+    lv_obj_t * label = lv_label_create(scr);
+    if (!label) {
+        Serial.println("ERROR: Failed to create test label!");
+        xSemaphoreGive(lvglMutex);
+        while(1) delay(100);
+    }
+
+    lv_label_set_text(label, "Initializing...");
+    lv_obj_center(label);
+
+    // Force a refresh
+    lv_refr_now(disp);
+
+    xSemaphoreGive(lvglMutex);
+    Serial.println("Basic UI initialized");
+    Serial.flush();
 
     // LVGL Input Device Declaration
     lv_indev_drv_init(&indev_drv);
@@ -208,20 +303,6 @@ void setup(void)
         lv_indev_set_group(kb_indev, g);
     }
 
-    // Create LVGL mutex
-    lvglMutex = xSemaphoreCreateMutex();
-
-    // Create config mode state mutex
-    configStateMutex = xSemaphoreCreateMutex();
-
-    // semaphore init
-    xSemaphore = xSemaphoreCreateMutexStatic(&xMutexBuffer);
-    if (xSemaphore == NULL){
-        Serial.println("Error creating semaphore");
-        while (1) delay(100);
-    }
-
-
     // Load the config data
     // Option 1: From default config data
     // sysConfig.loadConfig_from(cfg_data_default); 
@@ -232,12 +313,48 @@ void setup(void)
     // Print all config data
     Serial.println(sysConfig.output_all_config_data_in_String()); 
 
-    // Create tasks first
-    xSensorTaskHandle = xTaskCreateStatic(sensorUpdateTask, "Sensor_Update", STACK_SIZE_SENSOR, NULL, 3, xStack_Sensor, &xTaskBuffer_Sensor);
-    xLvglTaskHandle = xTaskCreateStatic(lvglTask, "UI_Update", STACK_SIZE_UI, NULL, 4, xStack_UI, &xTaskBuffer_UI);
-    xDialTaskHandle = xTaskCreateStatic(dialReadTask, "Dial_Read", STACK_SIZE_DIAL, NULL, 2, xStack_Dial, &xTaskBuffer_Dial);
-    xSerialTaskHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print", STACK_SIZE_SERIAL, NULL, 1, xStack_Serial, &xTaskBuffer_Serial);
+    // Create tasks with proper return type checking
+    TaskHandle_t taskHandle;
 
+    // Create sensor task first as it's highest priority
+    taskHandle = xTaskCreateStatic(sensorUpdateTask, "Sensor_Update", 
+        STACK_SIZE_SENSOR, NULL, TASK_PRIORITY_SENSOR, 
+        xStack_Sensor, &xTaskBuffer_Sensor);
+    if (taskHandle == nullptr) {
+        Serial.println("ERROR: Failed to create sensor task!");
+        while(1) delay(100);
+    }
+    Serial.println("> Sensor task created successfully");
+
+    // Create LVGL task
+    taskHandle = xTaskCreateStatic(lvglTask, "UI_Update", 
+        STACK_SIZE_UI, NULL, TASK_PRIORITY_LVGL, 
+        xStack_UI, &xTaskBuffer_UI);
+    if (taskHandle == nullptr) {
+        Serial.println("ERROR: Failed to create LVGL task!");
+        while(1) delay(100);
+    }
+    Serial.println("> LVGL task created successfully");
+
+    // Create dial task
+    taskHandle = xTaskCreateStatic(dialReadTask, "Dial_Read", 
+        STACK_SIZE_DIAL, NULL, 2, // Use numeric priority since TASK_PRIORITY_DIAL is undefined
+        xStack_Dial, &xTaskBuffer_Dial);
+    if (taskHandle == nullptr) {
+        Serial.println("ERROR: Failed to create dial task!");
+        while(1) delay(100);
+    }
+    Serial.println("> Dial task created successfully");
+
+    // Create serial task
+    taskHandle = xTaskCreateStatic(serialPrintTask, "Serial_Print", 
+        STACK_SIZE_SERIAL, NULL, TASK_PRIORITY_SERIAL, 
+        xStack_Serial, &xTaskBuffer_Serial);
+    if (taskHandle == nullptr) {
+        Serial.println("ERROR: Failed to create serial task!");
+        while(1) delay(100);
+    }
+    Serial.println("> Serial task created successfully");
 
     // Check the key status for config mode entry
     if (dial.readDialStatus() == 2) { // When "Down" key is pressed, enter config mode
@@ -294,6 +411,8 @@ void setup(void)
     configMode.applyConfigData(sysConfig, shuntResistorCHA, shuntResistorCHB, highLightChannel, current_functionMode);
     c_Sensor.setParameter(10, 10);
 
+    Serial.println("Config data applied.");
+    Serial.flush();
 
     // // Apply config data
     // if (configMode.configState.isActive) {
@@ -307,35 +426,102 @@ void setup(void)
     //     inaSensor.setParameter(shuntResistorCHA, shuntResistorCHB);
     // }
 
+    Serial.println("Initializing UI...");
+    Serial.flush();
 
-    // Initialize default UI
-    if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE) {
-        // Clean the screen first
-        lv_obj_clean(lv_scr_act());
-        
-        Serial.println("Initializing UI...");
-        Serial.flush();
-        // Use the correct UI based on current function mode
-        initUI(current_functionMode, ui_container, highLightChannel, latestSensorData, 0.0f, 0);
-
-        Serial.println("UI initialized.");
-        Serial.flush();
-        // switch (current_functionMode) {
-        // case dataMonitor:
-        //     ui_container = dataMonitor_initUI(tft_Rotation);
-        //     break;
-        // case dataMonitorChart:
-        //     ui_container = dataMonitorChart_initUI(tft_Rotation, highLightChannel);
-        //     break;
-        // case dataMonitorCount:
-        //     ui_container = dataMonitorCount_initUI(tft_Rotation, highLightChannel);
-        //     break;
-        // default:
-        //     ui_container = dataMonitor_initUI(tft_Rotation);
-        //     break;
-        // }
-        xSemaphoreGive(lvglMutex);
+    if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(1000)) != pdTRUE) {
+        Serial.println("ERROR: Failed to take LVGL mutex for UI init!");
+        while(1) delay(100);
     }
+
+    // Make the base container static to prevent deallocation
+    static lv_obj_t *base_container = NULL;
+
+    Serial.println("Cleaning screen...");
+    Serial.flush();
+    lv_obj_clean(lv_scr_act());
+
+    Serial.println("Creating base container...");
+    Serial.flush();
+
+    // Create a base container with minimal styling first
+    base_container = lv_obj_create(lv_scr_act());
+    if (!base_container || !lv_obj_is_valid(base_container)) {
+        Serial.println("ERROR: Failed to create base container!");
+        xSemaphoreGive(lvglMutex);
+        while(1) delay(100);
+    }
+
+    // Set basic properties
+    Serial.println("Setting container properties...");
+    Serial.flush();
+
+    lv_obj_set_size(base_container, screen_width, screen_height);
+    lv_obj_center(base_container);
+    lv_obj_clear_flag(base_container, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(base_container, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_border_width(base_container, 0, LV_PART_MAIN);
+
+    // Force a refresh to ensure container is created
+    lv_refr_now(lv_disp_get_default());
+
+    Serial.println("Basic container created successfully");
+    Serial.flush();
+
+    // Now try to initialize the actual UI
+    Serial.println("Initializing UI container...");
+    Serial.flush();
+
+    // Store the current mode for debugging
+    Serial.printf("Current function mode: %d\n", (int)current_functionMode);
+    Serial.flush();
+
+    // Verify container is still valid
+    if (!lv_obj_is_valid(base_container)) {
+        Serial.println("ERROR: Base container became invalid!");
+        xSemaphoreGive(lvglMutex);
+        while(1) delay(100);
+    }
+
+    try {
+        // Initialize UI based on mode
+        switch (current_functionMode) {
+            case Mode_1:
+                Serial.println("Initializing Mode 1 (Basic Monitor)");
+                dataMonitor_initUI(base_container, highLightChannel, latestSensorData, 0.0f, 0);
+                break;
+                
+            case Mode_2:
+                Serial.println("Initializing Mode 2 (Chart)");
+                dataMonitorChart_initUI(base_container, highLightChannel, latestSensorData, 0.0f, 0);
+                break;
+                
+            case Mode_3:
+                Serial.println("Initializing Mode 3 (Count)");
+                dataMonitorCount_initUI(base_container, highLightChannel, latestSensorData, 0.0f, 0);
+                break;
+                
+            default:
+                Serial.println("ERROR: Invalid function mode!");
+                xSemaphoreGive(lvglMutex);
+                while(1) delay(100);
+        }
+    } catch (...) {
+        Serial.println("ERROR: Exception during UI initialization!");
+        xSemaphoreGive(lvglMutex);
+        while(1) delay(100);
+    }
+
+    // Verify container one last time
+    if (!lv_obj_is_valid(base_container)) {
+        Serial.println("ERROR: Base container invalid after UI init!");
+        xSemaphoreGive(lvglMutex);
+        while(1) delay(100);
+    }
+
+    Serial.println("UI initialization complete");
+    Serial.flush();
+    xSemaphoreGive(lvglMutex);
 
     // Initialize with invalid values to force first update
     latestSensorData.channel0.busCurrent = -999.0f;
@@ -344,7 +530,6 @@ void setup(void)
     latestSensorData.channel1.busVoltage = -999.0f;
 
     // Force a display refresh
-    forceUpdate_flag = true;
     functionMode_ChangeRequested = true;
     if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
     {

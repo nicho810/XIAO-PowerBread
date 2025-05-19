@@ -3,6 +3,7 @@
 
 #include "Arduino.h"
 #include "boardConfig.h"
+#include "global_variables.h"
 #include "lvgl.h"
 #include "xpb_color_palette.h"
 #include "lvgl_ui_widget.h"

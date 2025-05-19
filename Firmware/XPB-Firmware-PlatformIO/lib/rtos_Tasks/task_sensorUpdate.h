@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include "boardConfig.h"
+#include "global_variables.h"
 #include <lvgl.h>
 #if defined(Proj_XIAOPowerBread)
 #include "CurrentSensor_INA3221.h"
