@@ -1,9 +1,33 @@
-#include "task_sensorUpdate.h"
-#include "sysConfig.h"
+#include "task_sensor.h"
 
-extern ConfigMode configMode;
-extern volatile bool configModeExitRequested; // Use the global variable
 
+// extern ConfigMode configMode;
+// extern volatile bool configModeExitRequested; // Use the global variable
+
+void sensorTask(void *pvParameters)
+{
+    (void)pvParameters;
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xInterval = pdMS_TO_TICKS(100); // 100ms
+
+
+    while (1)
+    {
+        TickType_t xCurrentTime = xTaskGetTickCount();
+        if ((xCurrentTime - xLastWakeTime) >= xInterval)
+        {
+            Serial.println("Sensor task running");
+            Serial.flush();
+
+            xLastWakeTime = xCurrentTime;
+        }
+        vTaskDelay(pdMS_TO_TICKS(5));
+    }
+}
+
+
+
+/*
 // Sensor Update Task
 void sensorUpdateTask(void *pvParameters)
 {
@@ -13,23 +37,23 @@ void sensorUpdateTask(void *pvParameters)
 
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(5);
-    const float UPDATE_THRESHOLD = 0.005f; // 5mV/mA threshold
+    // const float UPDATE_THRESHOLD = 0.005f; // 5mV/mA threshold
 
-    // Static buffers for averaging
-    static const int SHORT_SAMPLES = 100; // 1 second
-    static const int MED_SAMPLES = 1000;  // 10 seconds
-    static const int LONG_SAMPLES = 6000; // 60 seconds
-    static float shortBuffer[2][SHORT_SAMPLES] = {{0}};
-    static float medBuffer[2][MED_SAMPLES] = {{0}};
-    static float longBuffer[2][LONG_SAMPLES] = {{0}};
-    static int shortIndex = 0;
-    static int medIndex = 0;
-    static int longIndex = 0;
+    // // Static buffers for averaging
+    // static const int SHORT_SAMPLES = 100; // 1 second
+    // static const int MED_SAMPLES = 1000;  // 10 seconds
+    // static const int LONG_SAMPLES = 6000; // 60 seconds
+    // static float shortBuffer[2][SHORT_SAMPLES] = {{0}};
+    // static float medBuffer[2][MED_SAMPLES] = {{0}};
+    // static float longBuffer[2][LONG_SAMPLES] = {{0}};
+    // static int shortIndex = 0;
+    // static int medIndex = 0;
+    // static int longIndex = 0;
 
-    // Add these static variables at the start of sensorUpdateTask
-    static bool buffersInitialized = false;
-    static int sampleCount[2] = {0, 0};
-    static bool first_ui_update = true;
+    // // Add these static variables at the start of sensorUpdateTask
+    // static bool buffersInitialized = false;
+    // static int sampleCount[2] = {0, 0};
+    // static bool first_ui_update = true;
 
     // Add task initialization debug
     Serial.println("> Sensor task initialized");
@@ -37,7 +61,6 @@ void sensorUpdateTask(void *pvParameters)
 
     while (1)
     {
-        if (!ui_initialization_in_progress) {  // Skip updates during UI init
             Serial.println("> Sensor task cycle");  // Add this debug line
             Serial.flush();
             
@@ -265,9 +288,11 @@ void sensorUpdateTask(void *pvParameters)
                 
                 xSemaphoreGive(xSemaphore);
             }
-        }
+    
         
         // Always include a small delay to prevent tight loops
         vTaskDelay(pdMS_TO_TICKS(5));
     }
 }
+
+*/

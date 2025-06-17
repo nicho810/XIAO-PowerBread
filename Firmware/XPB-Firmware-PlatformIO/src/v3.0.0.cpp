@@ -1,15 +1,10 @@
-/*
- * XIAO PowerBread - A Breadboard Power Supply with Real-Time Monitoring
-*/
-
-// Board
 #include <Arduino.h>
 #include "boardConfig.h"
 #include "global_variables.h"
 
-// RTOS Tasks
-// #include "task_serial.h"       // serial task
-// #include "task_sensorUpdate.h" // sensor update task
+RTOS Tasks
+#include "task_serial.h"       // serial task
+#include "task_sensorUpdate.h" // sensor update task
 
 
 // // System Config
@@ -41,14 +36,14 @@ CurrentSensor_INA3221 c_Sensor;
 CurrentSensor_DualINA226 c_Sensor;
 #endif
 
-DualChannelData latestSensorData;                                 // Add a global variable to store the latest sensor data
-float avgS[2] = {0}, avgM[2] = {0}, avgH[2] = {0}, peak[2] = {0}; // Average values for each channel
+// DualChannelData latestSensorData;                                 // Add a global variable to store the latest sensor data
+// float avgS[2] = {0}, avgM[2] = {0}, avgH[2] = {0}, peak[2] = {0}; // Average values for each channel
 
 // FreeRTOS Task Declarations
 #if defined(SEEED_XIAO_ESP32C3)
-#define STACK_SIZE_UI 8192        // Increased from 4096
+// #define STACK_SIZE_UI 8192        // Increased from 4096
 #define STACK_SIZE_SERIAL 2048    // Reduced from 4096
-#define STACK_SIZE_DIAL 2048      // Reduced from 4096
+// #define STACK_SIZE_DIAL 2048      // Reduced from 4096
 #define STACK_SIZE_SENSOR 2048    // Reduced from 4096
 #elif defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
 #define STACK_SIZE_UI 2048
@@ -58,36 +53,38 @@ float avgS[2] = {0}, avgM[2] = {0}, avgH[2] = {0}, peak[2] = {0}; // Average val
 #endif
 
 // Task buffers and stacks
-StaticTask_t xTaskBuffer_UI, xTaskBuffer_Serial, xTaskBuffer_Dial, xTaskBuffer_Sensor;
-StackType_t xStack_UI[STACK_SIZE_UI];
+// StaticTask_t xTaskBuffer_UI, xTaskBuffer_Serial, xTaskBuffer_Dial, xTaskBuffer_Sensor;
+// StackType_t xStack_UI[STACK_SIZE_UI];
+// StackType_t xStack_Serial[STACK_SIZE_SERIAL];
+// StackType_t xStack_Dial[STACK_SIZE_DIAL];
+StaticTask_t xTaskBuffer_Serial, xTaskBuffer_Sensor;
 StackType_t xStack_Serial[STACK_SIZE_SERIAL];
-StackType_t xStack_Dial[STACK_SIZE_DIAL];
 StackType_t xStack_Sensor[STACK_SIZE_SENSOR];
 
 // Task handles
-TaskHandle_t xLvglTaskHandle = NULL;
+// TaskHandle_t xLvglTaskHandle = NULL;
 TaskHandle_t xSerialTaskHandle = NULL;
-TaskHandle_t xDialTaskHandle = NULL;
+// TaskHandle_t xDialTaskHandle = NULL;
 TaskHandle_t xSensorTaskHandle = NULL;
 
 // Other semaphores
-SemaphoreHandle_t lvglMutex = NULL;
+// SemaphoreHandle_t lvglMutex = NULL;
 SemaphoreHandle_t xSemaphore = NULL;
-StaticSemaphore_t xMutexBuffer_lvgl;
-StaticSemaphore_t xMutexBuffer_config;
-StaticSemaphore_t xMutexBuffer_main;
+// StaticSemaphore_t xMutexBuffer_lvgl;
+// StaticSemaphore_t xMutexBuffer_config;
+// StaticSemaphore_t xMutexBuffer_main;
 
 //Variable for 
-volatile bool configModeExitRequested = false;
+// volatile bool configModeExitRequested = false;
 
 // Add a timeout mechanism to the main loop waiting for config mode exit
-unsigned long configModeStartTime = millis();
-const unsigned long CONFIG_MODE_TIMEOUT = 60000; // 1 minute timeout
+// unsigned long configModeStartTime = millis();
+// const unsigned long CONFIG_MODE_TIMEOUT = 60000; // 1 minute timeout
 
 
 // Modify your task creation priorities
-#define TASK_PRIORITY_UI_INIT    3  // Reduced from 4
-#define TASK_PRIORITY_LVGL       3  // Keep same as UI init
+// #define TASK_PRIORITY_UI_INIT    3  // Reduced from 4
+// #define TASK_PRIORITY_LVGL       3  // Keep same as UI init
 #define TASK_PRIORITY_SENSOR     2  // Keep as is
 #define TASK_PRIORITY_SERIAL     1  // Keep as is
 
@@ -95,8 +92,8 @@ void setup(void)
 {
     // Serial Init
     Serial.begin(115200);
-    delay(3000);
-    Serial.println("==========[XIAO-PowerBread Boot Info]===========");
+    delay(1000);
+    Serial.println("==========[Boot Info]===========");
 
     // Dial init
     dial.init();

@@ -6,7 +6,7 @@
 
 
 // cSensor_1ch currentSensor_1ch(currentSensor_0_address, currentSensor_0_shuntR_0, 4);
-cSensor_2ch currentSensor_2ch(currentSensor_0_address, currentSensor_1_address, {currentSensor_0_shuntR_0, currentSensor_1_shuntR_0}, 4);
+cSensor_2ch_ina226 currentSensor_2ch(currentSensor_0_address, currentSensor_1_address, {currentSensor_0_shuntR_0, currentSensor_1_shuntR_0}, 4);
 
 
 

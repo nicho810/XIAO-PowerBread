@@ -13,10 +13,10 @@
 #include <vector>
 
 // Single channel current sensor implementation
-class cSensor_1ch : public CurrentSensor {
+class cSensor_1ch_ina226 : public CurrentSensor {
 public:
     // Constructor, initialize address, shunt resistor and averaging parameters
-    cSensor_1ch(uint8_t address, float shuntResistorOhm, uint16_t average = 1);
+    cSensor_1ch_ina226(uint8_t address, float shuntResistorOhm, uint16_t average = 1);
 
     // Initialize sensor
     bool initialize() override;
@@ -41,10 +41,10 @@ private:
 };
 
 // Dual channel current sensor implementation
-class cSensor_2ch : public CurrentSensor {
+class cSensor_2ch_ina226 : public CurrentSensor {
 public:
     // Modified constructor to take two addresses
-    cSensor_2ch(uint8_t address1, uint8_t address2, const std::vector<float>& shuntResistorOhms, uint16_t average = 1);
+    cSensor_2ch_ina226(uint8_t address1, uint8_t address2, const std::vector<float>& shuntResistorOhms, uint16_t average = 1);
 
     // Initialize sensor
     bool initialize() override;
