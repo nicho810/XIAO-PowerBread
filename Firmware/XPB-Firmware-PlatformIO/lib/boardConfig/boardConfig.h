@@ -6,6 +6,12 @@
 #define screen_width 80
 #define screen_height 160
 
+//INA3221
+#define currentSensor_0_address 0x40
+#define currentSensor_0_shuntR_0 0.050 //mOhm
+#define currentSensor_0_shuntR_1 0.050 //mOhm
+#define currentSensor_0_shuntR_2 0.050 //mOhm
+
 /* Pin definition for each board */
 #if defined(SEEED_XIAO_ESP32C3) || defined(SEEED_XIAO_ESP32S3)
 #define pin_dial D2 //D2
@@ -83,6 +89,15 @@
 //LCD definition
 #define screen_width 135
 #define screen_height 240
+
+//INA226 x2
+#define currentSensor_0_address 0x40
+#define currentSensor_0_shuntR_0 0.010 //mOhm
+
+#define currentSensor_1_address 0x41
+#define currentSensor_1_shuntR_0 0.010 //mOhm
+
+
 
 /* Pin definition for each board */
 #if defined(SEEED_XIAO_ESP32C3) || defined(SEEED_XIAO_ESP32S3)

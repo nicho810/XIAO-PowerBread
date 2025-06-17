@@ -37,8 +37,8 @@
 //=================================================================
 
 // Board
-#include "boardConfig.h"
 #include <Arduino.h>
+#include "boardConfig.h"
 #include "global_variables.h"
 
 // RTOS Tasks
