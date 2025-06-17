@@ -96,6 +96,13 @@ void setup(void)
     }
     Serial.println("> Serial task created successfully");
 
+    // Create the semaphore
+    xSemaphore = xSemaphoreCreateMutex();
+    if (xSemaphore == NULL) {
+        Serial.println("ERROR: Failed to create semaphore!");
+        while(1) delay(100);
+    }
+    Serial.println("> Semaphore created successfully");
 
     // Start the scheduler
     // vTaskStartScheduler(); //Note: no need to call this, it will cause a crash, keep this note here as reminder.

@@ -1,25 +1,27 @@
 #include "task_sensor.h"
 
-
-// extern ConfigMode configMode;
-// extern volatile bool configModeExitRequested; // Use the global variable
-
 void sensorTask(void *pvParameters)
 {
     (void)pvParameters;
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    const TickType_t xInterval = pdMS_TO_TICKS(100); // 100ms
-
+    const TickType_t xInterval = pdMS_TO_TICKS(100); // 100ms update interval
 
     while (1)
     {
         TickType_t xCurrentTime = xTaskGetTickCount();
         if ((xCurrentTime - xLastWakeTime) >= xInterval)
         {
-            Serial.println("Sensor task running");
-            Serial.flush();
-
-            xLastWakeTime = xCurrentTime;
+            // Take the semaphore before accessing shared data
+            if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(10)) == pdTRUE)
+            {
+                // Read sensor data
+                currentSensor_2ch.readData(cSensorData);
+                
+                // Give back the semaphore
+                xSemaphoreGive(xSemaphore);
+                
+                xLastWakeTime = xCurrentTime;
+            }
         }
         vTaskDelay(pdMS_TO_TICKS(5));
     }
