@@ -1,22 +1,24 @@
 #include "task_lvgl.h"
 
-extern volatile bool ui_initialization_in_progress;
-
-void lvglTask(void *parameter)
+void lvglTask(void *pvParameters)
 {
+    (void)pvParameters;
+    TickType_t xLastWakeTime = 0;
     const TickType_t xFrequency = pdMS_TO_TICKS(5); // 200Hz refresh rate
-    TickType_t xLastWakeTime = xTaskGetTickCount();
+
 
     while (1)
     {
-        if (!ui_initialization_in_progress) {  // Only process UI updates if not initializing
-            if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-                lv_task_handler();
+        TickType_t xCurrentTime = xTaskGetTickCount();
+        if ((xCurrentTime - xLastWakeTime) >= xFrequency)
+        {
+            //Take the semaphore before accessing shared data
+            if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+                // lv_task_handler();
+                xLastWakeTime = xCurrentTime;
                 xSemaphoreGive(lvglMutex);
             }
         }
-        
-        // Use vTaskDelayUntil for more precise timing
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        vTaskDelay(pdMS_TO_TICKS(5));
     }
 }

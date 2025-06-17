@@ -31,10 +31,9 @@ void serialTask(void *pvParameters)
                 }
                 Serial.println("]}");
                 
+                xLastPrintTime = xCurrentTime;
                 // Give back the semaphore
                 xSemaphoreGive(xSemaphore);
-                
-                xLastPrintTime = xCurrentTime;
             }
         }
         vTaskDelay(pdMS_TO_TICKS(5));

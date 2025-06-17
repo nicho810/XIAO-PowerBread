@@ -6,7 +6,7 @@
 #include <lvgl.h>
 
 // Function declaration
-void lvglTask(void *parameter);
+void lvglTask(void *pvParameters);
 
 extern SemaphoreHandle_t lvglMutex;
 
