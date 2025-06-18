@@ -6,6 +6,7 @@
 #include "task_serial.h"       // serial task
 #include "task_sensor.h" // sensor update task
 #include "task_lvgl.h"   // lvgl task
+#include "task_input.h"  // input task
 
 
 // Current sensor
@@ -28,14 +29,25 @@ cSensor_2ch_ina226 currentSensor_2ch(currentSensor_0_address, currentSensor_1_ad
 LGFX tft;// Create LGFX instance
 #include "lvgl_func.h"
 
+// Input Device
+#if defined(Proj_XIAOPowerBread)
+#include "input_Dial.h" //todo: add dial input device
+#elif defined(Proj_XIAOPowerMonitor)
+#include "input_ButtonX3.h"
+InputButtonX3 input_buttonX3(pin_button);
+ButtonState_X3 buttonState_X3;
+#endif
+
 
 // FreeRTOS Task Declarations
 #if defined(SEEED_XIAO_ESP32C3)
-// #define STACK_SIZE_UI 8192        // Increased from 4096
-#define STACK_SIZE_SERIAL 2048    // Reduced from 4096
-// #define STACK_SIZE_DIAL 2048      // Reduced from 4096
-#define STACK_SIZE_SENSOR 2048    // Reduced from 4096
-#define STACK_SIZE_LVGL 2048      // Reduced from 4096
+// #define STACK_SIZE_UI 8192      
+#define STACK_SIZE_SERIAL 2048    
+// #define STACK_SIZE_DIAL 2048     
+#define STACK_SIZE_SENSOR 2048   
+#define STACK_SIZE_LVGL 2048    
+#define STACK_SIZE_INPUT 2048   
+
 #elif defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
 #define STACK_SIZE_UI 2048
 #define STACK_SIZE_SERIAL 1024
@@ -44,15 +56,17 @@ LGFX tft;// Create LGFX instance
 #endif
 
 // Task buffers and stacks
-StaticTask_t xTaskBuffer_Serial, xTaskBuffer_Sensor, xTaskBuffer_Lvgl;
+StaticTask_t xTaskBuffer_Serial, xTaskBuffer_Sensor, xTaskBuffer_Lvgl, xTaskBuffer_Input;
 StackType_t xStack_Serial[STACK_SIZE_SERIAL];
 StackType_t xStack_Sensor[STACK_SIZE_SENSOR];
-StackType_t xStack_Lvgl[STACK_SIZE_LVGL];
+StackType_t xStack_Lvgl[STACK_SIZE_LVGL]; 
+StackType_t xStack_Input[STACK_SIZE_INPUT];
 
 // Task handles
 TaskHandle_t xLvglTaskHandle = NULL;
 TaskHandle_t xSerialTaskHandle = NULL;
 TaskHandle_t xSensorTaskHandle = NULL;
+TaskHandle_t xInputTaskHandle = NULL;
 
 // Other semaphores
 SemaphoreHandle_t lvglMutex = NULL;
@@ -60,9 +74,10 @@ SemaphoreHandle_t xSemaphore = NULL;
 
 
 // Modify your task creation priorities
-#define TASK_PRIORITY_LVGL       3  // Keep same as UI init
-#define TASK_PRIORITY_SENSOR     2  // Keep as is
-#define TASK_PRIORITY_SERIAL     1  // Keep as is
+#define TASK_PRIORITY_LVGL       4  // Keep same as UI init
+#define TASK_PRIORITY_SENSOR     3  // Keep as is
+#define TASK_PRIORITY_SERIAL     2  // Keep as is
+#define TASK_PRIORITY_INPUT      1
 
 void setup(void)
 {
@@ -97,6 +112,16 @@ void setup(void)
     }
     Serial.println("> Lvgl mutex created successfully");
     
+    // Create input task
+    taskHandle = xTaskCreateStatic(inputTask, "Input_Task", 
+        STACK_SIZE_INPUT, NULL, TASK_PRIORITY_INPUT, 
+        xStack_Input, &xTaskBuffer_Input);
+    if (taskHandle == nullptr) {
+        Serial.println("ERROR: Failed to create input task!");
+        while(1) delay(100);
+    }
+    Serial.println("> Input task created successfully");
+
 
     // Create sensor task first as it's highest priority
     taskHandle = xTaskCreateStatic(sensorTask, "Sensor_Update", 
