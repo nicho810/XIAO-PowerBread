@@ -21,7 +21,7 @@ bool cSensor_1ch_ina226::initialize() {
         return false;
     }
     // Set averaging parameters (ina226 library does not support direct setting of averaging count, here only print)
-    Serial.print("cSensor_1ch initialized at address 0x");
+    Serial.print("> cSensor_1ch initialized at address 0x");
     Serial.print(static_cast<int>(address_), HEX);
     Serial.print(" with average: ");
     Serial.println(average_);
@@ -93,7 +93,7 @@ bool cSensor_2ch_ina226::initialize() {
             return false;
         }
     }
-    Serial.print("cSensor_2ch initialized at addresses 0x");
+    Serial.print("> cSensor_2ch initialized at addresses 0x");
     Serial.print(static_cast<int>(addresses_[0]), HEX);
     Serial.print(" and 0x");
     Serial.print(static_cast<int>(addresses_[1]), HEX);

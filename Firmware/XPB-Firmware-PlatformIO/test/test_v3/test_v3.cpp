@@ -18,18 +18,15 @@ CurrentSensor_INA3221 c_Sensor;
 cSensor_2ch_ina226 currentSensor_2ch(currentSensor_0_address, currentSensor_1_address, {currentSensor_0_shuntR_0, currentSensor_1_shuntR_0}, 4);
 #endif
 
-// LCD
+// LCD & LVGL
 #include <LovyanGFX.h>
 #if defined(Proj_XIAOPowerBread)
 #include <LGFX_096_XPB.hpp>
 #elif defined(Proj_XIAOPowerMonitor)
 #include <LGFX_114_XPM.hpp>
 #endif
-LGFX tft;                 // Create LGFX instance
-// static LGFX_Sprite sprite(&tft); // Create LGFX_Sprite instance
-
-// LVGL
-#include "lvgl_func.h"    // LVGL flush and keyboard read function
+LGFX tft;// Create LGFX instance
+#include "lvgl_func.h"
 
 
 // FreeRTOS Task Declarations
@@ -78,6 +75,9 @@ void setup(void)
     Wire.begin();
     currentSensor_2ch.initialize();
 
+    //init LCD
+    lvgl_init();
+
     // Create tasks with proper return type checking
     TaskHandle_t taskHandle;
 
@@ -108,17 +108,6 @@ void setup(void)
     }
     Serial.println("> Sensor task created successfully");
 
-
-    // Create serial task
-    taskHandle = xTaskCreateStatic(serialTask, "Serial_Print", 
-        STACK_SIZE_SERIAL, NULL, TASK_PRIORITY_SERIAL, 
-        xStack_Serial, &xTaskBuffer_Serial);
-    if (taskHandle == nullptr) {
-        Serial.println("ERROR: Failed to create serial task!");
-        while(1) delay(100);
-    }
-    Serial.println("> Serial task created successfully");
-
     // Create lvgl task
     taskHandle = xTaskCreateStatic(lvglTask, "Lvgl_Task", 
         STACK_SIZE_LVGL, NULL, TASK_PRIORITY_LVGL, 
@@ -129,7 +118,15 @@ void setup(void)
     }
     Serial.println("> Lvgl task created successfully");
 
-
+    // Create serial task
+    taskHandle = xTaskCreateStatic(serialTask, "Serial_Print", 
+        STACK_SIZE_SERIAL, NULL, TASK_PRIORITY_SERIAL, 
+        xStack_Serial, &xTaskBuffer_Serial);
+    if (taskHandle == nullptr) {
+        Serial.println("ERROR: Failed to create serial task!");
+        while(1) delay(100);
+    }
+    Serial.println("> Serial task created successfully");
 
 
     // Start the scheduler
