@@ -17,18 +17,10 @@ void inputTask(void *pvParameters)
         TickType_t xCurrentTime = xTaskGetTickCount();
         if ((xCurrentTime - xLastWakeTime) >= xFrequency)
         {
-            if (input_buttonX3.update(buttonState_X3)) {
-                Serial.println("> Button state changed:");
-                Serial.flush();
-                Serial.print("{\"button1\": ");
-                Serial.print(buttonState_X3.button1_short_pressed);
-                Serial.print(", \"button2\": ");
-                Serial.print(buttonState_X3.button2_short_pressed); 
-                Serial.print(", \"button3\": ");
-                Serial.print(buttonState_X3.button3_short_pressed);
-                Serial.println("}");
-                Serial.flush();
-            }
+            // Serial.print("> Input task running:"); // Debug print
+            // Serial.println(input_buttonX3.update(buttonState_X3));
+            // Serial.flush();
+            input_buttonX3.update(buttonState_X3);
             xLastWakeTime = xCurrentTime;
         }
         vTaskDelay(pdMS_TO_TICKS(50));

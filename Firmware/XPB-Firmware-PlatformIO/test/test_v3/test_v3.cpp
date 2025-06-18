@@ -28,6 +28,7 @@ cSensor_2ch_ina226 currentSensor_2ch(currentSensor_0_address, currentSensor_1_ad
 #endif
 LGFX tft;// Create LGFX instance
 #include "lvgl_func.h"
+lv_obj_t *ui_container = NULL;   // Global container for the chart UI
 
 // Input Device
 #if defined(Proj_XIAOPowerBread)
@@ -36,6 +37,7 @@ LGFX tft;// Create LGFX instance
 #include "input_ButtonX3.h"
 InputButtonX3 input_buttonX3(pin_button);
 ButtonState_X3 buttonState_X3;
+lv_indev_drv_t indev_drv; // Input device driver
 #endif
 
 

@@ -50,6 +50,20 @@ bool InputButtonX3::update(ButtonState_X3& buttonState)
     if (buttonState_last.button1_short_pressed != buttonState.button1_short_pressed ||
         buttonState_last.button2_short_pressed != buttonState.button2_short_pressed ||
         buttonState_last.button3_short_pressed != buttonState.button3_short_pressed) {
+        buttonState.key_shortPressed = true;
+        //Priority: button1 > button2 > button3
+        if (buttonState.button1_short_pressed) {
+            buttonState.key_shortPressed_value = 1;
+        }
+        else if (buttonState.button2_short_pressed) {
+            buttonState.key_shortPressed_value = 2;
+        }
+        else if (buttonState.button3_short_pressed) {
+            buttonState.key_shortPressed_value = 3;
+        }
+        else {
+            buttonState.key_shortPressed_value = 0;
+        }
         return true;
     }
     return false;
@@ -57,27 +71,29 @@ bool InputButtonX3::update(ButtonState_X3& buttonState)
 
 bool InputButtonX3::isPressed_short(uint8_t button, ButtonState_X3& buttonState)
 {
-    if (button == 1) {
-        return buttonState.button1_short_pressed;
-    }
-    if (button == 2) {
-        return buttonState.button2_short_pressed;
-    }
-    if (button == 3) {
-        return buttonState.button3_short_pressed;
+    switch (button) {
+        case 1:
+            return buttonState.button1_short_pressed;
+        case 2:
+            return buttonState.button2_short_pressed;
+        case 3: 
+            return buttonState.button3_short_pressed;
+        default:
+            return false;
     }
 }
 
 bool InputButtonX3::isPressed_long(uint8_t button, ButtonState_X3& buttonState)
 {
-    if (button == 1) {
-        return buttonState.button1_long_pressed;
-    }
-    if (button == 2) {
-        return buttonState.button2_long_pressed;
-    }
-    if (button == 3) {
-        return buttonState.button3_long_pressed;
+    switch (button) {
+        case 1:
+            return buttonState.button1_long_pressed;
+        case 2:
+            return buttonState.button2_long_pressed;
+        case 3:
+            return buttonState.button3_long_pressed;
+        default:
+            return false;
     }
 }
 

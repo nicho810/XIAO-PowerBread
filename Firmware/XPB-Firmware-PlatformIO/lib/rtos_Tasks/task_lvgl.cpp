@@ -14,7 +14,7 @@ void lvglTask(void *pvParameters)
         {
             //Take the semaphore before accessing shared data
             if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-                // lv_task_handler();
+                lv_task_handler();
                 xLastWakeTime = xCurrentTime;
                 xSemaphoreGive(lvglMutex);
             }

@@ -14,6 +14,8 @@ class ButtonState_X3
         bool button1_short_pressed = false;
         bool button2_short_pressed = false;
         bool button3_short_pressed = false;
+        bool key_shortPressed = false;
+        uint8_t key_shortPressed_value = 0;
 };
 
 

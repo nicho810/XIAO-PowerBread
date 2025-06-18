@@ -1,7 +1,10 @@
 #include "lvgl_func.h"
+#include "input_ButtonX3.h"
 
-
-// extern SemaphoreHandle_t xSemaphore;
+extern SemaphoreHandle_t xSemaphore;
+extern ButtonState_X3 buttonState_X3;
+extern lv_indev_drv_t indev_drv;
+extern lv_obj_t *ui_container;
 // extern volatile bool last_key_pressed;
 // extern volatile uint32_t last_key;
 
@@ -64,18 +67,53 @@ void lvgl_init(void)
     Serial.println("Display driver registered");
     Serial.flush();
 
-      // Initialize basic screen
+    //register keyboard input device
+    lv_indev_drv_init(&indev_drv);
+    indev_drv.type = LV_INDEV_TYPE_KEYPAD;
+    indev_drv.read_cb = keyboard_read;
+    lv_indev_t *kb_indev = lv_indev_drv_register(&indev_drv);
+
+    // Set it as default input device
+    if (kb_indev){
+        lv_group_t *g = lv_group_create();
+        lv_group_set_default(g);
+        lv_indev_set_group(kb_indev, g);
+        Serial.println("> Input device registered successfully");
+    } else {
+        Serial.println("> Failed to register input device!");
+    }
+
+    // Initialize basic screen
     lv_obj_t * scr = lv_scr_act();
     if (!scr) {
         Serial.println("> ERROR: Failed to get active screen!");
         while(1) delay(100);
     }
 
-    lv_obj_set_style_bg_color(scr, lv_color_black(), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_clean(lv_scr_act());
+    ui_container = lv_obj_create(lv_scr_act());
+    if (!ui_container || !lv_obj_is_valid(ui_container)) {
+        Serial.println("ERROR: Failed to create ui container!");
+        while(1) delay(100);
+    }
+
+    // Add event handling to the container
+    setup_container_events(ui_container);
+
+    lv_obj_set_size(ui_container, screen_width, screen_height);
+    lv_obj_center(ui_container);
+    lv_obj_clear_flag(ui_container, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(ui_container, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_border_width(ui_container, 0, LV_PART_MAIN);
+
+    // Force a refresh to ensure container is created
+    lv_refr_now(lv_disp_get_default());
+    Serial.println("UI container created successfully");
+    Serial.flush();
+
 
     // Create a test label
-    lv_obj_t * label = lv_label_create(scr);
+    lv_obj_t * label = lv_label_create(ui_container);
     if (!label) {
         Serial.println("> ERROR: Failed to create test label!");
         while(1) delay(100);
@@ -86,34 +124,99 @@ void lvgl_init(void)
 
     // Force a refresh
     lv_refr_now(disp);
-
 }
 
-// void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
-// {
-//     // Take semaphore with a short timeout
-//     if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(10)) == pdTRUE)
-//     {
-//         if (last_key_pressed)
-//         {
-//             data->state = LV_INDEV_STATE_PRESSED;
-//             data->key = last_key;
-//         }
-//         else
-//         {
-//             data->state = LV_INDEV_STATE_RELEASED;
-//             data->key = last_key;
-//         }
+void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
+{
+    // Serial.println("> keyboard_read called"); // Debug print to see if function is called
+    // Serial.flush();
+    
+    // Take semaphore with a short timeout
+    if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(10)) == pdTRUE)
+    {
+        // Serial.print("> Semaphore taken, key_shortPressed: "); // Debug print for button state
+        // Serial.println(buttonState_X3.key_shortPressed);
+        // Serial.flush();
+        
+        if (buttonState_X3.key_shortPressed)
+        {
+            data->state = LV_INDEV_STATE_PRESSED;
+            data->key = buttonState_X3.key_shortPressed_value;
+            Serial.print("> Keyboard pressed: ");
+            Serial.println(data->key);
+            Serial.flush();
+        }
+        else
+        {
+            data->state = LV_INDEV_STATE_RELEASED;
+            data->key = buttonState_X3.key_shortPressed_value;
+            // Serial.println("> No key pressed"); // Debug print for no key press
+            // Serial.flush();
+        }
 
-//         // Reset the key press state after it's been read
-//         last_key_pressed = false;
+        // Reset the key press state after it's been read
+        buttonState_X3.key_shortPressed = false;
 
-//         xSemaphoreGive(xSemaphore);
-//     }
-//     else
-//     {
-//         // If we couldn't get the semaphore, maintain previous state
-//         data->state = LV_INDEV_STATE_RELEASED;
-//         data->key = 0;
-//     }
-// }
+        xSemaphoreGive(xSemaphore);
+    }
+    else
+    {
+        // If we couldn't get the semaphore, maintain previous state
+        data->state = LV_INDEV_STATE_RELEASED;
+        data->key = 0;
+        Serial.println("> Failed to take semaphore"); // Debug print for semaphore failure
+        Serial.flush();
+    }
+}
+
+// Add event handling to the container
+void setup_container_events(lv_obj_t *container)
+{
+    // Make container focusable
+    lv_obj_add_flag(container, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_flag(container, LV_OBJ_FLAG_CLICK_FOCUSABLE);
+
+    // Add to default group
+    lv_group_t *g = lv_group_get_default();
+    if (g)
+    {
+        lv_group_add_obj(g, container);
+    }
+    // Add key event handler
+    lv_obj_add_event_cb(container, key_event_cb, LV_EVENT_KEY, NULL);
+}
+
+// Add this implementation
+void key_event_cb(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_KEY)
+    {
+        uint32_t key = lv_event_get_key(e);
+        Serial.print("> Keyboard pressed: ");
+        Serial.println(key);
+        Serial.flush();
+        switch (key)
+        {
+        case LV_KEY_UP:
+            Serial.println("UP key pressed");
+            Serial.flush();
+            break;
+
+        case LV_KEY_DOWN:
+            Serial.println("DOWN key pressed");
+            Serial.flush();
+            break;
+
+        case LV_KEY_ENTER:
+            Serial.println("ENTER key pressed");
+            Serial.flush();
+            break;
+
+        case LV_KEY_ESC:
+            Serial.println("ESC key pressed");
+            Serial.flush();
+            break;
+        }
+    }
+}
