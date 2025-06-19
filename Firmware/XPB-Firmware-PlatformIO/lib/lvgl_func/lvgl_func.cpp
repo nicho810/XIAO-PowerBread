@@ -6,8 +6,7 @@ extern ButtonState_X3 buttonState_X3;
 extern InputButtonX3 input_buttonX3;
 extern lv_indev_drv_t indev_drv;
 extern lv_obj_t *ui_container;
-// extern volatile bool last_key_pressed;
-// extern volatile uint32_t last_key;
+
 
 void lvgl_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
@@ -166,9 +165,6 @@ void key_event_cb(lv_event_t *e)
     if (code == LV_EVENT_KEY)
     {
         uint32_t key = lv_event_get_key(e);
-        // Serial.print("> Keyboard pressed: ");
-        // Serial.println(key);
-        // Serial.flush();
         switch (key)
         {
         case LV_KEY_UP:
