@@ -10,7 +10,7 @@ void inputTask(void *pvParameters)
 {
     (void)pvParameters;
     TickType_t xLastWakeTime = 0;
-    const TickType_t xFrequency = pdMS_TO_TICKS(200); // Read frequency
+    const TickType_t xFrequency = pdMS_TO_TICKS(100); // Read frequency
 
     while (1)
     {

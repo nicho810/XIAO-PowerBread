@@ -15,7 +15,16 @@ int InputButtonX3::readRawValue()
     return analogRead(pin_);
 }
 
-bool InputButtonX3::update(ButtonState_X3& buttonState)
+void InputButtonX3::reset_keystate(ButtonState_X3& buttonState)
+{
+    buttonState.key_shortPressed = false;
+    buttonState.key_shortPressed_value = 0;
+    // buttonState.key_longPressed = false;
+    // buttonState.key_longPressed_value = 0;
+    // long_pressed_detect_time_button2 = 0;
+}
+
+void InputButtonX3::update(ButtonState_X3& buttonState)
 {
     /*
     * Button Analog Value Table
@@ -27,82 +36,39 @@ bool InputButtonX3::update(ButtonState_X3& buttonState)
     * 1800-2500   | button3_short_pressed   | ~2298
     */
 
-    ButtonState_X3 buttonState_last;
-    buttonState_last = buttonState;
-
     uint16_t analogValue = readRawValue();
     if (analogValue < 800) {
-        buttonState.button1_short_pressed = false;
-        buttonState.button2_short_pressed = false;
-        buttonState.button3_short_pressed = false;
+        reset_keystate(buttonState);
     }
-    if (analogValue > 800 && analogValue < 1300) {
-        buttonState.button1_short_pressed = true;
+    else if (analogValue > 800 && analogValue < 1300 && lastAnalogValue_ > 800 && lastAnalogValue_ < 1300) {
+        buttonState.key_shortPressed_value = 1;
     }
-    if (analogValue > 1300 && analogValue < 1800) {
-        buttonState.button2_short_pressed = true;
+    else if (analogValue > 1300 && analogValue < 1800 && lastAnalogValue_ > 1300 && lastAnalogValue_ < 1800) {
+        buttonState.key_shortPressed_value = 2;
     }
-    if (analogValue > 1800 && analogValue < 2500) {
-        buttonState.button3_short_pressed = true;
+    else if (analogValue > 1800 && analogValue < 2500 && lastAnalogValue_ > 1800 && lastAnalogValue_ < 2500) {
+        buttonState.key_shortPressed_value = 3;
+    }
+    lastAnalogValue_ = analogValue;
+
+
+    // Set key_shortPressed based on value and only if the value is changed
+    if (buttonState.key_shortPressed_value != 0 && buttonState.key_shortPressed_value != buttonState_last_.key_shortPressed_value) {
+        buttonState.key_shortPressed = true;
+    } else {
+        buttonState.key_shortPressed = false;
     }
 
-    //check if button state is changed
-    if (buttonState_last.button1_short_pressed != buttonState.button1_short_pressed ||
-        buttonState_last.button2_short_pressed != buttonState.button2_short_pressed ||
-        buttonState_last.button3_short_pressed != buttonState.button3_short_pressed) {
-        buttonState.key_shortPressed = true;
-        //Priority: button1 > button2 > button3
-        if (buttonState.button1_short_pressed) {
-            buttonState.key_shortPressed_value = 1;
-        }
-        else if (buttonState.button2_short_pressed) {
-            buttonState.key_shortPressed_value = 2;
-        }
-        else if (buttonState.button3_short_pressed) {
-            buttonState.key_shortPressed_value = 3;
-        }
-        else {
-            buttonState.key_shortPressed_value = 0;
-        }
+    // At the end, update the last state
+    buttonState_last_ = buttonState;
+}
+
+bool InputButtonX3::isPressed_short(uint8_t button, ButtonState_X3& buttonState)
+{
+    if (buttonState.key_shortPressed && buttonState.key_shortPressed_value == button)
+    {
         return true;
     }
     return false;
 }
 
-bool InputButtonX3::isPressed_short(uint8_t button, ButtonState_X3& buttonState)
-{
-    switch (button) {
-        case 1:
-            return buttonState.button1_short_pressed;
-        case 2:
-            return buttonState.button2_short_pressed;
-        case 3: 
-            return buttonState.button3_short_pressed;
-        default:
-            return false;
-    }
-}
-
-bool InputButtonX3::isPressed_long(uint8_t button, ButtonState_X3& buttonState)
-{
-    switch (button) {
-        case 1:
-            return buttonState.button1_long_pressed;
-        case 2:
-            return buttonState.button2_long_pressed;
-        case 3:
-            return buttonState.button3_long_pressed;
-        default:
-            return false;
-    }
-}
-
-void InputButtonX3::reset_keystate(ButtonState_X3& buttonState)
-{
-    buttonState.button1_short_pressed = false;
-    buttonState.button2_short_pressed = false;
-    buttonState.button3_short_pressed = false;
-    buttonState.button1_long_pressed = false;
-    buttonState.button2_long_pressed = false;
-    buttonState.button3_long_pressed = false;
-}

@@ -3,6 +3,7 @@
 
 extern SemaphoreHandle_t xSemaphore;
 extern ButtonState_X3 buttonState_X3;
+extern InputButtonX3 input_buttonX3;
 extern lv_indev_drv_t indev_drv;
 extern lv_obj_t *ui_container;
 // extern volatile bool last_key_pressed;
@@ -128,44 +129,63 @@ void lvgl_init(void)
 
 void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
 {
-    // Serial.println("> keyboard_read called"); // Debug print to see if function is called
-    // Serial.flush();
-    
-    // Take semaphore with a short timeout
     if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(10)) == pdTRUE)
     {
-        // Serial.print("> Semaphore taken, key_shortPressed: "); // Debug print for button state
-        // Serial.println(buttonState_X3.key_shortPressed);
-        // Serial.flush();
-        
-        if (buttonState_X3.key_shortPressed)
-        {
-            data->state = LV_INDEV_STATE_PRESSED;
-            data->key = buttonState_X3.key_shortPressed_value;
-            Serial.print("> Keyboard pressed: ");
-            Serial.println(data->key);
-            Serial.flush();
-        }
-        else
-        {
-            data->state = LV_INDEV_STATE_RELEASED;
-            data->key = buttonState_X3.key_shortPressed_value;
-            // Serial.println("> No key pressed"); // Debug print for no key press
-            // Serial.flush();
-        }
+        uint8_t key_map = 0;
 
-        // Reset the key press state after it's been read
-        buttonState_X3.key_shortPressed = false;
+        if (buttonState_X3.key_shortPressed) {
+            switch (buttonState_X3.key_shortPressed_value) {
+                case 1: key_map = LV_KEY_UP; break;
+                case 2: key_map = LV_KEY_ENTER; break;
+                case 3: key_map = LV_KEY_DOWN; break;
+                default: key_map = 0; break;
+            }
+            data->state = LV_INDEV_STATE_PRESSED;
+            data->key = key_map;
+            buttonState_X3.key_shortPressed = false;
+        } else {
+            data->state = LV_INDEV_STATE_RELEASED;
+            data->key = 0;
+        }
 
         xSemaphoreGive(xSemaphore);
     }
     else
     {
-        // If we couldn't get the semaphore, maintain previous state
-        data->state = LV_INDEV_STATE_RELEASED;
-        data->key = 0;
-        Serial.println("> Failed to take semaphore"); // Debug print for semaphore failure
+        Serial.println("> Failed to take semaphore");
         Serial.flush();
+    }
+}
+
+
+
+// Key event callback function
+void key_event_cb(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_KEY)
+    {
+        uint32_t key = lv_event_get_key(e);
+        // Serial.print("> Keyboard pressed: ");
+        // Serial.println(key);
+        // Serial.flush();
+        switch (key)
+        {
+        case LV_KEY_UP:
+            Serial.println("UP key pressed");
+            Serial.flush();
+            break;
+
+        case LV_KEY_DOWN:
+            Serial.println("DOWN key pressed");
+            Serial.flush();
+            break;
+
+        case LV_KEY_ENTER:
+            Serial.println("ENTER key pressed");
+            Serial.flush();
+            break;
+        }
     }
 }
 
@@ -184,39 +204,4 @@ void setup_container_events(lv_obj_t *container)
     }
     // Add key event handler
     lv_obj_add_event_cb(container, key_event_cb, LV_EVENT_KEY, NULL);
-}
-
-// Add this implementation
-void key_event_cb(lv_event_t *e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    if (code == LV_EVENT_KEY)
-    {
-        uint32_t key = lv_event_get_key(e);
-        Serial.print("> Keyboard pressed: ");
-        Serial.println(key);
-        Serial.flush();
-        switch (key)
-        {
-        case LV_KEY_UP:
-            Serial.println("UP key pressed");
-            Serial.flush();
-            break;
-
-        case LV_KEY_DOWN:
-            Serial.println("DOWN key pressed");
-            Serial.flush();
-            break;
-
-        case LV_KEY_ENTER:
-            Serial.println("ENTER key pressed");
-            Serial.flush();
-            break;
-
-        case LV_KEY_ESC:
-            Serial.println("ESC key pressed");
-            Serial.flush();
-            break;
-        }
-    }
 }
