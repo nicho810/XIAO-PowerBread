@@ -17,8 +17,9 @@ void sensorTask(void *pvParameters)
             
             // Prepare message for queue
             SensorDataMessage message;
-            message.data[0] = cSensorData_tmp[0];
-            message.data[1] = cSensorData_tmp[1];
+            for (int i = 0; i < sizeof(message.data)/sizeof(message.data[0]); i++) {
+                message.data[i] = cSensorData_tmp[i];
+            }
             message.timestamp = xCurrentTime;
             
             // Send to queue (non-blocking with timeout)
