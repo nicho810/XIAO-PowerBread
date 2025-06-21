@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include "boardConfig.h"
-#include "global_variables.h"
 
 // RTOS Tasks
 #include "task_serial.h"       // serial task
@@ -45,7 +44,6 @@ lv_indev_drv_t indev_drv; // Input device driver
 #if defined(SEEED_XIAO_ESP32C3)
 // #define STACK_SIZE_UI 8192      
 #define STACK_SIZE_SERIAL 2048    
-// #define STACK_SIZE_DIAL 2048     
 #define STACK_SIZE_SENSOR 2048   
 #define STACK_SIZE_LVGL 2048    
 #define STACK_SIZE_INPUT 2048   
@@ -53,7 +51,6 @@ lv_indev_drv_t indev_drv; // Input device driver
 #elif defined(SEEED_XIAO_RP2040) || defined(SEEED_XIAO_RP2350)
 #define STACK_SIZE_UI 2048
 #define STACK_SIZE_SERIAL 1024
-#define STACK_SIZE_DIAL 1024
 #define STACK_SIZE_SENSOR 1024
 #endif
 

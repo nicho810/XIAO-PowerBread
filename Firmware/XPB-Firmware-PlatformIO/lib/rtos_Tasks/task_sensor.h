@@ -2,7 +2,6 @@
 
 #include <Arduino.h>
 #include "boardConfig.h"
-#include "global_variables.h"
 #include <vector>
 #include "CurrentSensor_INA226.h"
 
