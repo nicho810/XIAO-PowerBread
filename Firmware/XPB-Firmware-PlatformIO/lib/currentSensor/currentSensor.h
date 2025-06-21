@@ -13,8 +13,8 @@ struct currentSensorData {
 
 // Queue message structure
 struct SensorDataMessage {
-    // std::vector<currentSensorData> data;  //This is likely to cause a stack overflow, maybe use a fixed size array instead
-    currentSensorData data[2];
+    // std::vector<currentSensorData> data;  //This is likely to cause a stack overflow, use a fixed size array instead.
+    currentSensorData data[2]; //Adjust the size of the array if needed when use multiple channels sensors.
     uint32_t timestamp;
 };
 
