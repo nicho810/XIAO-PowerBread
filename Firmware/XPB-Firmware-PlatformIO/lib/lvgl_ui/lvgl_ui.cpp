@@ -1,229 +1,135 @@
 #include "lvgl_ui.h"
-#include "sysConfig.h"
 
-extern ConfigMode configMode;
-extern SysConfig sysConfig;
-extern sysConfig_data tmp_cfg_data;
-// Add this helper function at the top of the file
-void cleanupAndWait()
+
+UI_manager::UI_manager()
 {
-    lv_obj_clean(lv_scr_act());    // Delete all objects from the screen
-    lv_refr_now(NULL);             // Force a screen update
-    vTaskDelay(pdMS_TO_TICKS(10)); // Small delay to ensure cleanup is complete
+    current_UI_mode = UI_Mode_DataMonitor; //set default mode
 }
 
-// Add this at the top of the file with other global variables
-volatile bool menu_is_visible = false;
+UI_manager::~UI_manager(){}
 
-// Add at the top with other global variables
-static uint32_t last_key_time = 0;
-const uint32_t KEY_DEBOUNCE_MS = 50;  // Minimum time between key events
-
-
-
-// Add event handling to the container
-static void setup_container_events(lv_obj_t *container)
+void UI_manager::initUI(UI_Mode mode)
 {
-    // Make container focusable
-    lv_obj_add_flag(container, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_add_flag(container, LV_OBJ_FLAG_CLICK_FOCUSABLE);
-
-    // Add to default group
-    lv_group_t *g = lv_group_get_default();
-    if (g)
-    {
-        lv_group_add_obj(g, container);
+    current_UI_mode = mode;
+    
+    // Take LVGL mutex for thread safety
+    if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(1000)) != pdTRUE) {
+        Serial.println("ERROR: Failed to take LVGL mutex for UI init!");
+        return;
     }
-    // Add key event handler
-    lv_obj_add_event_cb(container, key_event_cb, LV_EVENT_KEY, NULL);
+    
+    // Clean the screen
+    lv_obj_clean(lv_scr_act());
+    
+    // Create base container
+    lv_obj_t* base_container = lv_obj_create(lv_scr_act());
+    if (!base_container || !lv_obj_is_valid(base_container)) {
+        Serial.println("ERROR: Failed to create base container!");
+        xSemaphoreGive(lvglMutex);
+        return;
+    }
+    
+    // Set basic container properties
+    lv_obj_set_size(base_container, 80, 160); // Standard screen size
+    lv_obj_center(base_container);
+    lv_obj_clear_flag(base_container, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(base_container, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_border_width(base_container, 0, LV_PART_MAIN);
+    
+    // Initialize UI based on mode
+    switch (mode) {
+        case UI_Mode_Config:
+            Serial.println("Initializing Config Mode UI");
+            configMode_initUI(tft_Rotation);
+            break;
+            
+        case UI_Mode_DataMonitor:
+            Serial.println("Initializing Data Monitor UI");
+            dataMonitor_initUI(base_container, highLightChannel, latestSensorData, 0.0f, 0);
+            break;
+            
+        case UI_Mode_DataChart:
+            Serial.println("Initializing Data Chart UI");
+            dataMonitorChart_initUI(base_container, highLightChannel, latestSensorData, 0.0f, 0);
+            break;
+            
+        case UI_Mode_DataCount:
+            Serial.println("Initializing Data Count UI");
+            dataMonitorCount_initUI(base_container, highLightChannel, latestSensorData, 0.0f, 0);
+            break;
+            
+        default:
+            Serial.println("ERROR: Invalid UI mode!");
+            break;
+    }
+    
+    // Force refresh
+    lv_disp_t *disp = lv_disp_get_default();
+    if (disp) {
+        lv_refr_now(disp);
+    }
+    
+    xSemaphoreGive(lvglMutex);
 }
 
-// Add this implementation
-static void key_event_cb(lv_event_t *e)
+void UI_manager::updateUI(UI_Mode mode)
 {
-    lv_event_code_t code = lv_event_get_code(e);
-    if (code == LV_EVENT_KEY)
-    {
-        // Rate limiting check
-        uint32_t current_time = millis();
-        if (current_time - last_key_time < KEY_DEBOUNCE_MS) {
-            return;  // Ignore rapid keypresses
-        }
-        last_key_time = current_time;
+    // Only update if the mode matches current mode
+    if (mode != current_UI_mode) {
+        return;
+    }
+    
+    // Take LVGL mutex for thread safety
+    if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(100)) != pdTRUE) {
+        return; // Don't block if mutex is busy
+    }
+    
+    // Get the main container
+    lv_obj_t* container = lv_scr_act();
+    if (!container || !lv_obj_is_valid(container)) {
+        xSemaphoreGive(lvglMutex);
+        return;
+    }
+    
+    // Update UI based on mode
+    switch (mode) {
+        case UI_Mode_Config:
+            // Config mode updates are handled by the config mode system
+            break;
+            
+        case UI_Mode_DataMonitor:
+            // Update monitor data for both channels
+            update_monitor_data(container, 0, latestSensorData, 0.0f, 0);
+            update_monitor_data(container, 1, latestSensorData, 0.0f, 0);
+            break;
+            
+        case UI_Mode_DataChart:
+            // Update chart data for current channel
+            update_chart_data(container, highLightChannel, latestSensorData, 0.0f, 0);
+            break;
+            
+        case UI_Mode_DataCount:
+            // Update count data for current channel
+            update_count_data(container, highLightChannel, latestSensorData, 0.0f, 0);
+            break;
+            
+        default:
+            break;
+    }
+    
+    xSemaphoreGive(lvglMutex);
+}
 
-        uint32_t key = lv_event_get_key(e);
-
-        if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(50)) == pdTRUE)  // Increased timeout
-        {
-            ConfigModeState currentState;
-            if (configMode.getConfigState(&currentState))  // Safely get current state
-            {
-                if (currentState.isActive)
-                {
-                    int8_t newCursor = currentState.cursor;  // Work with local copy
-                    bool stateChanged = false;
-
-                    switch (key)
-                    {
-                    case LV_KEY_UP:
-                        if (currentState.cursorStatus == 0) { //if the cursorStatus is 0, it means not selected, so we can move the cursor
-                            if (newCursor > 0 && newCursor < currentState.cursorMax) {  // Extra bounds validation
-                                newCursor--;
-                                stateChanged = true;
-                            }
-                        } else if (currentState.cursorStatus == 1) { 
-                            //if the cursorStatus is 1, it means selected, so we increase the value of the item instead of moving the cursor
-                            // Serial.println("Increase the value of the item. ++");
-                            // Serial.flush();
-                            sysConfig.incrementConfigValue(newCursor, tmp_cfg_data);
-
-                        }
-                        break;
-
-                    case LV_KEY_DOWN:
-                        if (currentState.cursorStatus == 0) { //if the cursorStatus is 0, it means not selected, so we can move the cursor
-                            if (newCursor >= 0 && newCursor < (currentState.cursorMax - 1)) {  // Extra bounds validation
-                                newCursor++;
-                                stateChanged = true;
-                            }
-                        }
-                        else if (currentState.cursorStatus == 1) { 
-                            //if the cursorStatus is 1, it means selected, so we decrease the value of the item instead of moving the cursor
-                            // Serial.println("Decrease the value of the item. --");
-                            // Serial.flush();
-                            sysConfig.decrementConfigValue(newCursor, tmp_cfg_data);
-                        }
-                        break;
-
-                    case LV_KEY_ENTER:
-                        currentState.cursorStatus = 1; //1 is max, it means select the item, and it can edit the value
-                        stateChanged = true;
-                        break;
-
-                    case LV_KEY_ESC:
-                        currentState.cursorStatus--;
-                        if (currentState.cursorStatus < -1) { //-1 is min, it means exit the config mode, 0 is normal(not selected)
-                            currentState.cursorStatus = -1;
-                        }
-                        stateChanged = true;
-                        break;
-                    }
-
-                    if (stateChanged && 
-                        newCursor >= 0 && 
-                        newCursor < currentState.cursorMax) {  // Final bounds check
-                        currentState.cursorLast = currentState.cursor;
-                        currentState.cursor = newCursor;
-                        if (!configMode.updateConfigState(&currentState)) {  // Check if update succeeded
-                            Serial.println("Failed to update config state");
-                        }
-                    }
-
-                    // Debug output
-                    // Serial.printf("Config mode: cursor=%d, last=%d, max=%d, status=%d\n", 
-                    //     currentState.cursor, 
-                    //     currentState.cursorLast,
-                    //     currentState.cursorMax,
-                    //     currentState.cursorStatus);
-                    // Serial.flush();
-                }
-                else // not in config mode
-                {
-                    switch (key)
-                    {
-                    case LV_KEY_UP: // Dial turned up (status 1)
-                        // Serial.println("UP key pressed");
-                        if (current_functionMode > Mode_1)
-                        {
-                            current_functionMode = static_cast<function_mode>(current_functionMode - 1);
-                        }
-                        else
-                        {
-                            current_functionMode = Mode_3;
-                        }
-                        functionMode_ChangeRequested = true;
-                        break;
-
-                    case LV_KEY_DOWN: // Dial turned down (status 2)
-                        // Serial.println("DOWN key pressed");
-                        if (current_functionMode < Mode_3)
-                        {
-                            current_functionMode = static_cast<function_mode>(current_functionMode + 1);
-                        }
-                        else
-                        {
-                            current_functionMode = Mode_1;
-                        }
-                        functionMode_ChangeRequested = true;
-                        break;
-
-                    case LV_KEY_ENTER: // Short press (status 3)
-                        // Serial.println("ENTER key pressed");
-                        highLightChannel = (highLightChannel + 1) % 2;
-                        highLightChannel_ChangeRequested = true;
-
-                        if (current_functionMode == Mode_2 ||
-                            current_functionMode == Mode_3)
-                        {
-                            functionMode_ChangeRequested = true;
-                        }
-                        break;
-
-                    case LV_KEY_ESC: // Long press (status 4)
-                        // Serial.println("ESC pressed(long press dial)");
-                        // Add any long press handling here
-                        break;
-                    }
-                }
-            }
-            xSemaphoreGive(xSemaphore);
-        }
-        else {
-            // Serial.println("Failed to take semaphore in key_event_cb");
-        }
+void UI_manager::switch_UI(UI_Mode mode)
+{
+    if (mode != current_UI_mode) {
+        Serial.printf("Switching UI from mode %d to mode %d\n", current_UI_mode, mode);
+        initUI(mode);
     }
 }
 
-// Define UI handlers for each mode
-const UIModeHandlers UI_MODE_HANDLERS[] = {
-    // Mode_1 (Basic Monitor)
-    {
-        .init_handler = dataMonitor_initUI,
-        .update_handler = update_monitor_data
-    },
-    // Mode_2 (Chart)
-    {
-        .init_handler = dataMonitorChart_initUI,
-        .update_handler = update_monitor_data
-    },
-    // Mode_3 (Count)
-    {
-        .init_handler = dataMonitorCount_initUI,
-        .update_handler = update_count_data
-    },
-    // Mode_4 (Reserved)
-    {
-        .init_handler = dataMonitor_initUI,
-        .update_handler = update_monitor_data
-    }
-};
-
-// Generic UI initialization function
-void initUI(function_mode mode, lv_obj_t* container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue) {
-    if (mode >= 0 && mode < sizeof(UI_MODE_HANDLERS)/sizeof(UI_MODE_HANDLERS[0])) {
-        UI_MODE_HANDLERS[mode].init_handler(container, channel, newSensorData, floatValue, intValue);
-    }
-}
-
-// Update UI based on mode
-void updateUI(function_mode mode, lv_obj_t* container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue) {
-    if (mode >= 0 && mode < sizeof(UI_MODE_HANDLERS)/sizeof(UI_MODE_HANDLERS[0])) {
-        UI_MODE_HANDLERS[mode].update_handler(container, channel, newSensorData, floatValue, intValue);
-    }
-}
-
-
-void dataMonitor_initUI(lv_obj_t *ui_container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue) {
+void dataMonitor_initUI(lv_obj_t *ui_container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue)
+{
     // Guard against reentrant calls
     if (ui_initialization_in_progress) {
         Serial.println("WARNING: UI initialization already in progress, skipping");
@@ -480,3 +386,4 @@ lv_obj_t *configMode_initUI(int rotation)
 
     return ui_container;
 }
+

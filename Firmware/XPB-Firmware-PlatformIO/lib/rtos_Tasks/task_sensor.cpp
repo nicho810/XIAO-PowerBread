@@ -12,13 +12,13 @@ void sensorTask(void *pvParameters)
         if ((xCurrentTime - xLastWakeTime) >= xInterval)
         {
             // Take the semaphore before accessing shared data
-            if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(10)) == pdTRUE)
+            if (xSemaphoreTake(dataMutex, pdMS_TO_TICKS(10)) == pdTRUE)
             {
                 // Read sensor data
                 currentSensor_2ch.readData(cSensorData);
                 
                 // Give back the semaphore
-                xSemaphoreGive(xSemaphore);
+                xSemaphoreGive(dataMutex);
                 
                 xLastWakeTime = xCurrentTime;
             }

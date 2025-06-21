@@ -39,6 +39,10 @@ ButtonState_X3 buttonState_X3;
 lv_indev_drv_t indev_drv; // Input device driver
 #endif
 
+//UI
+// #include "lvgl_ui.h"
+// UI_manager ui_manager;
+
 
 // FreeRTOS Task Declarations
 #if defined(SEEED_XIAO_ESP32C3)
@@ -69,7 +73,7 @@ TaskHandle_t xInputTaskHandle = NULL;
 
 // Other semaphores
 SemaphoreHandle_t lvglMutex = NULL;
-SemaphoreHandle_t xSemaphore = NULL;
+SemaphoreHandle_t dataMutex = NULL;
 
 
 // Modify your task creation priorities
@@ -96,8 +100,8 @@ void setup(void)
     TaskHandle_t taskHandle;
 
     // Create the semaphore
-    xSemaphore = xSemaphoreCreateMutex();
-    if (xSemaphore == NULL) {
+    dataMutex = xSemaphoreCreateMutex();
+    if (dataMutex == NULL) {
         Serial.println("ERROR: Failed to create semaphore!");
         while(1) delay(100);
     }

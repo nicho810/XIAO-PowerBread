@@ -1,7 +1,7 @@
 #include "lvgl_func.h"
 #include "input_ButtonX3.h"
 
-extern SemaphoreHandle_t xSemaphore;
+extern SemaphoreHandle_t dataMutex;
 extern ButtonState_X3 buttonState_X3;
 extern InputButtonX3 input_buttonX3;
 extern lv_indev_drv_t indev_drv;
@@ -101,6 +101,7 @@ void lvgl_init(void)
     setup_container_events(ui_container);
 
     lv_obj_set_size(ui_container, screen_width, screen_height);
+    lv_obj_set_style_radius(ui_container, 0, LV_PART_MAIN);
     lv_obj_center(ui_container);
     lv_obj_clear_flag(ui_container, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(ui_container, lv_color_black(), LV_PART_MAIN);
@@ -119,6 +120,7 @@ void lvgl_init(void)
         while(1) delay(100);
     }
 
+    lv_obj_set_style_text_color(label, lv_color_white(), LV_PART_MAIN);
     lv_label_set_text(label, "Booting...");
     lv_obj_center(label);
 
@@ -128,7 +130,7 @@ void lvgl_init(void)
 
 void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
 {
-    if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(10)) == pdTRUE)
+    if (xSemaphoreTake(dataMutex, pdMS_TO_TICKS(10)) == pdTRUE)
     {
         uint8_t key_map = 0;
 
@@ -147,7 +149,7 @@ void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
             data->key = 0;
         }
 
-        xSemaphoreGive(xSemaphore);
+        xSemaphoreGive(dataMutex);
     }
     else
     {

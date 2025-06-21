@@ -2,7 +2,7 @@
 #define LVGL_UI_UPDATEFUNC_H
 
 #include "lvgl.h"
-#include "xpb_color_palette.h"
+#include "colorPalette.h"
 #include "currentSensor.h"
 
 void update_monitor_data(lv_obj_t *monitor_container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue);

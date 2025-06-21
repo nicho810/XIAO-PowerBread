@@ -12,7 +12,7 @@ void serialTask(void *pvParameters)
         if ((xCurrentTime - xLastPrintTime) >= xPrintInterval)
         {
             // Take the semaphore before accessing shared data
-            if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(10)) == pdTRUE)
+            if (xSemaphoreTake(dataMutex, pdMS_TO_TICKS(10)) == pdTRUE)
             {
                 Serial.print("{\"cSensor\":[");
                 for (size_t i = 0; i < cSensorData.size(); i++) {
@@ -33,7 +33,7 @@ void serialTask(void *pvParameters)
                 
                 xLastPrintTime = xCurrentTime;
                 // Give back the semaphore
-                xSemaphoreGive(xSemaphore);
+                xSemaphoreGive(dataMutex);
             }
         }
         vTaskDelay(pdMS_TO_TICKS(5));

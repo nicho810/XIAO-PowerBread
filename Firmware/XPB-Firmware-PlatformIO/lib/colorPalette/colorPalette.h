@@ -1,5 +1,5 @@
-#ifndef XPB_COLOR_PALETTE_H
-#define XPB_COLOR_PALETTE_H
+#ifndef COLOR_PALETTE_H
+#define COLOR_PALETTE_H
 
 #include "lvgl.h"
 

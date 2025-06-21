@@ -10,7 +10,7 @@
 void serialTask(void *pvParameters);
 
 // External variable declarations
-extern SemaphoreHandle_t xSemaphore;
+extern SemaphoreHandle_t dataMutex;
 extern std::vector<currentSensorData> cSensorData;
 
 #endif // SERIAL_TASK_H

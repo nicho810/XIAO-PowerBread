@@ -1,4 +1,4 @@
-#include "xpb_color_palette.h"
+#include "colorPalette.h"
 
 lv_color_t xpb_color_Background = lv_color_hex(0x000000);
 lv_color_t xpb_color_Text = lv_color_hex(0xFFFFFF);
