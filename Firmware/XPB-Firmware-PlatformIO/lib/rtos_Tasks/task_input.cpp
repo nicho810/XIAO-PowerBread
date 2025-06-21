@@ -1,10 +1,5 @@
 #include "task_input.h"
 
-extern SemaphoreHandle_t xSemaphore;
-extern InputButtonX3 input_buttonX3;
-extern ButtonState_X3 buttonState_X3;
-
-
 // Dial Read Task
 void inputTask(void *pvParameters)
 {
@@ -17,10 +12,21 @@ void inputTask(void *pvParameters)
         TickType_t xCurrentTime = xTaskGetTickCount();
         if ((xCurrentTime - xLastWakeTime) >= xFrequency)
         {
-            // Serial.print("> Input task running:"); // Debug print
-            // Serial.println(input_buttonX3.update(buttonState_X3));
-            // Serial.flush();
-            input_buttonX3.update(buttonState_X3);
+
+            // Update button state
+            ButtonState_X3 buttonState_tmp;
+            input_buttonX3.update(buttonState_tmp);
+            
+            // If button state changed, send to queue
+            if (buttonState_tmp.key_shortPressed) {
+                ButtonEventMessage message;
+                message.buttonState = buttonState_tmp;
+                message.timestamp = xCurrentTime;
+                
+                // Send to queue (non-blocking)
+                xQueueOverwrite(buttonEventQueue, &message);
+            }
+            
             xLastWakeTime = xCurrentTime;
         }
         vTaskDelay(pdMS_TO_TICKS(50));

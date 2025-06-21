@@ -11,17 +11,23 @@ void sensorTask(void *pvParameters)
         TickType_t xCurrentTime = xTaskGetTickCount();
         if ((xCurrentTime - xLastWakeTime) >= xInterval)
         {
-            // Take the semaphore before accessing shared data
-            if (xSemaphoreTake(dataMutex, pdMS_TO_TICKS(10)) == pdTRUE)
-            {
-                // Read sensor data
-                currentSensor_2ch.readData(cSensorData);
-                
-                // Give back the semaphore
-                xSemaphoreGive(dataMutex);
-                
-                xLastWakeTime = xCurrentTime;
+            // Read sensor data
+            std::vector<currentSensorData> cSensorData_tmp;
+            currentSensor_2ch.readData(cSensorData_tmp);
+            
+            // Prepare message for queue
+            SensorDataMessage message;
+            message.data[0] = cSensorData_tmp[0];
+            message.data[1] = cSensorData_tmp[1];
+            message.timestamp = xCurrentTime;
+            
+            // Send to queue (non-blocking with timeout)
+            if (xQueueOverwrite(sensorDataQueue, &message) != pdTRUE) {
+                // Queue is full, handle accordingly
+                Serial.println("Warning: Sensor data queue full - dropping data");
             }
+            
+            xLastWakeTime = xCurrentTime;
         }
         vTaskDelay(pdMS_TO_TICKS(5));
     }

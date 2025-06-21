@@ -71,10 +71,10 @@ TaskHandle_t xSerialTaskHandle = NULL;
 TaskHandle_t xSensorTaskHandle = NULL;
 TaskHandle_t xInputTaskHandle = NULL;
 
-// Other semaphores
-SemaphoreHandle_t lvglMutex = NULL;
-SemaphoreHandle_t dataMutex = NULL;
-
+// Queues (replacing semaphores)
+QueueHandle_t sensorDataQueue = NULL;
+QueueHandle_t buttonEventQueue = NULL;
+SemaphoreHandle_t lvglMutex = NULL; // Keep this for LVGL operations
 
 // Modify your task creation priorities
 #define TASK_PRIORITY_LVGL       4  // Keep same as UI init
@@ -99,15 +99,23 @@ void setup(void)
     // Create tasks with proper return type checking
     TaskHandle_t taskHandle;
 
-    // Create the semaphore
-    dataMutex = xSemaphoreCreateMutex();
-    if (dataMutex == NULL) {
-        Serial.println("ERROR: Failed to create semaphore!");
+    // Create the sensor data queue
+    sensorDataQueue = xQueueCreate(1, sizeof(SensorDataMessage));
+    if (sensorDataQueue == NULL) {
+        Serial.println("ERROR: Failed to create sensor data queue!");
         while(1) delay(100);
     }
-    Serial.println("> Semaphore created successfully");
+    Serial.println("> Sensor data queue created successfully");
 
-    // Create the lvglMutex
+    // Create the button event queue
+    buttonEventQueue = xQueueCreate(1, sizeof(ButtonEventMessage));
+    if (buttonEventQueue == NULL) {
+        Serial.println("ERROR: Failed to create button event queue!");
+        while(1) delay(100);
+    }
+    Serial.println("> Button event queue created successfully");
+
+    // Create the lvglMutex (keep this for LVGL operations)
     lvglMutex = xSemaphoreCreateMutex();
     if (lvglMutex == NULL) {
         Serial.println("ERROR: Failed to create lvgl mutex!");
@@ -124,7 +132,6 @@ void setup(void)
         while(1) delay(100);
     }
     Serial.println("> Input task created successfully");
-
 
     // Create sensor task first as it's highest priority
     taskHandle = xTaskCreateStatic(sensorTask, "Sensor_Update", 
@@ -155,7 +162,6 @@ void setup(void)
         while(1) delay(100);
     }
     Serial.println("> Serial task created successfully");
-
 
     // Start the scheduler
     // vTaskStartScheduler(); //Note: no need to call this, it will cause a crash, keep this note here as reminder.

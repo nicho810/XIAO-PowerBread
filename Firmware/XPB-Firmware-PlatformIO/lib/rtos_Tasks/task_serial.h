@@ -6,11 +6,11 @@
 #include <vector>
 #include "CurrentSensor_INA226.h"
 
+
 // Function declarations
 void serialTask(void *pvParameters);
 
 // External variable declarations
-extern SemaphoreHandle_t dataMutex;
-extern std::vector<currentSensorData> cSensorData;
+extern QueueHandle_t sensorDataQueue;
 
 #endif // SERIAL_TASK_H

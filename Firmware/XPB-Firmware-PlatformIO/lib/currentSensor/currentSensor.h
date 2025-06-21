@@ -11,6 +11,12 @@ struct currentSensorData {
   float power_mW;
 };
 
+// Queue message structure
+struct SensorDataMessage {
+    // std::vector<currentSensorData> data;  //This is likely to cause a stack overflow, maybe use a fixed size array instead
+    currentSensorData data[2];
+    uint32_t timestamp;
+};
 
 
 

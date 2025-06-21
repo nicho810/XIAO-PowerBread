@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "boardConfig.h"
 
+
 // Class of button state
 class ButtonState_X3
 {
@@ -12,6 +13,10 @@ class ButtonState_X3
         uint8_t key_shortPressed_value = 0;
 };
 
+struct inputEventMessage {
+    ButtonState_X3 buttonState;
+    uint32_t timestamp;
+};
 
 class InputButtonX3
 {
