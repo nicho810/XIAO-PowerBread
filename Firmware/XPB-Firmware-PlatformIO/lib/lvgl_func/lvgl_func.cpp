@@ -66,7 +66,7 @@ void lvgl_init(void)
         Serial.println("ERROR: Failed to register display driver!");
         while(1) delay(100);
     }
-    Serial.println("Display driver registered");
+    Serial.println("> Display driver registered");
     Serial.flush();
 
     //register keyboard input device
@@ -111,7 +111,7 @@ void lvgl_init(void)
 
     // Force a refresh to ensure container is created
     lv_refr_now(lv_disp_get_default());
-    Serial.println("UI container created successfully");
+    Serial.println("> UI container created successfully");
     Serial.flush();
 
 
