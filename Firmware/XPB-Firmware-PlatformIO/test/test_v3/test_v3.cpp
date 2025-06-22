@@ -1,11 +1,13 @@
 #include <Arduino.h>
 #include "boardConfig.h"
 
+
 // RTOS Tasks
 #include "task_serial.h"       // serial task
 #include "task_sensor.h" // sensor update task
 #include "task_lvgl.h"   // lvgl task
 #include "task_input.h"  // input task
+#include "task_ui.h"    // ui task
 
 
 // Current sensor
@@ -40,13 +42,13 @@ lv_indev_drv_t indev_drv; // Input device driver
 #endif
 
 //UI
-// #include "lvgl_ui.h"
-// UI_manager ui_manager;
+#include "lvgl_ui.h"
+UI_manager ui_manager;
 
 
 // FreeRTOS Task Declarations
 #if defined(SEEED_XIAO_ESP32C3)
-// #define STACK_SIZE_UI 8192      
+#define STACK_SIZE_UI 4096      
 #define STACK_SIZE_SERIAL 2048    
 #define STACK_SIZE_SENSOR 2048   
 #define STACK_SIZE_LVGL 2048    
@@ -59,17 +61,19 @@ lv_indev_drv_t indev_drv; // Input device driver
 #endif
 
 // Task buffers and stacks
-StaticTask_t xTaskBuffer_Serial, xTaskBuffer_Sensor, xTaskBuffer_Lvgl, xTaskBuffer_Input;
+StaticTask_t xTaskBuffer_Serial, xTaskBuffer_Sensor, xTaskBuffer_Lvgl, xTaskBuffer_Input, xTaskBuffer_UI;
 StackType_t xStack_Serial[STACK_SIZE_SERIAL];
 StackType_t xStack_Sensor[STACK_SIZE_SENSOR];
 StackType_t xStack_Lvgl[STACK_SIZE_LVGL]; 
 StackType_t xStack_Input[STACK_SIZE_INPUT];
+StackType_t xStack_UI[STACK_SIZE_UI];
 
 // Task handles
 TaskHandle_t xLvglTaskHandle = NULL;
 TaskHandle_t xSerialTaskHandle = NULL;
 TaskHandle_t xSensorTaskHandle = NULL;
 TaskHandle_t xInputTaskHandle = NULL;
+TaskHandle_t xUITaskHandle = NULL;
 
 // Queues (replacing semaphores)
 QueueHandle_t sensorDataQueue = NULL;
@@ -77,10 +81,12 @@ QueueHandle_t buttonEventQueue = NULL;
 SemaphoreHandle_t lvglMutex = NULL; // Keep this for LVGL operations
 
 // Modify your task creation priorities
-#define TASK_PRIORITY_LVGL       4  // Keep same as UI init
-#define TASK_PRIORITY_SENSOR     3  // Keep as is
-#define TASK_PRIORITY_SERIAL     2  // Keep as is
+#define TASK_PRIORITY_LVGL       5  
+#define TASK_PRIORITY_UI         4  
+#define TASK_PRIORITY_SENSOR     3
+#define TASK_PRIORITY_SERIAL     2  
 #define TASK_PRIORITY_INPUT      1
+
 
 void setup(void)
 {
@@ -152,6 +158,16 @@ void setup(void)
         while(1) delay(100);
     }
     Serial.println("> Lvgl task created successfully");
+
+    // Create UI task
+    taskHandle = xTaskCreateStatic(uiTask, "UI_Task", 
+        STACK_SIZE_UI, NULL, TASK_PRIORITY_UI, 
+        xStack_UI, &xTaskBuffer_UI);
+    if (taskHandle == nullptr) {
+        Serial.println("ERROR: Failed to create UI task!");
+        while(1) delay(100);
+    }
+    Serial.println("> UI task created successfully");
 
     // Create serial task
     taskHandle = xTaskCreateStatic(serialTask, "Serial_Print", 

@@ -8,8 +8,11 @@ UI_manager::UI_manager()
 
 UI_manager::~UI_manager(){}
 
-void UI_manager::initUI(UI_Mode mode)
-{
+void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
+{   
+    // If container is not provided, use the current screen
+    if (container == NULL) container = lv_scr_act();
+
     current_UI_mode = mode;
     
     // Take LVGL mutex for thread safety
@@ -17,12 +20,12 @@ void UI_manager::initUI(UI_Mode mode)
         Serial.println("ERROR: Failed to take LVGL mutex for UI init!");
         return;
     }
-    
+
     // Clean the screen
-    lv_obj_clean(lv_scr_act());
+    lv_obj_clean(container);
     
     // Create base container
-    lv_obj_t* base_container = lv_obj_create(lv_scr_act());
+    lv_obj_t* base_container = lv_obj_create(container);
     if (!base_container || !lv_obj_is_valid(base_container)) {
         Serial.println("ERROR: Failed to create base container!");
         xSemaphoreGive(lvglMutex);
@@ -39,23 +42,21 @@ void UI_manager::initUI(UI_Mode mode)
     // Initialize UI based on mode
     switch (mode) {
         case UI_Mode_Config:
-            Serial.println("Initializing Config Mode UI");
-            configMode_initUI(tft_Rotation);
             break;
             
         case UI_Mode_DataMonitor:
-            Serial.println("Initializing Data Monitor UI");
-            dataMonitor_initUI(base_container, highLightChannel, latestSensorData, 0.0f, 0);
+            Serial.println("> Initializing Data Monitor UI");
+            // dataMonitor_initUI(base_container, highLightChannel, latestSensorData, 0.0f, 0);
+            static Widget_DataMonitor dataMonitor_A(0, 41, "Channel A", xpb_color_ChannelA);
+            static Widget_DataMonitor dataMonitor_B(0, -41, "Channel B", xpb_color_ChannelB);
+            lv_obj_set_parent(dataMonitor_A.getContainer(), base_container);
+            lv_obj_set_parent(dataMonitor_B.getContainer(), base_container);
             break;
             
         case UI_Mode_DataChart:
-            Serial.println("Initializing Data Chart UI");
-            dataMonitorChart_initUI(base_container, highLightChannel, latestSensorData, 0.0f, 0);
             break;
             
         case UI_Mode_DataCount:
-            Serial.println("Initializing Data Count UI");
-            dataMonitorCount_initUI(base_container, highLightChannel, latestSensorData, 0.0f, 0);
             break;
             
         default:
@@ -72,9 +73,12 @@ void UI_manager::initUI(UI_Mode mode)
     xSemaphoreGive(lvglMutex);
 }
 
-void UI_manager::updateUI(UI_Mode mode)
+void UI_manager::updateUI(UI_Mode mode, SensorDataMessage sensorDataMessage, lv_obj_t* container)
 {
-    // Only update if the mode matches current mode
+    // If container is not provided, use the current screen
+    if (container == NULL) container = lv_scr_act();
+
+    // If the mode is not the current mode, return
     if (mode != current_UI_mode) {
         return;
     }
@@ -85,7 +89,6 @@ void UI_manager::updateUI(UI_Mode mode)
     }
     
     // Get the main container
-    lv_obj_t* container = lv_scr_act();
     if (!container || !lv_obj_is_valid(container)) {
         xSemaphoreGive(lvglMutex);
         return;
@@ -99,18 +102,18 @@ void UI_manager::updateUI(UI_Mode mode)
             
         case UI_Mode_DataMonitor:
             // Update monitor data for both channels
-            update_monitor_data(container, 0, latestSensorData, 0.0f, 0);
-            update_monitor_data(container, 1, latestSensorData, 0.0f, 0);
+            // update_monitor_data(container, 0, latestSensorData, 0.0f, 0);
+            // update_monitor_data(container, 1, latestSensorData, 0.0f, 0);
             break;
             
         case UI_Mode_DataChart:
             // Update chart data for current channel
-            update_chart_data(container, highLightChannel, latestSensorData, 0.0f, 0);
+            // update_chart_data(container, highLightChannel, latestSensorData, 0.0f, 0);
             break;
             
         case UI_Mode_DataCount:
             // Update count data for current channel
-            update_count_data(container, highLightChannel, latestSensorData, 0.0f, 0);
+            // update_count_data(container, highLightChannel, latestSensorData, 0.0f, 0);
             break;
             
         default:
@@ -123,11 +126,11 @@ void UI_manager::updateUI(UI_Mode mode)
 void UI_manager::switch_UI(UI_Mode mode)
 {
     if (mode != current_UI_mode) {
-        Serial.printf("Switching UI from mode %d to mode %d\n", current_UI_mode, mode);
+        Serial.printf("> Switching UI from mode %d to mode %d\n", current_UI_mode, mode);
         initUI(mode);
     }
 }
-
+/*
 void dataMonitor_initUI(lv_obj_t *ui_container, uint8_t channel, DualChannelData newSensorData, float floatValue, int32_t intValue)
 {
     // Guard against reentrant calls
@@ -387,3 +390,4 @@ lv_obj_t *configMode_initUI(int rotation)
     return ui_container;
 }
 
+*/

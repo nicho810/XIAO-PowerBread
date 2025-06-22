@@ -11,9 +11,9 @@ void serialTask(void *pvParameters)
         TickType_t xCurrentTime = xTaskGetTickCount();
         if ((xCurrentTime - xLastPrintTime) >= xPrintInterval)
         {
-            // Receive data from queue (blocking with timeout)
+            // Peek at the latest data from queue (non-blocking)
             SensorDataMessage receivedData;
-            if (xQueueReceive(sensorDataQueue, &receivedData, pdMS_TO_TICKS(100)) == pdTRUE) {
+            if (xQueuePeek(sensorDataQueue, &receivedData, pdMS_TO_TICKS(100)) == pdTRUE) {
                 // Process the received data
                 Serial.print("{\"cSensor\":[");
                 for (size_t i = 0; i < sizeof(receivedData.data)/sizeof(receivedData.data[0]); i++) {
