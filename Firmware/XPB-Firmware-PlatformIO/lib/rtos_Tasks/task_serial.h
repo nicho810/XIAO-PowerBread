@@ -11,6 +11,6 @@
 void serialTask(void *pvParameters);
 
 // External variable declarations
-extern QueueHandle_t sensorDataQueue;
+extern QueueHandle_t sensorDataQueue_serial;
 
 #endif // SERIAL_TASK_H

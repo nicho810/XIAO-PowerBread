@@ -10,6 +10,7 @@
 void sensorTask(void *pvParameters);
 
 // External variable declarations
-extern QueueHandle_t sensorDataQueue;
+extern QueueHandle_t sensorDataQueue_serial;
+extern QueueHandle_t sensorDataQueue_ui;
 extern cSensor_2ch_ina226 currentSensor_2ch;
 

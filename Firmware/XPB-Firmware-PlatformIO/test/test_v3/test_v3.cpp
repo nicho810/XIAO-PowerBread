@@ -48,7 +48,7 @@ UI_manager ui_manager;
 
 // FreeRTOS Task Declarations
 #if defined(SEEED_XIAO_ESP32C3)
-#define STACK_SIZE_UI 4096      
+#define STACK_SIZE_UI 8192      
 #define STACK_SIZE_SERIAL 2048    
 #define STACK_SIZE_SENSOR 2048   
 #define STACK_SIZE_LVGL 2048    
@@ -76,15 +76,16 @@ TaskHandle_t xInputTaskHandle = NULL;
 TaskHandle_t xUITaskHandle = NULL;
 
 // Queues (replacing semaphores)
-QueueHandle_t sensorDataQueue = NULL;
+QueueHandle_t sensorDataQueue_serial = NULL;
+QueueHandle_t sensorDataQueue_ui = NULL;
 QueueHandle_t buttonEventQueue = NULL;
 SemaphoreHandle_t lvglMutex = NULL; // Keep this for LVGL operations
 
 // Modify your task creation priorities
-#define TASK_PRIORITY_LVGL       5  
-#define TASK_PRIORITY_UI         4  
-#define TASK_PRIORITY_SENSOR     3
-#define TASK_PRIORITY_SERIAL     2  
+#define TASK_PRIORITY_LVGL       3  
+#define TASK_PRIORITY_UI         4 
+#define TASK_PRIORITY_SENSOR     2
+#define TASK_PRIORITY_SERIAL     1  
 #define TASK_PRIORITY_INPUT      1
 
 
@@ -105,13 +106,21 @@ void setup(void)
     // Create tasks with proper return type checking
     TaskHandle_t taskHandle;
 
-    // Create the sensor data queue
-    sensorDataQueue = xQueueCreate(1, sizeof(SensorDataMessage));
-    if (sensorDataQueue == NULL) {
-        Serial.println("ERROR: Failed to create sensor data queue!");
+    // Create the sensor data queue for serial
+    sensorDataQueue_serial = xQueueCreate(2, sizeof(SensorDataMessage));
+    if (sensorDataQueue_serial == NULL) {
+        Serial.println("ERROR: Failed to create sensor data queue_serial!");
         while(1) delay(100);
     }
-    Serial.println("> Sensor data queue created successfully");
+    Serial.println("> Sensor data queue_serial created successfully");
+
+    // Create the sensor data queue for UI
+    sensorDataQueue_ui = xQueueCreate(2, sizeof(SensorDataMessage));
+    if (sensorDataQueue_ui == NULL) {
+        Serial.println("ERROR: Failed to create sensor data queue_ui!");
+        while(1) delay(100);
+    }
+    Serial.println("> Sensor data queue_ui created successfully");
 
     // Create the button event queue
     buttonEventQueue = xQueueCreate(1, sizeof(ButtonEventMessage));
@@ -149,6 +158,8 @@ void setup(void)
     }
     Serial.println("> Sensor task created successfully");
 
+    //Dont need this task for now, lvgl task is handled by ui task
+    /*
     // Create lvgl task
     taskHandle = xTaskCreateStatic(lvglTask, "Lvgl_Task", 
         STACK_SIZE_LVGL, NULL, TASK_PRIORITY_LVGL, 
@@ -158,6 +169,7 @@ void setup(void)
         while(1) delay(100);
     }
     Serial.println("> Lvgl task created successfully");
+    */
 
     // Create UI task
     taskHandle = xTaskCreateStatic(uiTask, "UI_Task", 

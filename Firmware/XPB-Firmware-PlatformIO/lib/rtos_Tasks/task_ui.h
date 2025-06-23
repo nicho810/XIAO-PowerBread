@@ -6,7 +6,7 @@
 #include "lvgl_ui.h"
 
 extern UI_manager ui_manager;
-extern QueueHandle_t sensorDataQueue;
+extern QueueHandle_t sensorDataQueue_ui;
 extern QueueHandle_t buttonEventQueue;
 extern SemaphoreHandle_t lvglMutex;
 

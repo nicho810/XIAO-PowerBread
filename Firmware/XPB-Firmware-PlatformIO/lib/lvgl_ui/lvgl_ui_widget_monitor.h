@@ -17,7 +17,7 @@ private:
     const char* title;
 
 public:
-    Widget_DataMonitor(uint16_t x, uint16_t y, const char* title, lv_color_t color);
+    Widget_DataMonitor(uint16_t x, uint16_t y, const char* title, lv_color_t color, lv_obj_t* parent = nullptr);
     
     void setVoltage(float voltage);
     void setCurrent(float current);

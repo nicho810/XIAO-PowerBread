@@ -1,6 +1,7 @@
 #ifndef LVGL_WIDGET_H
 #define LVGL_WIDGET_H
 
+#include "Arduino.h"
 #include "lvgl.h"
 #include "colorPalette.h"
 #include "boardConfig.h"

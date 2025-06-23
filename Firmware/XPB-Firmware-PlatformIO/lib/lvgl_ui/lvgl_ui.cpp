@@ -4,9 +4,21 @@
 UI_manager::UI_manager()
 {
     current_UI_mode = UI_Mode_DataMonitor; //set default mode
+    dataMonitor_A = nullptr;
+    dataMonitor_B = nullptr;
 }
 
-UI_manager::~UI_manager(){}
+UI_manager::~UI_manager()
+{
+    if (dataMonitor_A) {
+        delete dataMonitor_A;
+        dataMonitor_A = nullptr;
+    }
+    if (dataMonitor_B) {
+        delete dataMonitor_B;
+        dataMonitor_B = nullptr;
+    }
+}
 
 void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
 {   
@@ -33,11 +45,13 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
     }
     
     // Set basic container properties
-    lv_obj_set_size(base_container, 80, 160); // Standard screen size
+    lv_obj_set_size(base_container, screen_width, screen_height); // Standard screen size
     lv_obj_center(base_container);
     lv_obj_clear_flag(base_container, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(base_container, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_radius(base_container, 0, LV_PART_MAIN);
     lv_obj_set_style_border_width(base_container, 0, LV_PART_MAIN);
+
     
     // Initialize UI based on mode
     switch (mode) {
@@ -46,11 +60,48 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
             
         case UI_Mode_DataMonitor:
             Serial.println("> Initializing Data Monitor UI");
-            // dataMonitor_initUI(base_container, highLightChannel, latestSensorData, 0.0f, 0);
-            static Widget_DataMonitor dataMonitor_A(0, 41, "Channel A", xpb_color_ChannelA);
-            static Widget_DataMonitor dataMonitor_B(0, -41, "Channel B", xpb_color_ChannelB);
-            lv_obj_set_parent(dataMonitor_A.getContainer(), base_container);
-            lv_obj_set_parent(dataMonitor_B.getContainer(), base_container);
+            // Create new instances and store them as member variables
+            if (dataMonitor_A) {
+                delete dataMonitor_A;
+                dataMonitor_A = nullptr;
+            }
+            if (dataMonitor_B) {
+                delete dataMonitor_B;
+                dataMonitor_B = nullptr;
+            }
+            
+            // Create widgets with proper parent container and error checking
+            try {
+                dataMonitor_A = new Widget_DataMonitor(0, 41, "Channel A", xpb_color_ChannelA, base_container);
+                if (!dataMonitor_A) {
+                    Serial.println("ERROR: Failed to create Channel A monitor!");
+                    xSemaphoreGive(lvglMutex);
+                    return;
+                }
+                
+                dataMonitor_B = new Widget_DataMonitor(0, -41, "Channel B", xpb_color_ChannelB, base_container);
+                if (!dataMonitor_B) {
+                    Serial.println("ERROR: Failed to create Channel B monitor!");
+                    delete dataMonitor_A;
+                    dataMonitor_A = nullptr;
+                    xSemaphoreGive(lvglMutex);
+                    return;
+                }
+                
+                Serial.println("> Data Monitor widgets created successfully");
+            } catch (...) {
+                Serial.println("ERROR: Exception during widget creation!");
+                if (dataMonitor_A) {
+                    delete dataMonitor_A;
+                    dataMonitor_A = nullptr;
+                }
+                if (dataMonitor_B) {
+                    delete dataMonitor_B;
+                    dataMonitor_B = nullptr;
+                }
+                xSemaphoreGive(lvglMutex);
+                return;
+            }
             break;
             
         case UI_Mode_DataChart:
@@ -83,6 +134,12 @@ void UI_manager::updateUI(UI_Mode mode, SensorDataMessage sensorDataMessage, lv_
         return;
     }
     
+    // Check available heap memory
+    size_t freeHeap = ESP.getFreeHeap();
+    if (freeHeap < 10000) { // Less than 10KB free
+        Serial.printf("WARNING: Low heap memory: %d bytes\n", freeHeap);
+    }
+    
     // Take LVGL mutex for thread safety
     if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(100)) != pdTRUE) {
         return; // Don't block if mutex is busy
@@ -101,9 +158,33 @@ void UI_manager::updateUI(UI_Mode mode, SensorDataMessage sensorDataMessage, lv_
             break;
             
         case UI_Mode_DataMonitor:
-            // Update monitor data for both channels
-            // update_monitor_data(container, 0, latestSensorData, 0.0f, 0);
-            // update_monitor_data(container, 1, latestSensorData, 0.0f, 0);
+            // Update monitor data for both channels with proper unit handling
+            if (dataMonitor_A && dataMonitor_B) {
+                // Convert mV to V for voltage display
+                float voltage_A = sensorDataMessage.data[0].busVoltage_mV / 1000.0f;
+                float voltage_B = sensorDataMessage.data[1].busVoltage_mV / 1000.0f;
+                
+                // Keep current in mA (no conversion needed)
+                float current_A = sensorDataMessage.data[0].current_mA;
+                float current_B = sensorDataMessage.data[1].current_mA;
+                
+                // Keep power in mW (no conversion needed)
+                float power_A = sensorDataMessage.data[0].power_mW;
+                float power_B = sensorDataMessage.data[1].power_mW;
+                
+                // Update with null checks and error handling
+                if (dataMonitor_A->getContainer() && lv_obj_is_valid(dataMonitor_A->getContainer())) {
+                    dataMonitor_A->setVoltage(voltage_A);
+                    dataMonitor_A->setCurrent(current_A);
+                    dataMonitor_A->setPower(power_A);
+                }
+                
+                if (dataMonitor_B->getContainer() && lv_obj_is_valid(dataMonitor_B->getContainer())) {
+                    dataMonitor_B->setVoltage(voltage_B);
+                    dataMonitor_B->setCurrent(current_B);
+                    dataMonitor_B->setPower(power_B);
+                }
+            }
             break;
             
         case UI_Mode_DataChart:

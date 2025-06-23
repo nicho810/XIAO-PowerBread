@@ -24,6 +24,8 @@ enum UI_Mode{
 class UI_manager{
     private:
         UI_Mode current_UI_mode;
+        Widget_DataMonitor* dataMonitor_A;
+        Widget_DataMonitor* dataMonitor_B;
 
     public:
         UI_manager();

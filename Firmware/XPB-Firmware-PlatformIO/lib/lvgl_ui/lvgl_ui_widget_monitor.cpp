@@ -3,10 +3,13 @@
 
 
 // Data Monitor Widget Implementation
-Widget_DataMonitor::Widget_DataMonitor(uint16_t x, uint16_t y, const char* title, lv_color_t color) 
+Widget_DataMonitor::Widget_DataMonitor(uint16_t x, uint16_t y, const char* title, lv_color_t color, lv_obj_t* parent) 
     : Widget_Base(x, y, color), title_label(nullptr), voltage_value(nullptr), voltage_unit(nullptr),
       current_value(nullptr), current_unit(nullptr), power_value(nullptr), power_unit(nullptr),
       title_rect(nullptr), title(title) {
+    
+    // Use provided parent or default to screen
+    lv_obj_t* parent_obj = parent ? parent : lv_scr_act();
     
     int pos_x_of_Voltage_lable = -10;
     int pos_y_of_Voltage_lable = -16;
@@ -23,8 +26,8 @@ Widget_DataMonitor::Widget_DataMonitor(uint16_t x, uint16_t y, const char* title
     int pos_x_of_Power_unit = pos_x_of_Voltage_unit;
     int pos_y_of_Power_unit = pos_y_of_Power_lable + 3;
 
-    // Create container
-    container = lv_obj_create(lv_scr_act());
+    // Create container with proper parent
+    container = lv_obj_create(parent_obj);
     lv_obj_clear_flag(container, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_size(container, 78, 78);
     lv_obj_align(container, LV_ALIGN_CENTER, x, y);
@@ -97,6 +100,8 @@ void Widget_DataMonitor::setVoltage(float voltage) {
         char voltage_str[16];
         snprintf(voltage_str, sizeof(voltage_str), "%.3f", voltage);
         lv_label_set_text(voltage_value, voltage_str);
+    } else {
+        Serial.println("ERROR: voltage_value is null in setVoltage!");
     }
 }
 
@@ -105,6 +110,8 @@ void Widget_DataMonitor::setCurrent(float current) {
         char current_str[16];
         snprintf(current_str, sizeof(current_str), "%.3f", current);
         lv_label_set_text(current_value, current_str);
+    } else {
+        Serial.println("ERROR: current_value is null in setCurrent!");
     }
 }
 
@@ -113,6 +120,8 @@ void Widget_DataMonitor::setPower(float power) {
         char power_str[16];
         snprintf(power_str, sizeof(power_str), "%.3f", power);
         lv_label_set_text(power_value, power_str);
+    } else {
+        Serial.println("ERROR: power_value is null in setPower!");
     }
 }
 

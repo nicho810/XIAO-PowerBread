@@ -17,20 +17,38 @@ void sensorTask(void *pvParameters)
             
             // Prepare message for queue
             SensorDataMessage message;
-            for (int i = 0; i < sizeof(message.data)/sizeof(message.data[0]); i++) {
+            for (int i = 0; i < sizeof(message.data)/sizeof(message.data[0]) && i < cSensorData_tmp.size(); i++) {
                 message.data[i] = cSensorData_tmp[i];
             }
             message.timestamp = xCurrentTime;
             
-            // Send to queue (non-blocking with timeout)
-            if (xQueueOverwrite(sensorDataQueue, &message) != pdTRUE) {
-                // Queue is full, handle accordingly
-                Serial.println("Warning: Sensor data queue full - dropping data");
+            // Send to queue_serial
+            if (xQueueSend(sensorDataQueue_serial, &message, pdMS_TO_TICKS(10)) != pdTRUE) {
+                // Queue is full, try to receive and then send
+                SensorDataMessage oldData;
+                if (xQueueReceive(sensorDataQueue_serial, &oldData, 0) == pdTRUE) {
+                    // Now try to send the new data
+                    if (xQueueSend(sensorDataQueue_serial, &message, pdMS_TO_TICKS(10)) != pdTRUE) {
+                        Serial.println("Warning: Failed to update sensor data queue_serial");
+                    }
+                }
+            }
+
+            // Send to queue_ui
+            if (xQueueSend(sensorDataQueue_ui, &message, pdMS_TO_TICKS(10)) != pdTRUE) {
+                // Queue is full, try to receive and then send
+                SensorDataMessage oldData;
+                if (xQueueReceive(sensorDataQueue_ui, &oldData, 0) == pdTRUE) {
+                    // Now try to send the new data
+                    if (xQueueSend(sensorDataQueue_ui, &message, pdMS_TO_TICKS(10)) != pdTRUE) {
+                        Serial.println("Warning: Failed to update sensor data queue_ui");
+                    }
+                }
             }
             
             xLastWakeTime = xCurrentTime;
         }
-        vTaskDelay(pdMS_TO_TICKS(5));
+        vTaskDelay(pdMS_TO_TICKS(10)); // Increase delay to reduce CPU load
     }
 }
 

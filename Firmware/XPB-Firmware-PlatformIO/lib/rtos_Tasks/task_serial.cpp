@@ -13,7 +13,7 @@ void serialTask(void *pvParameters)
         {
             // Peek at the latest data from queue (non-blocking)
             SensorDataMessage receivedData;
-            if (xQueuePeek(sensorDataQueue, &receivedData, pdMS_TO_TICKS(100)) == pdTRUE) {
+            if (xQueuePeek(sensorDataQueue_serial, &receivedData, pdMS_TO_TICKS(100)) == pdTRUE) {
                 // Process the received data
                 Serial.print("{\"cSensor\":[");
                 for (size_t i = 0; i < sizeof(receivedData.data)/sizeof(receivedData.data[0]); i++) {
