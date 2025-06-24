@@ -6,9 +6,10 @@
 #include <vector>
 #include "CurrentSensor_INA226.h"
 
-
 // Function declarations
 void serialTask(void *pvParameters);
+void readSerialCommands();
+void printSensorData();
 
 // External variable declarations
 extern QueueHandle_t sensorDataQueue_serial;
