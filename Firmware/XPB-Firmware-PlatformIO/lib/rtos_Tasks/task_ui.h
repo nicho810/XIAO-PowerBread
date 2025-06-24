@@ -4,6 +4,8 @@
 #include "Arduino.h"
 #include "boardConfig.h"
 #include "lvgl_ui.h"
+#include "input_ButtonX3.h"
+
 
 extern UI_manager ui_manager;
 extern QueueHandle_t sensorDataQueue_ui;

@@ -4,7 +4,7 @@ void uiTask(void* pvParameters)
 {
     (void)pvParameters;
     TickType_t xLastUpdateTime = 0;
-    const TickType_t xUpdateInterval = pdMS_TO_TICKS(200); // Increase to 200ms
+    const TickType_t xUpdateInterval = pdMS_TO_TICKS(10); // Increase to 200ms
 
     // Initialize UI
     ui_manager.initUI(UI_Mode_DataMonitor);
@@ -12,7 +12,7 @@ void uiTask(void* pvParameters)
     while (1) {
         TickType_t xCurrentTime = xTaskGetTickCount();
         if ((xCurrentTime - xLastUpdateTime) >= xUpdateInterval) {
-            // Receive data from queue (blocking with timeout)
+            // Handle sensor data and update UI
             SensorDataMessage receivedData;
             if (xQueueReceive(sensorDataQueue_ui, &receivedData, pdMS_TO_TICKS(50)) == pdTRUE) {
                 // Process the received data with error handling
@@ -22,6 +22,8 @@ void uiTask(void* pvParameters)
                     Serial.println("ERROR: Exception in UI task updateUI call!");
                 }
             }
+
+            // Handle LVGL events
             lv_task_handler();  // Call lv_task_handler() to handle LVGL events
             xLastUpdateTime = xCurrentTime;
         }

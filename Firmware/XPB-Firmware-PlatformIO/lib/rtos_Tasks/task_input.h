@@ -5,11 +5,6 @@
 #include "boardConfig.h"
 #include "input_ButtonX3.h"
 
-// Queue message structure
-struct ButtonEventMessage {
-    ButtonState_X3 buttonState;
-    uint32_t timestamp;
-};
 
 // Function declarations
 void inputTask(void *pvParameters);

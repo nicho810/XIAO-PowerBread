@@ -13,6 +13,13 @@ class ButtonState_X3
         uint8_t key_shortPressed_value = 0;
 };
 
+// Queue message structure
+struct ButtonEventMessage {
+    ButtonState_X3 buttonState;
+    uint32_t timestamp;
+};
+
+// Input event message structure
 struct inputEventMessage {
     ButtonState_X3 buttonState;
     uint32_t timestamp;

@@ -139,6 +139,10 @@ void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
     {
         uint8_t key_map = 0;
 
+        //Debug print
+        Serial.printf("Button handler: %d\n", message.buttonState.key_shortPressed_value);
+        Serial.flush();
+
         // Map button values to LVGL keys
         switch (message.buttonState.key_shortPressed_value) {
             case 1: key_map = LV_KEY_UP; break;
@@ -149,6 +153,10 @@ void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
         
         data->state = LV_INDEV_STATE_PRESSED;
         data->key = key_map;
+        
+        // Debug: Print the key being sent to LVGL
+        Serial.printf("LVGL key sent: %d\n", key_map);
+        Serial.flush();
     } else {
         // No message in queue, return released state
         data->state = LV_INDEV_STATE_RELEASED;
@@ -156,15 +164,19 @@ void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
     }
 }
 
-
-
 // Key event callback function
 void key_event_cb(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
+    Serial.printf("Event received: %d\n", code); // Debug print
+    Serial.flush();
+    
     if (code == LV_EVENT_KEY)
     {
         uint32_t key = lv_event_get_key(e);
+        Serial.printf("Key event received: %d\n", key); // Debug print
+        Serial.flush();
+        
         switch (key)
         {
         case LV_KEY_UP:
@@ -197,7 +209,20 @@ void setup_container_events(lv_obj_t *container)
     if (g)
     {
         lv_group_add_obj(g, container);
+        Serial.println("Container added to group"); // Debug print
+        Serial.flush();
+    } else {
+        Serial.println("No default group found!"); // Debug print
+        Serial.flush();
     }
+    
     // Add key event handler
     lv_obj_add_event_cb(container, key_event_cb, LV_EVENT_KEY, NULL);
+    Serial.println("Key event callback added to container"); // Debug print
+    Serial.flush();
+    
+    // Focus the container
+    lv_group_focus_obj(container);
+    Serial.println("Container focused"); // Debug print
+    Serial.flush();
 }

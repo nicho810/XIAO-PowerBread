@@ -52,7 +52,9 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
     lv_obj_set_style_radius(base_container, 0, LV_PART_MAIN);
     lv_obj_set_style_border_width(base_container, 0, LV_PART_MAIN);
 
-    
+    // Add event handling to the base container
+    // setup_container_events(base_container);
+
     // Initialize UI based on mode
     switch (mode) {
         case UI_Mode_Config:
