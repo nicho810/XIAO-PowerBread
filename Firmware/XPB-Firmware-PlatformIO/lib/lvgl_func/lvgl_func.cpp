@@ -1,6 +1,5 @@
 #include "lvgl_func.h"
-#include "input_ButtonX3.h"
-#include "task_input.h"
+
 
 extern SemaphoreHandle_t lvglMutex;
 extern ButtonState_X3 buttonState_X3;

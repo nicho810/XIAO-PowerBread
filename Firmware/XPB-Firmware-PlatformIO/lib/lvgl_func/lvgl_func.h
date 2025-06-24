@@ -6,8 +6,11 @@
 #if defined(Proj_XIAOPowerBread)
 #include <LGFX_096_XPB.hpp>
 #elif defined(Proj_XIAOPowerMonitor)
-#endif
 #include <LGFX_114_XPM.hpp>
+#endif
+
+#include "input_ButtonX3.h"
+
 
 // Extern LGFX instance (will be defined elsewhere)
 extern LGFX tft;
