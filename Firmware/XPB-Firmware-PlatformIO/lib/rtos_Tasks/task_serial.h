@@ -10,6 +10,7 @@
 void serialTask(void *pvParameters);
 void readSerialCommands();
 void printSensorData();
+void processATCommand(String command);
 
 // External variable declarations
 extern QueueHandle_t sensorDataQueue_serial;

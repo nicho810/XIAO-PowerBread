@@ -1,4 +1,58 @@
 #include "task_serial.h"
+// #include "configMode.h"
+// #include "sysConfig.h"
+
+// External declarations
+// extern ConfigMode configMode;
+// extern SysConfig sysConfig;
+
+// AT Command processing function
+void processATCommand(String command) {
+    command.trim(); // Remove leading/trailing whitespace
+    
+    // Convert to uppercase for case-insensitive comparison
+    command.toUpperCase();
+    
+    // Basic AT command - just respond with OK
+    if (command == "AT") {
+        Serial.println("OK");
+        return;
+    }
+    
+    // AT+CONFIG command - enter config mode
+    if (command == "AT+CONFIG") {
+        Serial.println("Entering config mode...");
+        // configMode.enterConfigMode();
+        Serial.println("OK");
+        return;
+    }
+    
+    // AT+SET_Serial_Print_Interval command
+    if (command.startsWith("AT+SET_SERIAL_PRINT_INTERVAL+")) {
+        // Extract the value after the +
+        String valueStr = command.substring(28); // Length of "AT+SET_SERIAL_PRINT_INTERVAL+"
+        int value = valueStr.toInt();
+        
+        // Validate the value (0-4 as per sysConfig_user.h)
+        if (value >= 0 && value <= 4) {
+            // Update the configuration
+            // sysConfig.cfg_data.serial_printInterval = value;
+            
+            // Save to EEPROM
+            // sysConfig.saveConfig_to_EEPROM(sysConfig.cfg_data);
+            
+            Serial.print("Serial print interval set to: ");
+            Serial.println(value);
+            Serial.println("OK");
+        } else {
+            Serial.println("ERROR: Invalid value. Use 0-4 (0=1000ms, 1=500ms, 2=100ms, 3=50ms, 4=10ms)");
+        }
+        return;
+    }
+    
+    // Unknown command
+    Serial.println("ERROR: Unknown command");
+}
 
 // Function to read and process serial commands
 void readSerialCommands() {
@@ -22,9 +76,14 @@ void readSerialCommands() {
                 Serial.print("Received command: ");
                 Serial.println(commandBuffer);
                 
-                // Process the command here (you can add command parsing logic later)
-                // For now, just acknowledge receipt
-                Serial.println("Command acknowledged");
+                // Check if it's an AT command
+                if (commandBuffer.startsWith("AT") || commandBuffer.startsWith("at")) {
+                    processATCommand(commandBuffer);
+                } else {
+                    // Process other commands here (you can add command parsing logic later)
+                    // For now, just acknowledge receipt
+                    Serial.println("Command acknowledged");
+                }
                 
                 // Clear the buffer
                 commandBuffer = "";
