@@ -103,20 +103,20 @@ void printSensorData() {
     SensorDataMessage receivedData;
     if (xQueuePeek(sensorDataQueue_serial, &receivedData, pdMS_TO_TICKS(100)) == pdTRUE) {
         // Process the received data
-        Serial.print("{\"cSensor\":[");
+        Serial.print("{\"cS\":[");
         for (size_t i = 0; i < sizeof(receivedData.data)/sizeof(receivedData.data[0]); i++) {
             if (i > 0) {
                 Serial.print(",");
             }
             Serial.print("{\"ch\":");
             Serial.print(i);
-            Serial.print(",\"voltage_mV\":");
+            Serial.print(",\"v_mV\":");
             Serial.print(receivedData.data[i].busVoltage_mV);
-            Serial.print(",\"current_mA\":");
+            Serial.print(",\"c_mA\":");
             Serial.print(receivedData.data[i].current_mA);
-            Serial.print(",\"power_mW\":");
+            Serial.print(",\"p_mW\":");
             Serial.print(receivedData.data[i].power_mW);
-            Serial.print(",\"timestamp\":");
+            Serial.print(",\"ts\":");
             Serial.print(receivedData.timestamp);
             Serial.print("}");
         }
