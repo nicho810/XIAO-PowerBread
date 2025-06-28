@@ -105,6 +105,10 @@ public:
     static uint8_t getMaxValue(ConfigIndex index);
     static bool isToggleType(ConfigIndex index);
 
+    // config data operation methods
+    uint8_t getConfigValue(ConfigIndex index);
+    bool setConfigValue(ConfigIndex index, uint8_t value);
+
 private:
     #if defined(Proj_XIAOPowerBread)
     #elif defined(Proj_XIAOPowerMonitor)
@@ -119,9 +123,6 @@ private:
     uint8_t readFromEEPROM(uint8_t address);
     
     bool validateConfigValue(ConfigIndex index, uint8_t value);
-
-    uint8_t getConfigValue(ConfigIndex index);
-    bool setConfigValue(ConfigIndex index, uint8_t value);
 };
 
 #endif

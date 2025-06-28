@@ -1,10 +1,5 @@
 #include "task_serial.h"
-// #include "configMode.h"
-// #include "sysConfig.h"
 
-// External declarations
-// extern ConfigMode configMode;
-// extern SysConfig sysConfig;
 
 // AT Command processing function
 void processATCommand(String command) {
@@ -21,9 +16,10 @@ void processATCommand(String command) {
     
     // AT+CONFIG command - enter config mode
     if (command == "AT+CONFIG") {
-        Serial.println("Entering config mode...");
-        // configMode.enterConfigMode();
-        Serial.println("OK");
+        Serial.println("> Print config data");
+        sysConfig.loadFromEEPROM();
+        Serial.println(sysConfig.toString());
+        Serial.println("> OK");
         return;
     }
     
@@ -33,17 +29,15 @@ void processATCommand(String command) {
         String valueStr = command.substring(28); // Length of "AT+SET_SERIAL_PRINT_INTERVAL+"
         int value = valueStr.toInt();
         
-        // Validate the value (0-4 as per sysConfig_user.h)
+        // Validate the value (0-4 as per sysConfig_configData.h)
         if (value >= 0 && value <= 4) {
             // Update the configuration
-            // sysConfig.cfg_data.serial_printInterval = value;
+            sysConfig.setConfigValue(ConfigIndex::SERIAL_PRINT_INTERVAL, value);
+            sysConfig.saveToEEPROM();
             
-            // Save to EEPROM
-            // sysConfig.saveConfig_to_EEPROM(sysConfig.cfg_data);
-            
-            Serial.print("Serial print interval set to: ");
+            Serial.print("> Serial print interval set to: ");
             Serial.println(value);
-            Serial.println("OK");
+            Serial.println("> OK");
         } else {
             Serial.println("ERROR: Invalid value. Use 0-4 (0=1000ms, 1=500ms, 2=100ms, 3=50ms, 4=10ms)");
         }

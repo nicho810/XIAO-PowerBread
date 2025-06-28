@@ -1,6 +1,9 @@
 #include <Arduino.h>
 #include "boardConfig.h"
+#include "sysConfig.h"
 
+//sysConfig
+SysConfig sysConfig;
 
 // RTOS Tasks
 #include "task_serial.h"       // serial task
@@ -96,8 +99,15 @@ void setup(void)
     delay(1000);
     Serial.println("==========[Boot Info]===========");
 
-    // Current Sensor Init
+    //Wire Init
     Wire.begin();
+
+    //sysConfig Init
+    sysConfig.initialize(false);
+    Serial.println("SysConfig initialized");
+    Serial.println(sysConfig.toString());
+
+    // Current Sensor Init
     currentSensor_2ch.initialize();
 
     //init LCD
