@@ -3,49 +3,12 @@
 
 // AT Command processing function
 void processATCommand(String command) {
-    command.trim(); // Remove leading/trailing whitespace
-    
-    // Convert to uppercase for case-insensitive comparison
-    command.toUpperCase();
-    
-    // Basic AT command - just respond with OK
-    if (command == "AT") {
-        Serial.println("OK");
-        return;
+    String response;
+    if (atCommand.processCommand(command, response)) {
+        Serial.println(response);
+    } else {
+        Serial.println("ERROR: Unknown command");
     }
-    
-    // AT+CONFIG command - enter config mode
-    if (command == "AT+CONFIG") {
-        Serial.println("> Print config data");
-        sysConfig.loadFromEEPROM();
-        Serial.println(sysConfig.toString());
-        Serial.println("> OK");
-        return;
-    }
-    
-    // AT+SET_Serial_Print_Interval command
-    if (command.startsWith("AT+SET_SERIAL_PRINT_INTERVAL+")) {
-        // Extract the value after the +
-        String valueStr = command.substring(28); // Length of "AT+SET_SERIAL_PRINT_INTERVAL+"
-        int value = valueStr.toInt();
-        
-        // Validate the value (0-4 as per sysConfig_configData.h)
-        if (value >= 0 && value <= 4) {
-            // Update the configuration
-            sysConfig.setConfigValue(ConfigIndex::SERIAL_PRINT_INTERVAL, value);
-            sysConfig.saveToEEPROM();
-            
-            Serial.print("> Serial print interval set to: ");
-            Serial.println(value);
-            Serial.println("> OK");
-        } else {
-            Serial.println("ERROR: Invalid value. Use 0-4 (0=1000ms, 1=500ms, 2=100ms, 3=50ms, 4=10ms)");
-        }
-        return;
-    }
-    
-    // Unknown command
-    Serial.println("ERROR: Unknown command");
 }
 
 // Function to read and process serial commands

@@ -5,6 +5,11 @@
 //sysConfig
 SysConfig sysConfig;
 
+// ATCommand
+#include "ATCommand.h"
+ATCommand atCommand;
+
+
 // RTOS Tasks
 #include "task_serial.h"       // serial task
 #include "task_sensor.h" // sensor update task
