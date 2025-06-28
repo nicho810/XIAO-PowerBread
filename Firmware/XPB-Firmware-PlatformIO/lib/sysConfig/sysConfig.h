@@ -20,23 +20,32 @@ struct ConfigAddresses {
     static constexpr uint8_t CFG_VERSION = 0;
     static constexpr uint8_t DEFAULT_MODE = 1;
     static constexpr uint8_t DEFAULT_CHANNEL = 2;
-    static constexpr uint8_t SHUNT_RESISTOR_CHA = 3;
-    static constexpr uint8_t SHUNT_RESISTOR_CHB = 4;
-    static constexpr uint8_t SERIAL_ENABLE = 5;
-    static constexpr uint8_t SERIAL_BAUDRATE = 6;
-    static constexpr uint8_t SERIAL_MODE = 7;
-    static constexpr uint8_t SERIAL_PRINT_INTERVAL = 8;
-    static constexpr uint8_t CHART_UPDATE_INTERVAL = 9;
-    static constexpr uint8_t CHART_SCALE_MODE = 10;
-    static constexpr uint8_t CHART_SCALE = 11;
+    static constexpr uint8_t SHUNT_RESISTOR_CH1 = 3;
+    static constexpr uint8_t SHUNT_RESISTOR_CH2 = 4;
+    static constexpr uint8_t SHUNT_RESISTOR_CH3 = 5;
+    static constexpr uint8_t SHUNT_RESISTOR_CH4 = 6;
+    static constexpr uint8_t SERIAL_ENABLE = 7;
+    static constexpr uint8_t SERIAL_BAUDRATE = 8;
+    static constexpr uint8_t SERIAL_MODE = 9;
+    static constexpr uint8_t SERIAL_PRINT_INTERVAL = 10;
+    static constexpr uint8_t CHART_UPDATE_INTERVAL = 11;
+    static constexpr uint8_t CHART_SCALE_MODE = 12;
+    static constexpr uint8_t CHART_SCALE = 13;
+    static constexpr uint8_t WIFI_ENABLE = 14;
+    static constexpr uint8_t WIFI_SSID = 15;  //Max 32 characters, Address is from 15 to 46
+    static constexpr uint8_t WIFI_PASSWORD = 47;  //Max 32 characters, Address is from 47 to 78
+    static constexpr uint8_t WEB_MODE = 79;
+    static constexpr uint8_t WEB_INTERVAL = 80;
 };
 
 // Configuration index enum for type safety
 enum class ConfigIndex : uint8_t {
     DEFAULT_MODE = 0,
     DEFAULT_CHANNEL,
-    SHUNT_RESISTOR_CHA,
-    SHUNT_RESISTOR_CHB,
+    SHUNT_RESISTOR_CH1,
+    SHUNT_RESISTOR_CH2,
+    SHUNT_RESISTOR_CH3,
+    SHUNT_RESISTOR_CH4,
     SERIAL_ENABLE,
     SERIAL_BAUDRATE,
     SERIAL_MODE,
@@ -44,7 +53,11 @@ enum class ConfigIndex : uint8_t {
     CHART_UPDATE_INTERVAL,
     CHART_SCALE_MODE,
     CHART_SCALE,
-    COUNT
+    WIFI_ENABLE,
+    WIFI_SSID,
+    WIFI_PASSWORD,
+    WEB_MODE,
+    WEB_INTERVAL,
 };
 
 // Configuration names for UI display
@@ -53,15 +66,22 @@ struct ConfigNames {
     static constexpr const char* NAMES[] = {
         "def_mode",
         "def_ch",
-        "shunt_chA",
-        "shunt_chB",
+        "shunt_ch1",
+        "shunt_ch2",
+        "shunt_ch3",
+        "shunt_ch4",
         "uart_en",
         "uart_baud",
         "uart_mode",
         "uart_intv",
         "chart_intv",
         "chart_M",
-        "chart_SC"
+        "chart_SC",
+        "wifi_en",
+        "wifi_ssid",
+        "wifi_pwd",
+        "web_mode",
+        "web_intv"
     };
     
     static const char* getName(ConfigIndex index) {
@@ -106,8 +126,10 @@ public:
     static bool isToggleType(ConfigIndex index);
 
     // config data operation methods
-    uint8_t getConfigValue(ConfigIndex index);
-    bool setConfigValue(ConfigIndex index, uint8_t value);
+    uint8_t getConfigValue(ConfigIndex index); //for uint8_t type config data
+    void getConfigValue(ConfigIndex index, String& value); //for string type config data: wifiSSID, wifiPassword
+    bool setConfigValue(ConfigIndex index, uint8_t value); //for uint8_t type config data
+    bool setConfigValue(ConfigIndex index, String value);  //for string type config data: wifiSSID, wifiPassword
 
 private:
     #if defined(Proj_XIAOPowerBread)
@@ -121,7 +143,8 @@ private:
     // Helper methods
     bool writeToEEPROM(uint8_t address, uint8_t value);
     uint8_t readFromEEPROM(uint8_t address);
-    
+    bool writeStringToEEPROM(uint8_t address, String& str);
+    String readStringFromEEPROM(uint8_t address);
     bool validateConfigValue(ConfigIndex index, uint8_t value);
 };
 

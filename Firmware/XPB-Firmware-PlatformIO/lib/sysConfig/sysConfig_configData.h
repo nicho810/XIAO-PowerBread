@@ -6,12 +6,12 @@
 
 // Configuration version constants
 static constexpr uint8_t CONFIG_VERSION_UNINITIALIZED = 0xFF;
-static constexpr uint8_t CONFIG_VERSION_CURRENT = 2;
+static constexpr uint8_t CONFIG_VERSION_CURRENT = 3;
 
 
 // Configuration limits
-static constexpr uint8_t MAX_MODE = 2;
-static constexpr uint8_t MAX_CHANNEL = 1;
+static constexpr uint8_t MAX_MODE = 3;
+static constexpr uint8_t MAX_CHANNEL = 4;
 static constexpr uint8_t MAX_SHUNT_RESISTOR = 255;
 static constexpr uint8_t MAX_SERIAL_BAUDRATE = 0;
 static constexpr uint8_t MAX_SERIAL_MODE = 1;
@@ -20,6 +20,12 @@ static constexpr uint8_t MAX_CHART_INTERVAL = 4;
 static constexpr uint8_t MAX_CHART_SCALE_MODE = 1;
 static constexpr uint8_t MAX_CHART_SCALE = 255;
 static constexpr uint8_t MIN_CHART_SCALE = 1;
+static constexpr uint8_t MAX_WIFI_ENABLE = 1;
+static constexpr uint8_t MAX_WIFI_SSID = 32;
+static constexpr uint8_t MAX_WIFI_PASSWORD = 32;
+static constexpr uint8_t MAX_WEB_MODE = 2;
+static constexpr uint8_t MAX_WEB_INTERVAL = 4;
+
 
 // Configuration data structure
 struct ConfigData {
@@ -48,6 +54,8 @@ struct ConfigData {
     */
     uint8_t shuntResistorCH1 = 50;
     uint8_t shuntResistorCH2 = 50;
+    uint8_t shuntResistorCH3 = 50;
+    uint8_t shuntResistorCH4 = 50;
 
     /* Serial communication control:
     * 0-disable: No serial output
@@ -87,7 +95,38 @@ struct ConfigData {
     */
     uint8_t chartScaleMode = 0;
     uint8_t chartScale = 5;
-    
+
+    /* WiFi connection control:
+    * 0-disable: No WiFi connection
+    * 1-enable: Enable WiFi connection
+    */
+    uint8_t wifiEnable = 0;
+
+    /* WiFi SSID:
+    * 1-32 characters
+    */
+    String wifiSSID = "Example SSID";
+
+    /* WiFi password:
+    * 8-32 characters
+    */
+    String wifiPassword = "Example password";
+
+    /* Web server mode:
+    * 0-disable: No web server
+    * 1-enable: WebSocket
+    */
+    uint8_t webMode = 1;
+
+    /* Web server interval:
+    * 0-1000ms (1 second)
+    * 1-500ms (0.5 second)
+    * 2-100ms (0.1 second)
+    * 3-50ms (0.05 second)
+    * 4-10ms (0.01 second)
+    */
+    uint8_t webInterval = 0;
+
     // Validation methods
     bool isValid() const;
     void sanitize();
