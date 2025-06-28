@@ -125,6 +125,7 @@ void printSensorData() {
         // No data received within timeout
         Serial.println("{\"status\":\"no_sensor_data\"}");
     }
+    //Example output: {"cS":[{"ch":0,"v_mV":1234,"c_mA":123,"p_mW":12345,"ts":1234567890},{"ch":1,"v_mV":1234,"c_mA":123,"p_mW":12345,"ts":1234567890}]}
 }
 
 void serialTask(void *pvParameters)
