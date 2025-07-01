@@ -13,7 +13,6 @@ ATCommand atCommand;
 // RTOS Tasks
 #include "task_serial.h"       // serial task
 #include "task_sensor.h" // sensor update task
-#include "task_lvgl.h"   // lvgl task
 #include "task_input.h"  // input task
 #include "task_ui.h"    // ui task
 
@@ -173,18 +172,6 @@ void setup(void)
     }
     Serial.println("> Sensor task created successfully");
 
-    //Dont need this task for now, lvgl task is handled by ui task
-    /*
-    // Create lvgl task
-    taskHandle = xTaskCreateStatic(lvglTask, "Lvgl_Task", 
-        STACK_SIZE_LVGL, NULL, TASK_PRIORITY_LVGL, 
-        xStack_Lvgl, &xTaskBuffer_Lvgl);
-    if (taskHandle == nullptr) {
-        Serial.println("ERROR: Failed to create lvgl task!");
-        while(1) delay(100);
-    }
-    Serial.println("> Lvgl task created successfully");
-    */
 
     // Create UI task
     taskHandle = xTaskCreateStatic(uiTask, "UI_Task", 

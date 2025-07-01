@@ -92,11 +92,10 @@
 
 //INA226 x2
 #define currentSensor_0_address 0x40
-#define currentSensor_0_shuntR_0 0.010 //mOhm
+#define currentSensor_0_shuntR_0 0.010 //10 mOhm
 
 #define currentSensor_1_address 0x41
-#define currentSensor_1_shuntR_0 0.010 //mOhm
-
+#define currentSensor_1_shuntR_0 0.010 //10 mOhm
 
 
 /* Pin definition for each board */
