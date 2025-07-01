@@ -4,19 +4,19 @@
 UI_manager::UI_manager()
 {
     current_UI_mode = UI_Mode_DataMonitor; //set default mode
-    dataMonitor_A = nullptr;
-    dataMonitor_B = nullptr;
+    dataMonitor_1 = nullptr;
+    dataMonitor_2 = nullptr;
 }
 
 UI_manager::~UI_manager()
 {
-    if (dataMonitor_A) {
-        delete dataMonitor_A;
-        dataMonitor_A = nullptr;
+    if (dataMonitor_1) {
+        delete dataMonitor_1;
+        dataMonitor_1 = nullptr;
     }
-    if (dataMonitor_B) {
-        delete dataMonitor_B;
-        dataMonitor_B = nullptr;
+    if (dataMonitor_2) {
+        delete dataMonitor_2;
+        dataMonitor_2 = nullptr;
     }
 }
 
@@ -63,29 +63,29 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
         case UI_Mode_DataMonitor:
             Serial.println("> Initializing Data Monitor UI");
             // Create new instances and store them as member variables
-            if (dataMonitor_A) {
-                delete dataMonitor_A;
-                dataMonitor_A = nullptr;
+            if (dataMonitor_1) {
+                delete dataMonitor_1;
+                dataMonitor_1 = nullptr;
             }
-            if (dataMonitor_B) {
-                delete dataMonitor_B;
-                dataMonitor_B = nullptr;
+            if (dataMonitor_2) {
+                delete dataMonitor_2;
+                dataMonitor_2 = nullptr;
             }
             
             // Create widgets with proper parent container and error checking
             try {
-                dataMonitor_A = new Widget_DataMonitor(0, 41, "Channel A", xpb_color_ChannelA, base_container);
-                if (!dataMonitor_A) {
+                dataMonitor_1 = new Widget_DataMonitor(0, 41, "Channel 1", xpb_color_ChannelA, base_container);
+                if (!dataMonitor_1) {
                     Serial.println("ERROR: Failed to create Channel A monitor!");
                     xSemaphoreGive(lvglMutex);
                     return;
                 }
                 
-                dataMonitor_B = new Widget_DataMonitor(0, -41, "Channel B", xpb_color_ChannelB, base_container);
-                if (!dataMonitor_B) {
+                dataMonitor_2 = new Widget_DataMonitor(0, -41, "Channel 2", xpb_color_ChannelB, base_container);
+                if (!dataMonitor_2) {
                     Serial.println("ERROR: Failed to create Channel B monitor!");
-                    delete dataMonitor_A;
-                    dataMonitor_A = nullptr;
+                    delete dataMonitor_1;
+                    dataMonitor_1 = nullptr;
                     xSemaphoreGive(lvglMutex);
                     return;
                 }
@@ -93,23 +93,62 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
                 Serial.println("> Data Monitor widgets created successfully");
             } catch (...) {
                 Serial.println("ERROR: Exception during widget creation!");
-                if (dataMonitor_A) {
-                    delete dataMonitor_A;
-                    dataMonitor_A = nullptr;
+                if (dataMonitor_1) {
+                    delete dataMonitor_1;
+                    dataMonitor_1 = nullptr;
                 }
-                if (dataMonitor_B) {
-                    delete dataMonitor_B;
-                    dataMonitor_B = nullptr;
+                if (dataMonitor_2) {
+                    delete dataMonitor_2;
+                    dataMonitor_2 = nullptr;
                 }
                 xSemaphoreGive(lvglMutex);
                 return;
             }
             break;
             
-        case UI_Mode_DataChart:
+        case UI_Mode_DataChart_1:
+            Serial.println("> Initializing Data Chart UI #1");
+            // Create new instances and store them as member variables
+            if (dataMonitor_1) {
+                delete dataMonitor_1;
+                dataMonitor_1 = nullptr;
+            }
+            if (dataChart_1) {
+                delete dataChart_1;
+                dataChart_1 = nullptr;
+            }
+            // Create widgets with proper parent container and error checking
+            try {
+                dataMonitor_1 = new Widget_DataMonitor(0, -41, "Channel 1", xpb_color_ChannelA, base_container);
+                if (!dataMonitor_1) {
+                    Serial.println("ERROR: Failed to create Channel A monitor!");
+                    xSemaphoreGive(lvglMutex);
+                    return;
+                }
+                
+                dataChart_1 = new Widget_DataChart(0, 41, xpb_color_ChannelA, xpb_color_ChannelA_dark);
+                if (!dataChart_1) {
+                    Serial.println("ERROR: Failed to create Channel 1 chart!");
+                    xSemaphoreGive(lvglMutex);
+                    return;
+                }
+                Serial.println("> Data Monitor and Chart widgets created successfully");
+            } catch (...) {
+                Serial.println("ERROR: Exception during widget creation!");
+                if (dataMonitor_1) {
+                    delete dataMonitor_1;
+                    dataMonitor_1 = nullptr;
+                }
+                if (dataChart_1) {
+                    delete dataChart_1;
+                    dataChart_1 = nullptr;
+                }
+                xSemaphoreGive(lvglMutex);
+                return;
+            }
             break;
             
-        case UI_Mode_DataCount:
+        case UI_Mode_DataCount_1:
             break;
             
         default:
@@ -122,6 +161,9 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
     if (disp) {
         lv_refr_now(disp);
     }
+
+    // Set the previous mode
+    setPreviousMode(mode);
     
     xSemaphoreGive(lvglMutex);
 }
@@ -161,7 +203,7 @@ void UI_manager::updateUI(UI_Mode mode, SensorDataMessage sensorDataMessage, lv_
             
         case UI_Mode_DataMonitor:
             // Update monitor data for both channels with proper unit handling
-            if (dataMonitor_A && dataMonitor_B) {
+            if (dataMonitor_1 && dataMonitor_2) {
                 // Convert mV to V for voltage display
                 float voltage_A = sensorDataMessage.data[0].busVoltage_mV / 1000.0f;
                 float voltage_B = sensorDataMessage.data[1].busVoltage_mV / 1000.0f;
@@ -175,26 +217,43 @@ void UI_manager::updateUI(UI_Mode mode, SensorDataMessage sensorDataMessage, lv_
                 float power_B = sensorDataMessage.data[1].power_mW;
                 
                 // Update with null checks and error handling
-                if (dataMonitor_A->getContainer() && lv_obj_is_valid(dataMonitor_A->getContainer())) {
-                    dataMonitor_A->setVoltage(voltage_A);
-                    dataMonitor_A->setCurrent(current_A);
-                    dataMonitor_A->setPower(power_A);
+                if (dataMonitor_1->getContainer() && lv_obj_is_valid(dataMonitor_1->getContainer())) {
+                    dataMonitor_1->setVoltage(voltage_A);
+                    dataMonitor_1->setCurrent(current_A);
+                    dataMonitor_1->setPower(power_A);
                 }
                 
-                if (dataMonitor_B->getContainer() && lv_obj_is_valid(dataMonitor_B->getContainer())) {
-                    dataMonitor_B->setVoltage(voltage_B);
-                    dataMonitor_B->setCurrent(current_B);
-                    dataMonitor_B->setPower(power_B);
+                if (dataMonitor_2->getContainer() && lv_obj_is_valid(dataMonitor_2->getContainer())) {
+                    dataMonitor_2->setVoltage(voltage_B);
+                    dataMonitor_2->setCurrent(current_B);
+                    dataMonitor_2->setPower(power_B);
                 }
             }
             break;
             
-        case UI_Mode_DataChart:
+        case UI_Mode_DataChart_1:
             // Update chart data for current channel
-            // update_chart_data(container, highLightChannel, latestSensorData, 0.0f, 0);
+            if (dataMonitor_1 && dataChart_1) {
+                // Update monitor data for channel 1
+                float voltage_1 = sensorDataMessage.data[0].busVoltage_mV / 1000.0f;
+                float current_1 = sensorDataMessage.data[0].current_mA;
+                float power_1 = sensorDataMessage.data[0].power_mW;
+                if (dataMonitor_1->getContainer() && lv_obj_is_valid(dataMonitor_1->getContainer())) {
+                    dataMonitor_1->setVoltage(voltage_1);
+                    dataMonitor_1->setCurrent(current_1);
+                    dataMonitor_1->setPower(power_1);
+                }
+                // Update chart data for channel 1
+                if (dataChart_1->getSeries() && lv_obj_is_valid(dataChart_1->getContainer())) {
+                    dataChart_1->addDataPoint(current_1);
+                }
+            }
+            else {
+                Serial.println("ERROR: Data Monitor or Chart not found!");
+            }
             break;
             
-        case UI_Mode_DataCount:
+        case UI_Mode_DataCount_1:
             // Update count data for current channel
             // update_count_data(container, highLightChannel, latestSensorData, 0.0f, 0);
             break;
@@ -210,7 +269,7 @@ void UI_manager::switch_UI(UI_Mode mode)
 {
     if (mode != current_UI_mode) {
         Serial.printf("> Switching UI from mode %d to mode %d\n", current_UI_mode, mode);
-        initUI(mode);
+        current_UI_mode = mode;
     }
 }
 /*
@@ -233,8 +292,8 @@ void dataMonitor_initUI(lv_obj_t *ui_container, uint8_t channel, DualChannelData
     }
 
     // Store monitors as static to prevent deallocation
-    static lv_obj_t *dataMonitor_A = NULL;
-    static lv_obj_t *dataMonitor_B = NULL;
+    static lv_obj_t *dataMonitor_1 = NULL;
+    static lv_obj_t *dataMonitor_2 = NULL;
 
     // Clear existing objects but keep the container
     lv_obj_clean(ui_container);
@@ -243,8 +302,8 @@ void dataMonitor_initUI(lv_obj_t *ui_container, uint8_t channel, DualChannelData
     Serial.flush();
 
     // Create Channel A monitor with error checking
-    dataMonitor_A = widget_DataMonitor_create(0, 41, "Channel A", xpb_color_ChannelA);
-    if (!dataMonitor_A || !lv_obj_is_valid(dataMonitor_A)) {
+    dataMonitor_1 = widget_DataMonitor_create(0, 41, "Channel A", xpb_color_ChannelA);
+    if (!dataMonitor_1 || !lv_obj_is_valid(dataMonitor_1)) {
         Serial.println("ERROR: Failed to create Channel A monitor!");
         ui_initialization_in_progress = false;
         return;
@@ -254,22 +313,22 @@ void dataMonitor_initUI(lv_obj_t *ui_container, uint8_t channel, DualChannelData
     Serial.flush();
 
     // Create Channel B monitor with error checking
-    dataMonitor_B = widget_DataMonitor_create(0, -41, "Channel B", xpb_color_ChannelB);
-    if (!dataMonitor_B || !lv_obj_is_valid(dataMonitor_B)) {
+    dataMonitor_2 = widget_DataMonitor_create(0, -41, "Channel B", xpb_color_ChannelB);
+    if (!dataMonitor_2 || !lv_obj_is_valid(dataMonitor_2)) {
         Serial.println("ERROR: Failed to create Channel B monitor!");
         ui_initialization_in_progress = false;
         return;
     }
 
     // Set parents with validation
-    if (lv_obj_is_valid(ui_container) && lv_obj_is_valid(dataMonitor_A)) {
-        lv_obj_set_parent(dataMonitor_A, ui_container);
+    if (lv_obj_is_valid(ui_container) && lv_obj_is_valid(dataMonitor_1)) {
+        lv_obj_set_parent(dataMonitor_1, ui_container);
         Serial.println("Channel A monitor parented");
         Serial.flush();
     }
 
-    if (lv_obj_is_valid(ui_container) && lv_obj_is_valid(dataMonitor_B)) {
-        lv_obj_set_parent(dataMonitor_B, ui_container);
+    if (lv_obj_is_valid(ui_container) && lv_obj_is_valid(dataMonitor_2)) {
+        lv_obj_set_parent(dataMonitor_2, ui_container);
         Serial.println("Channel B monitor parented");
         Serial.flush();
     }

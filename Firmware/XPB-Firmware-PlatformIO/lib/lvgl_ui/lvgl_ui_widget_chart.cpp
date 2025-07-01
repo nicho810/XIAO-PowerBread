@@ -2,11 +2,14 @@
 
 
 // Data Chart Widget Implementation
-Widget_DataChart::Widget_DataChart(uint16_t x, uint16_t y, lv_color_t color, lv_color_t color_dark) 
+Widget_DataChart::Widget_DataChart(uint16_t x, uint16_t y, lv_color_t color, lv_color_t color_dark, lv_obj_t* parent) 
     : Widget_Base(x, y, color, color_dark), chart(nullptr), series(nullptr) {
-    
+
+    // Use provided parent or default to screen
+    lv_obj_t* parent_obj = parent ? parent : lv_scr_act();
+
     // Create container
-    container = lv_obj_create(lv_scr_act());
+    container = lv_obj_create(parent_obj);
     lv_obj_clear_flag(container, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_size(container, 78, 78);
     lv_obj_align(container, LV_ALIGN_CENTER, x, y);

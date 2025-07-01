@@ -7,6 +7,8 @@
 #define screen_height 160
 
 //INA3221
+#define currentSensor_TotalChannel 2 //2 channel, only use 2 channel for this project
+
 #define currentSensor_0_address 0x40
 #define currentSensor_0_shuntR_0 0.050 //mOhm
 #define currentSensor_0_shuntR_1 0.050 //mOhm
@@ -91,11 +93,15 @@
 #define screen_height 240
 
 //INA226 x2
+#define currentSensor_TotalChannel 2 //2 channel
+
 #define currentSensor_0_address 0x40
 #define currentSensor_0_shuntR_0 0.010 //10 mOhm
 
 #define currentSensor_1_address 0x41
 #define currentSensor_1_shuntR_0 0.010 //10 mOhm
+
+
 
 
 /* Pin definition for each board */

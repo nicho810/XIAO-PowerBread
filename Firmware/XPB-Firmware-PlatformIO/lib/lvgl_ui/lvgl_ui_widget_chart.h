@@ -11,7 +11,7 @@ private:
     lv_chart_series_t* series;
 
 public:
-    Widget_DataChart(uint16_t x, uint16_t y, lv_color_t color, lv_color_t color_dark = xpb_color_Background);
+    Widget_DataChart(uint16_t x, uint16_t y, lv_color_t color, lv_color_t color_dark = xpb_color_Background, lv_obj_t* parent = nullptr);
     
     void addDataPoint(int32_t value);
     void setRange(int32_t min, int32_t max);

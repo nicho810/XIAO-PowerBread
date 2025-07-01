@@ -7,6 +7,7 @@ extern InputButtonX3 input_buttonX3;
 extern lv_indev_drv_t indev_drv;
 extern lv_obj_t *ui_container;
 extern QueueHandle_t buttonEventQueue;
+// extern UI_manager ui_manager;
 
 
 void lvgl_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -139,8 +140,8 @@ void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
         uint8_t key_map = 0;
 
         //Debug print
-        Serial.printf("Button handler: %d\n", message.buttonState.key_shortPressed_value);
-        Serial.flush();
+        // Serial.printf("Button handler: %d\n", message.buttonState.key_shortPressed_value);
+        // Serial.flush();
 
         // Map button values to LVGL keys
         switch (message.buttonState.key_shortPressed_value) {
@@ -154,8 +155,8 @@ void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
         data->key = key_map;
         
         // Debug: Print the key being sent to LVGL
-        Serial.printf("LVGL key sent: %d\n", key_map);
-        Serial.flush();
+        // Serial.printf("LVGL key sent: %d\n", key_map);
+        // Serial.flush();
     } else {
         // No message in queue, return released state
         data->state = LV_INDEV_STATE_RELEASED;
@@ -167,25 +168,35 @@ void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
 void key_event_cb(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
-    Serial.printf("Event received: %d\n", code); // Debug print
-    Serial.flush();
+    // Serial.printf("Event received: %d\n", code); // Debug print
+    // Serial.flush();
     
     if (code == LV_EVENT_KEY)
     {
         uint32_t key = lv_event_get_key(e);
-        Serial.printf("Key event received: %d\n", key); // Debug print
-        Serial.flush();
+        // Serial.printf("Key event received: %d\n", key); // Debug print
+        // Serial.flush();
         
         switch (key)
         {
         case LV_KEY_UP:
             Serial.println("UP key pressed");
             Serial.flush();
+            // if (ui_manager.getCurrentMode() == UI_Mode_DataMonitor) {
+            //     ui_manager.switch_UI(UI_Mode_DataChart_1);
+            // } else {
+            //     ui_manager.switch_UI(UI_Mode_DataMonitor);
+            // }
             break;
 
         case LV_KEY_DOWN:
             Serial.println("DOWN key pressed");
             Serial.flush();
+            // if (ui_manager.getCurrentMode() == UI_Mode_DataChart_1) {
+            //     ui_manager.switch_UI(UI_Mode_DataMonitor);
+            // } else {
+            //     ui_manager.switch_UI(UI_Mode_DataChart_1);
+            // }
             break;
 
         case LV_KEY_ENTER:
