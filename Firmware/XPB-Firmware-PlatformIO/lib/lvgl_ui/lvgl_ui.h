@@ -9,7 +9,7 @@
 #include "lvgl_ui_widget_chart.h"
 // #include "lvgl_ui_widget_count.h"
 // #include "lvgl_ui_widget_config.h"
-#include "lvgl_func.h"
+// #include "lvgl_func.h"
 
 extern SemaphoreHandle_t lvglMutex;
 

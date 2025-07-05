@@ -1,4 +1,5 @@
 #include "lvgl_func.h"
+// #include "lvgl_ui.h"
 
 
 extern SemaphoreHandle_t lvglMutex;
@@ -7,7 +8,9 @@ extern InputButtonX3 input_buttonX3;
 extern lv_indev_drv_t indev_drv;
 extern lv_obj_t *ui_container;
 extern QueueHandle_t buttonEventQueue;
-// extern UI_manager ui_manager;
+extern UI_manager ui_manager;
+extern UI_Mode current_UI_mode;
+
 
 
 void lvgl_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -182,21 +185,21 @@ void key_event_cb(lv_event_t *e)
         case LV_KEY_UP:
             Serial.println("UP key pressed");
             Serial.flush();
-            // if (ui_manager.getCurrentMode() == UI_Mode_DataMonitor) {
-            //     ui_manager.switch_UI(UI_Mode_DataChart_1);
-            // } else {
-            //     ui_manager.switch_UI(UI_Mode_DataMonitor);
-            // }
+            if (ui_manager.getCurrentMode() == UI_Mode_DataMonitor) {
+                ui_manager.switch_UI(UI_Mode_DataChart_1);
+            } else {
+                ui_manager.switch_UI(UI_Mode_DataMonitor);
+            }
             break;
 
         case LV_KEY_DOWN:
             Serial.println("DOWN key pressed");
             Serial.flush();
-            // if (ui_manager.getCurrentMode() == UI_Mode_DataChart_1) {
-            //     ui_manager.switch_UI(UI_Mode_DataMonitor);
-            // } else {
-            //     ui_manager.switch_UI(UI_Mode_DataChart_1);
-            // }
+            if (ui_manager.getCurrentMode() == UI_Mode_DataChart_1) {
+                ui_manager.switch_UI(UI_Mode_DataMonitor);
+            } else {
+                ui_manager.switch_UI(UI_Mode_DataChart_1);
+            }
             break;
 
         case LV_KEY_ENTER:

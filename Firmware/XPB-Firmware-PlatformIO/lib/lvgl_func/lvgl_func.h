@@ -1,6 +1,8 @@
 #ifndef LVGL_FUNC_H
 #define LVGL_FUNC_H
 
+#include "lvgl_ui.h"
+
 #include <lvgl.h>
 #include <LovyanGFX.h>
 #if defined(Proj_XIAOPowerBread)
@@ -10,7 +12,11 @@
 #endif
 
 #include "input_ButtonX3.h"
-// #include "lvgl_ui.h"
+
+//  // it cause circular dependency, dont know how to fix it yet
+// class UI_manager; // forward declaration
+// enum UI_Mode; // forward declaration
+
 
 
 // Extern LGFX instance (will be defined elsewhere)
