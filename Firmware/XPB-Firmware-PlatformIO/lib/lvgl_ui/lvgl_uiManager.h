@@ -10,13 +10,8 @@
 #include "lvgl_keyboard.h"
 #include "lvgl_ui_widget_monitor.h"
 #include "lvgl_ui_widget_chart.h"
-// #include "lvgl_ui_widget_count.h"
+#include "lvgl_ui_widget_count.h"
 // #include "lvgl_ui_widget_config.h"
-
-
-
-
-
 
 
 // UI manager class
@@ -28,6 +23,8 @@ class UI_manager{
         Widget_DataMonitor* dataMonitor_2;
         Widget_DataChart* dataChart_1;
         Widget_DataChart* dataChart_2;
+        Widget_DataCount* dataCount_1;
+        Widget_DataCount* dataCount_2;
 
     public:
         UI_manager();

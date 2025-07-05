@@ -19,8 +19,4 @@ public:
     lv_chart_series_t* getSeries() const { return series; }
 };
 
-
-
-
-
 #endif

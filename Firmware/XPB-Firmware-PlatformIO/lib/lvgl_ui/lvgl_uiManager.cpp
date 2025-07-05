@@ -11,6 +11,8 @@ UI_manager::UI_manager()
     dataMonitor_2 = nullptr;
     dataChart_1 = nullptr;
     dataChart_2 = nullptr;
+    dataCount_1 = nullptr;
+    dataCount_2 = nullptr;
 }
 
 UI_manager::~UI_manager()
@@ -30,6 +32,14 @@ UI_manager::~UI_manager()
     if (dataChart_2) {
         delete dataChart_2;
         dataChart_2 = nullptr;
+    }
+    if (dataCount_1) {
+        delete dataCount_1;
+        dataCount_1 = nullptr;
+    }
+    if (dataCount_2) {
+        delete dataCount_2;
+        dataCount_2 = nullptr;
     }
 }
 
@@ -203,6 +213,45 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
             }
             break;
         case UI_Mode_DataCount_1:
+            Serial.println("> Initializing Data Count UI #1");
+            // Create new instances and store them as member variables
+            if (dataMonitor_1) {
+                delete dataMonitor_1;
+                dataMonitor_1 = nullptr;
+            }
+            if (dataCount_1) {
+                delete dataCount_1;
+                dataCount_1 = nullptr;
+            }
+            // Create widgets with proper parent container and error checking
+            try {
+                dataMonitor_1 = new Widget_DataMonitor(0, -41, "Channel 1", xpb_color_ChannelA, base_container);
+                if (!dataMonitor_1) {
+                    Serial.println("ERROR: Failed to create Channel A monitor!");
+                    xSemaphoreGive(lvglMutex);
+                    return;
+                }
+                
+                dataCount_1 = new Widget_DataCount(0, 41, xpb_color_ChannelA, xpb_color_ChannelA_dark, base_container);
+                if (!dataCount_1) {
+                    Serial.println("ERROR: Failed to create Channel 1 count!");
+                    xSemaphoreGive(lvglMutex);
+                    return;
+                }
+                Serial.println("> Data Monitor and Count widgets created successfully");
+            } catch (...) {
+                Serial.println("ERROR: Exception during widget creation!");
+                if (dataMonitor_1) {
+                    delete dataMonitor_1;
+                    dataMonitor_1 = nullptr;
+                }
+                if (dataCount_1) {
+                    delete dataCount_1;
+                    dataCount_1 = nullptr;
+                }
+                xSemaphoreGive(lvglMutex);
+                return;
+            }
             break;
             
         default:
@@ -359,6 +408,9 @@ void UI_manager::switch_UI_next()
             switch_UI(UI_Mode_DataChart_2);
             break;
         case UI_Mode_DataChart_2:
+            switch_UI(UI_Mode_DataCount_1);
+            break;
+        case UI_Mode_DataCount_1:
             switch_UI(UI_Mode_DataMonitor);
             break;
     }
@@ -366,8 +418,11 @@ void UI_manager::switch_UI_next()
 
 void UI_manager::switch_UI_prev()
 {
-    //Switch order: DataChart_2 -> DataChart_1 -> DataMonitor
+    //Switch order: DataCount_1 -> DataChart_2 -> DataChart_1 -> DataMonitor
     switch (current_UI_mode) {
+        case UI_Mode_DataCount_1:
+            switch_UI(UI_Mode_DataChart_2);
+            break;
         case UI_Mode_DataChart_2:
             switch_UI(UI_Mode_DataChart_1);
             break;
@@ -375,8 +430,9 @@ void UI_manager::switch_UI_prev()
             switch_UI(UI_Mode_DataMonitor);
             break;
         case UI_Mode_DataMonitor:
-            switch_UI(UI_Mode_DataChart_2);
+            switch_UI(UI_Mode_DataCount_1);
             break;
+
     }
 }
 

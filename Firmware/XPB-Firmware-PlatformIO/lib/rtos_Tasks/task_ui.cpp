@@ -8,7 +8,7 @@ void uiTask(void* pvParameters)
 
     // Initialize UI
     // ui_manager.initUI(UI_Mode_DataMonitor);
-    ui_manager.initUI(UI_Mode_DataChart_1);
+    ui_manager.initUI(UI_Mode_DataCount_1);
 
 
     while (1) {
