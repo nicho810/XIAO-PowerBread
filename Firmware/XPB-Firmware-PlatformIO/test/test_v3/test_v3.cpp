@@ -35,7 +35,7 @@ cSensor_2ch_ina226 currentSensor_2ch(currentSensor_0_address, currentSensor_1_ad
 #include <LGFX_114_XPM.hpp>
 #endif
 LGFX tft;// Create LGFX instance
-#include "lvgl_func.h"
+#include "lvgl_ui.h"
 lv_obj_t *ui_container = NULL;   // Global container for the chart UI
 
 // Input Device
@@ -115,7 +115,7 @@ void setup(void)
     currentSensor_2ch.initialize();
 
     //init LCD
-    lvgl_init();
+    lvgl_init(ui_container);
 
     // Create tasks with proper return type checking
     TaskHandle_t taskHandle;

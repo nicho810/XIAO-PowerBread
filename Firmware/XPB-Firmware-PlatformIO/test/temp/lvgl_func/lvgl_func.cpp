@@ -2,15 +2,8 @@
 // #include "lvgl_ui.h"
 
 
-extern SemaphoreHandle_t lvglMutex;
-extern ButtonState_X3 buttonState_X3;
-extern InputButtonX3 input_buttonX3;
-extern lv_indev_drv_t indev_drv;
-extern lv_obj_t *ui_container;
-extern QueueHandle_t buttonEventQueue;
-extern UI_manager ui_manager;
-extern UI_Mode current_UI_mode;
 
+/*
 
 
 void lvgl_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -239,3 +232,6 @@ void setup_container_events(lv_obj_t *container)
     Serial.println("Container focused"); // Debug print
     Serial.flush();
 }
+
+*/
+
