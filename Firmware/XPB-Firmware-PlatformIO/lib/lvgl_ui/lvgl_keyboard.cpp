@@ -55,21 +55,13 @@ void key_event_cb(lv_event_t *e)
         case LV_KEY_UP:
             Serial.println("UP key pressed");
             Serial.flush();
-            if (ui_manager.getCurrentMode() == UI_Mode_DataMonitor) {
-                ui_manager.switch_UI(UI_Mode_DataChart_1);
-            } else {
-                ui_manager.switch_UI(UI_Mode_DataMonitor);
-            }
+            ui_manager.switch_UI_prev();
             break;
 
         case LV_KEY_DOWN:
             Serial.println("DOWN key pressed");
             Serial.flush();
-            if (ui_manager.getCurrentMode() == UI_Mode_DataChart_1) {
-                ui_manager.switch_UI(UI_Mode_DataMonitor);
-            } else {
-                ui_manager.switch_UI(UI_Mode_DataChart_1);
-            }
+            ui_manager.switch_UI_next();
             break;
 
         case LV_KEY_ENTER:

@@ -35,6 +35,8 @@ class UI_manager{
         void initUI(UI_Mode mode = UI_Mode_DataMonitor, lv_obj_t* container = NULL);
         void updateUI(UI_Mode mode, SensorDataMessage sensorDataMessage, lv_obj_t* container = NULL);
         void switch_UI(UI_Mode mode);
+        void switch_UI_next(); // switch to next UI mode
+        void switch_UI_prev(); // switch to previous UI mode
 
         UI_Mode getCurrentMode() const { return current_UI_mode; }
         UI_Mode getPreviousMode() const { return previous_UI_mode; }

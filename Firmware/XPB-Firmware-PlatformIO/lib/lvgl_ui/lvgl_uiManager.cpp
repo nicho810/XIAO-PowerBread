@@ -9,6 +9,8 @@ UI_manager::UI_manager()
     current_UI_mode = UI_Mode_DataMonitor; //set default mode
     dataMonitor_1 = nullptr;
     dataMonitor_2 = nullptr;
+    dataChart_1 = nullptr;
+    dataChart_2 = nullptr;
 }
 
 UI_manager::~UI_manager()
@@ -20,6 +22,14 @@ UI_manager::~UI_manager()
     if (dataMonitor_2) {
         delete dataMonitor_2;
         dataMonitor_2 = nullptr;
+    }
+    if (dataChart_1) {
+        delete dataChart_1;
+        dataChart_1 = nullptr;
+    }
+    if (dataChart_2) {
+        delete dataChart_2;
+        dataChart_2 = nullptr;
     }
 }
 
@@ -150,7 +160,48 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
                 return;
             }
             break;
-            
+
+        case UI_Mode_DataChart_2:
+            Serial.println("> Initializing Data Chart UI #2");
+            // Create new instances and store them as member variables
+            if (dataMonitor_2) {
+                delete dataMonitor_2;
+                dataMonitor_2 = nullptr;
+            }
+            if (dataChart_2) {
+                delete dataChart_2;
+                dataChart_2 = nullptr;
+            }
+            // Create widgets with proper parent container and error checking
+            try {
+                dataMonitor_2 = new Widget_DataMonitor(0, -41, "Channel 2", xpb_color_ChannelB, base_container);
+                if (!dataMonitor_2) {
+                    Serial.println("ERROR: Failed to create Channel B monitor!");
+                    xSemaphoreGive(lvglMutex);
+                    return;
+                }
+                
+                dataChart_2 = new Widget_DataChart(0, 41, xpb_color_ChannelB, xpb_color_ChannelB_dark);
+                if (!dataChart_2) {
+                    Serial.println("ERROR: Failed to create Channel 2 chart!");
+                    xSemaphoreGive(lvglMutex);
+                    return;
+                }
+                Serial.println("> Data Monitor and Chart widgets created successfully");
+            } catch (...) {
+                Serial.println("ERROR: Exception during widget creation!");
+                if (dataMonitor_2) {
+                    delete dataMonitor_2;
+                    dataMonitor_2 = nullptr;
+                }
+                if (dataChart_2) {
+                    delete dataChart_2;
+                    dataChart_2 = nullptr;
+                }
+                xSemaphoreGive(lvglMutex);
+                return;
+            }
+            break;
         case UI_Mode_DataCount_1:
             break;
             
@@ -255,6 +306,27 @@ void UI_manager::updateUI(UI_Mode mode, SensorDataMessage sensorDataMessage, lv_
                 Serial.println("ERROR: Data Monitor or Chart not found!");
             }
             break;
+            case UI_Mode_DataChart_2:
+            // Update chart data for current channel
+            if (dataMonitor_2 && dataChart_2) {
+                // Update monitor data for channel 1
+                float voltage_2 = sensorDataMessage.data[1].busVoltage_mV / 1000.0f;
+                float current_2 = sensorDataMessage.data[1].current_mA;
+                float power_2 = sensorDataMessage.data[1].power_mW;
+                if (dataMonitor_2->getContainer() && lv_obj_is_valid(dataMonitor_2->getContainer())) {
+                    dataMonitor_2->setVoltage(voltage_2);
+                    dataMonitor_2->setCurrent(current_2);
+                    dataMonitor_2->setPower(power_2);
+                }
+                // Update chart data for channel 1
+                if (dataChart_2->getSeries() && lv_obj_is_valid(dataChart_2->getContainer())) {
+                    dataChart_2->addDataPoint(current_2);
+                }
+            }
+            else {
+                Serial.println("ERROR: Data Monitor or Chart not found!");
+            }
+            break;
             
         case UI_Mode_DataCount_1:
             // Update count data for current channel
@@ -276,7 +348,37 @@ void UI_manager::switch_UI(UI_Mode mode)
     }
 }
 
+void UI_manager::switch_UI_next()
+{
+    //Switch order: DataMonitor -> DataChart_1 -> DataChart_2
+    switch (current_UI_mode) {
+        case UI_Mode_DataMonitor:
+            switch_UI(UI_Mode_DataChart_1);
+            break;
+        case UI_Mode_DataChart_1:
+            switch_UI(UI_Mode_DataChart_2);
+            break;
+        case UI_Mode_DataChart_2:
+            switch_UI(UI_Mode_DataMonitor);
+            break;
+    }
+}
 
+void UI_manager::switch_UI_prev()
+{
+    //Switch order: DataChart_2 -> DataChart_1 -> DataMonitor
+    switch (current_UI_mode) {
+        case UI_Mode_DataChart_2:
+            switch_UI(UI_Mode_DataChart_1);
+            break;
+        case UI_Mode_DataChart_1:
+            switch_UI(UI_Mode_DataMonitor);
+            break;
+        case UI_Mode_DataMonitor:
+            switch_UI(UI_Mode_DataChart_2);
+            break;
+    }
+}
 
 
 
