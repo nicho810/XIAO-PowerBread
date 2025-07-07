@@ -24,8 +24,8 @@ struct SensorDataMessage {
 class CurrentSensor {
 public:
     // Constructor, initialize address, shunt resistor values and averaging parameters
-    CurrentSensor(uint8_t address, const std::vector<float>& shuntResistorOhms, uint16_t average = 1)
-        : address_(address), shuntResistorOhms_(shuntResistorOhms), average_(average) {}
+    CurrentSensor(uint8_t address, const std::vector<float>& shuntResistorOhms, const std::vector<float>& maxCurrent, uint16_t average = 1)
+        : address_(address), shuntResistorOhms_(shuntResistorOhms), maxCurrent_(maxCurrent), average_(average) {}
 
     // Virtual destructor to ensure proper resource cleanup in derived classes
     virtual ~CurrentSensor() = default;
@@ -63,6 +63,7 @@ public:
 protected:
     uint8_t address_;                    // Sensor address
     std::vector<float> shuntResistorOhms_;  // Shunt resistor values for each channel (Ohms)
+    std::vector<float> maxCurrent_;        // Max current values for each channel (A)
     uint16_t average_;                   // Number of samples to average
 };
 

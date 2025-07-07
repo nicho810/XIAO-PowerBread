@@ -6,8 +6,8 @@
 
 // Single channel current sensor implementation
 
-cSensor_1ch_ina226::cSensor_1ch_ina226(uint8_t address, float shuntResistorOhm, uint16_t average)
-    : CurrentSensor(address, {shuntResistorOhm}, average), ina226_(address) {
+cSensor_1ch_ina226::cSensor_1ch_ina226(uint8_t address, float shuntResistorOhm, float maxCurrent, uint16_t average)
+    : CurrentSensor(address, {shuntResistorOhm}, {maxCurrent}, average), ina226_(address) {
     if (shuntResistorOhm <= 0) {
         Serial.println("Shunt resistor value must be positive");
     }
@@ -68,20 +68,26 @@ float cSensor_1ch_ina226::getPower_mW(uint8_t channel) {
 }
 
 // Dual channel current sensor implementation
-
-cSensor_2ch_ina226::cSensor_2ch_ina226(uint8_t address1, uint8_t address2, const std::vector<float>& shuntResistorOhms, uint16_t average)
-    : CurrentSensor(address1, shuntResistorOhms, average) {
+cSensor_2ch_ina226::cSensor_2ch_ina226(uint8_t address1, uint8_t address2, const std::vector<float>& shuntResistorOhms, const std::vector<float>& maxCurrent, uint16_t average)
+    : CurrentSensor(address1, shuntResistorOhms, maxCurrent, average) {
     if (shuntResistorOhms.size() != 2) {
         Serial.println("cSensor_2ch requires exactly 2 shunt resistor values");
+        return;
     }
     for (float r : shuntResistorOhms) {
         if (r <= 0) {
             Serial.println("Shunt resistor values must be positive");
+            return;
         }
+    }
+    if (maxCurrent.size() != 2) {
+        Serial.println("cSensor_2ch requires exactly 2 max current values");
+        return;
     }
     // Use the two provided addresses
     addresses_ = {address1, address2};
     ina226s_ = {INA226(address1), INA226(address2)};
+    maxCurrent_ = maxCurrent;
 }
 
 bool cSensor_2ch_ina226::initialize() {
@@ -93,12 +99,46 @@ bool cSensor_2ch_ina226::initialize() {
             return false;
         }
     }
-    Serial.print("> cSensor_2ch initialized at addresses 0x");
+
+    //Set average
+    ina226s_[0].setAverage(average_);
+    ina226s_[1].setAverage(average_);
+
+    //Set shunt resistor
+    ina226s_[0].setMaxCurrentShunt(maxCurrent_[0], shuntResistorOhms_[0], true);
+    ina226s_[1].setMaxCurrentShunt(maxCurrent_[1], shuntResistorOhms_[1], true);
+
+    Serial.print("> cSensor #1 initialized: Address 0x");
     Serial.print(static_cast<int>(addresses_[0]), HEX);
-    Serial.print(" and 0x");
+    Serial.print(", Shunt Resistor ");
+    Serial.print(ina226s_[0].getShunt(), 3);
+    Serial.print(" Ohm, Max Current ");
+    Serial.print(ina226s_[0].getMaxCurrent(), 3);
+    Serial.print(" A");
+    Serial.print(", Average ");
+    Serial.print(average_);
+    //LSB
+    Serial.print(", LSB ");
+    Serial.print(ina226s_[0].getCurrentLSB(), 3);
+    Serial.print(" mA");
+    Serial.println();
+
+    Serial.print("> cSensor #2 initialized: Address 0x");
     Serial.print(static_cast<int>(addresses_[1]), HEX);
-    Serial.print(" with average: ");
-    Serial.println(average_);
+    Serial.print(", Shunt Resistor ");    
+    Serial.print(ina226s_[1].getShunt(), 3);
+    Serial.print(" Ohm, Max Current ");
+    Serial.print(ina226s_[1].getMaxCurrent(), 3);
+    Serial.print(" A");
+    Serial.print(", Average ");
+    Serial.print(average_);
+    //LSB
+    Serial.print(", LSB ");
+    Serial.print(ina226s_[0].getCurrentLSB(), 3);
+    Serial.print(" mA");
+    Serial.println();
+
+
     return true;
 }
 

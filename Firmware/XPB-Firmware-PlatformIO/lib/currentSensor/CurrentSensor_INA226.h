@@ -16,7 +16,7 @@
 class cSensor_1ch_ina226 : public CurrentSensor {
 public:
     // Constructor, initialize address, shunt resistor and averaging parameters
-    cSensor_1ch_ina226(uint8_t address, float shuntResistorOhm, uint16_t average = 1);
+    cSensor_1ch_ina226(uint8_t address, float shuntResistorOhm, float maxCurrent, uint16_t average = 1);
 
     // Initialize sensor
     bool initialize() override;
@@ -44,7 +44,7 @@ private:
 class cSensor_2ch_ina226 : public CurrentSensor {
 public:
     // Modified constructor to take two addresses
-    cSensor_2ch_ina226(uint8_t address1, uint8_t address2, const std::vector<float>& shuntResistorOhms, uint16_t average = 1);
+    cSensor_2ch_ina226(uint8_t address1, uint8_t address2, const std::vector<float>& shuntResistorOhms, const std::vector<float>& maxCurrent, uint16_t average = 1);
 
     // Initialize sensor
     bool initialize() override;
@@ -67,6 +67,7 @@ public:
 private:
     std::vector<INA226> ina226s_;  // Two INA226 instances
     std::vector<uint8_t> addresses_;        // Addresses for each channel
+    std::vector<float> maxCurrent_;        // Max current values for each channel (A)
 };
 
 
