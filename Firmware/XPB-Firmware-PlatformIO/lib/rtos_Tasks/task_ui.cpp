@@ -33,6 +33,12 @@ void uiTask(void* pvParameters)
                         case UI_Mode_DataChart_1:
                             ui_manager.updateUI(UI_Mode_DataChart_1, receivedData, NULL);
                             break;
+                        case UI_Mode_DataChart_2:
+                            ui_manager.updateUI(UI_Mode_DataChart_2, receivedData, NULL);
+                            break;
+                        case UI_Mode_DataCount_1:
+                            ui_manager.updateUI(UI_Mode_DataCount_1, receivedData, NULL);
+                            break;
                     }
                 } catch (...) {
                     Serial.println("ERROR: Exception in UI task updateUI call!");

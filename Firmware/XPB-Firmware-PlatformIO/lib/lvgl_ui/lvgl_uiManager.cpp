@@ -355,7 +355,7 @@ void UI_manager::updateUI(UI_Mode mode, SensorDataMessage sensorDataMessage, lv_
                 Serial.println("ERROR: Data Monitor or Chart not found!");
             }
             break;
-            case UI_Mode_DataChart_2:
+        case UI_Mode_DataChart_2:
             // Update chart data for current channel
             if (dataMonitor_2 && dataChart_2) {
                 // Update monitor data for channel 1
@@ -379,7 +379,24 @@ void UI_manager::updateUI(UI_Mode mode, SensorDataMessage sensorDataMessage, lv_
             
         case UI_Mode_DataCount_1:
             // Update count data for current channel
-            // update_count_data(container, highLightChannel, latestSensorData, 0.0f, 0);
+            if (dataMonitor_1 && dataCount_1) {
+                // Update monitor data for channel 1
+                float voltage_1 = sensorDataMessage.data[0].busVoltage_mV / 1000.0f;
+                float current_1 = sensorDataMessage.data[0].current_mA;
+                float power_1 = sensorDataMessage.data[0].power_mW;
+                if (dataMonitor_1->getContainer() && lv_obj_is_valid(dataMonitor_1->getContainer())) {
+                    dataMonitor_1->setVoltage(voltage_1);
+                    dataMonitor_1->setCurrent(current_1);
+                    dataMonitor_1->setPower(power_1);
+                }
+                // Update count data for channel 1
+                if (dataCount_1->getContainer() && lv_obj_is_valid(dataCount_1->getContainer())) {
+                    dataCount_1->addData_current(current_1);
+                }
+            }
+            else {
+                Serial.println("ERROR: Data Monitor or Count not found!");
+            }
             break;
             
         default:

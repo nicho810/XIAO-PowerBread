@@ -93,22 +93,6 @@ Widget_DataMonitor::Widget_DataMonitor(uint16_t x, uint16_t y, const char* title
     lv_obj_align(power_unit, LV_ALIGN_RIGHT_MID, pos_x_of_Power_unit, pos_y_of_Power_unit);
 }
 
-// Helper function to format truncated value for display
-void Widget_DataMonitor::formatTruncatedValue(float value, char* out_str, size_t out_str_size) {
-    if (value >= 1000.0f) {
-        int truncated = (int)value;
-        snprintf(out_str, out_str_size, "%d", truncated);
-    } else if (value >= 100.0f) {
-        float truncated = (float)((int)(value * 10)) / 10.0f;
-        snprintf(out_str, out_str_size, "%.1f", truncated);
-    } else if (value >= 10.0f) {
-        float truncated = (float)((int)(value * 100)) / 100.0f;
-        snprintf(out_str, out_str_size, "%.2f", truncated);
-    } else {
-        float truncated = (float)((int)(value * 1000)) / 1000.0f;
-        snprintf(out_str, out_str_size, "%.3f", truncated);
-    }
-}
 
 void Widget_DataMonitor::setVoltage(float voltage) {
     if (voltage_value) {
@@ -162,5 +146,22 @@ void Widget_DataMonitor::setTitle(const char* new_title) {
     title = new_title;
     if (title_label) {
         lv_label_set_text(title_label, title);
+    }
+}
+
+// Helper function to format truncated value for display
+void Widget_DataMonitor::formatTruncatedValue(float value, char* out_str, size_t out_str_size) {
+    if (value >= 1000.0f) {
+        int truncated = (int)value;
+        snprintf(out_str, out_str_size, "%d", truncated);
+    } else if (value >= 100.0f) {
+        float truncated = (float)((int)(value * 10)) / 10.0f;
+        snprintf(out_str, out_str_size, "%.1f", truncated);
+    } else if (value >= 10.0f) {
+        float truncated = (float)((int)(value * 100)) / 100.0f;
+        snprintf(out_str, out_str_size, "%.2f", truncated);
+    } else {
+        float truncated = (float)((int)(value * 1000)) / 1000.0f;
+        snprintf(out_str, out_str_size, "%.3f", truncated);
     }
 }
