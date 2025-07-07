@@ -1,7 +1,5 @@
 #include "lvgl_ui_widget_monitor.h"
 
-
-
 // Data Monitor Widget Implementation
 Widget_DataMonitor::Widget_DataMonitor(uint16_t x, uint16_t y, const char* title, lv_color_t color, lv_obj_t* parent) 
     : Widget_Base(x, y, color), title_label(nullptr), voltage_value(nullptr), voltage_unit(nullptr),
@@ -95,10 +93,27 @@ Widget_DataMonitor::Widget_DataMonitor(uint16_t x, uint16_t y, const char* title
     lv_obj_align(power_unit, LV_ALIGN_RIGHT_MID, pos_x_of_Power_unit, pos_y_of_Power_unit);
 }
 
+// Helper function to format truncated value for display
+void Widget_DataMonitor::formatTruncatedValue(float value, char* out_str, size_t out_str_size) {
+    if (value >= 1000.0f) {
+        int truncated = (int)value;
+        snprintf(out_str, out_str_size, "%d", truncated);
+    } else if (value >= 100.0f) {
+        float truncated = (float)((int)(value * 10)) / 10.0f;
+        snprintf(out_str, out_str_size, "%.1f", truncated);
+    } else if (value >= 10.0f) {
+        float truncated = (float)((int)(value * 100)) / 100.0f;
+        snprintf(out_str, out_str_size, "%.2f", truncated);
+    } else {
+        float truncated = (float)((int)(value * 1000)) / 1000.0f;
+        snprintf(out_str, out_str_size, "%.3f", truncated);
+    }
+}
+
 void Widget_DataMonitor::setVoltage(float voltage) {
     if (voltage_value) {
         char voltage_str[16];
-        snprintf(voltage_str, sizeof(voltage_str), "%.3f", voltage);
+        formatTruncatedValue(voltage, voltage_str, sizeof(voltage_str));
         lv_label_set_text(voltage_value, voltage_str);
     } else {
         Serial.println("ERROR: voltage_value is null in setVoltage!");
@@ -108,7 +123,7 @@ void Widget_DataMonitor::setVoltage(float voltage) {
 void Widget_DataMonitor::setCurrent(float current) {
     if (current_value) {
         char current_str[16];
-        snprintf(current_str, sizeof(current_str), "%.3f", current);
+        formatTruncatedValue(current, current_str, sizeof(current_str));
         lv_label_set_text(current_value, current_str);
     } else {
         Serial.println("ERROR: current_value is null in setCurrent!");
@@ -118,7 +133,7 @@ void Widget_DataMonitor::setCurrent(float current) {
 void Widget_DataMonitor::setPower(float power) {
     if (power_value) {
         char power_str[16];
-        snprintf(power_str, sizeof(power_str), "%.3f", power);
+        formatTruncatedValue(power, power_str, sizeof(power_str));
         lv_label_set_text(power_value, power_str);
     } else {
         Serial.println("ERROR: power_value is null in setPower!");

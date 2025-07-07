@@ -26,6 +26,7 @@ public:
     void setCurrent(const char* current_str);
     void setPower(const char* power_str);
     void setTitle(const char* new_title);
+    void formatTruncatedValue(float value, char* out_str, size_t out_str_size);
 };
 
 
