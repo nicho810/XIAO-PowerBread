@@ -60,9 +60,13 @@ Widget_DataChart::Widget_DataChart(uint16_t x, uint16_t y, lv_color_t color, lv_
 }
 
 void Widget_DataChart::addDataPoint(int32_t value) {
+    //Add data point to chart
     if (series) {
         lv_chart_set_next_value(chart, series, value);
     }
+    //Auto range
+    updateChartRange(chart, series);
+
 }
 
 void Widget_DataChart::setRange(int32_t min, int32_t max) {
@@ -77,3 +81,32 @@ void Widget_DataChart::setPointCount(uint16_t count) {
     }
 }
 
+void Widget_DataChart::updateChartRange(lv_obj_t* chart, lv_chart_series_t* series) {
+    if (!chart || !series) return;
+
+    // Find max value (min will be fixed at 0)
+    int32_t max = INT32_MIN;
+    uint16_t point_count = lv_chart_get_point_count(chart);
+    
+    // Iterate through points to find maximum value
+    for (uint16_t i = 0; i < point_count; i++) {
+        int32_t value = series->y_points[i];
+        if (value != LV_CHART_POINT_NONE && value > max) {
+            max = value;
+        }
+    }
+
+    // If no valid points found, use default range
+    if (max == INT32_MIN) {
+        max = 100;
+    }
+    
+    // Add 10% padding to the top
+    max = max + (max / 10);
+    
+    // Ensure minimum range
+    if (max < 10) max = 10;
+    
+    // Update chart range with fixed minimum at 0
+    lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, max);
+}

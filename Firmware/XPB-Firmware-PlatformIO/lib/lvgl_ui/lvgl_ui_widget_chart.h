@@ -16,6 +16,7 @@ public:
     void addDataPoint(int32_t value);
     void setRange(int32_t min, int32_t max);
     void setPointCount(uint16_t count);
+    void updateChartRange(lv_obj_t* chart, lv_chart_series_t* series);
     lv_chart_series_t* getSeries() const { return series; }
 };
 
