@@ -7,7 +7,7 @@ void processATCommand(String command) {
     if (atCommand.processCommand(command, response)) {
         Serial.println(response);
     } else {
-        Serial.println("ERROR: Unknown command");
+        Serial.println("[AT] Unknown command");
     }
 }
 
@@ -30,16 +30,19 @@ void readSerialCommands() {
         else if (c == '\n' || c == '\r') {
             if (commandBuffer.length() > 0) {
                 // Echo the received command
-                Serial.print("Received command: ");
+                #ifdef DEBUG_PRINT
+                Serial.print("[AT] Received command: ");
                 Serial.println(commandBuffer);
-                
+                #endif
                 // Check if it's an AT command
                 if (commandBuffer.startsWith("AT") || commandBuffer.startsWith("at")) {
                     processATCommand(commandBuffer);
                 } else {
                     // Process other commands here (you can add command parsing logic later)
                     // For now, just acknowledge receipt
-                    Serial.println("Command acknowledged");
+                    #ifdef DEBUG_PRINT
+                    Serial.println("[AT] Command acknowledged");
+                    #endif
                 }
                 
                 // Clear the buffer

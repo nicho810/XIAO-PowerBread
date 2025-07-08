@@ -27,7 +27,7 @@ const ATCommand::ATCommandEntry ATCommand::commandTable[] = {
 };
 
 // Handler implementations
-bool ATCommand::handleAT(String& cmd, String& resp) { resp = "OK"; return true; }
+bool ATCommand::handleAT(String& cmd, String& resp) { resp = "[OK]"; return true; }
 bool ATCommand::handleConfig(String& cmd, String& resp) { sysConfig.loadFromEEPROM(); resp = sysConfig.toString(); return true; }
 bool ATCommand::handleReload(String& cmd, String& resp) { sysConfig.loadFromEEPROM(); resp = "OK"; return true; }
 bool ATCommand::handleDefaultMode(String& cmd, String& resp) { String valueStr = cmd.substring(16); sysConfig.setConfigValue(ConfigIndex::DEFAULT_MODE, valueStr.toInt()); sysConfig.saveToEEPROM(); resp = "OK:" + valueStr; return true; }
@@ -61,19 +61,17 @@ bool ATCommand::processCommand(String& command, String& response) {
         }
         // For commands with arguments, use startsWith and substring as needed
     }
-    response = "ERROR: Unknown command";
+    response = "[ERROR] Unknown command";
     return false;
 }
 
 
-bool ATCommand::sendError(String& error) {
-    Serial.println(error);
-    return true;
-}
-
-bool ATCommand::sendOK(String& response) {
-    Serial.println(response);
-    return true;
+String ATCommand::response(String& response) {
+    if (response == "[OK]") {
+        return "[OK]"; //for AT only
+    } else {
+        return "[OK] " + response; //for other commands
+    }
 }
 
 ATCommand::ATCommand() {

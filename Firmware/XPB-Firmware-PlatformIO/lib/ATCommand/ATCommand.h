@@ -13,8 +13,7 @@ public:
     ~ATCommand();
 
     bool processCommand(String& command, String& response);
-    bool sendError(String& error);
-    bool sendOK(String& response);
+    String response(String& response);
 
 private:
     typedef bool (*ATHandler)(String&, String&);
