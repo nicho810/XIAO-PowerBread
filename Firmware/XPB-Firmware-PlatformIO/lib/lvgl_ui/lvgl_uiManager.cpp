@@ -253,7 +253,47 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
                 return;
             }
             break;
-            
+        case UI_Mode_DataCount_2:
+            Serial.println("> Initializing Data Count UI #2");
+            // Create new instances and store them as member variables
+            if (dataMonitor_2) {
+                delete dataMonitor_2;
+                dataMonitor_2 = nullptr;
+            }
+            if (dataCount_2) {
+                delete dataCount_2;
+                dataCount_2 = nullptr;
+            }
+            // Create widgets with proper parent container and error checking
+            try {
+                dataMonitor_2 = new Widget_DataMonitor(0, -41, "Channel 2", xpb_color_ChannelB, base_container);
+                if (!dataMonitor_2) {
+                    Serial.println("ERROR: Failed to create Channel B monitor!");
+                    xSemaphoreGive(lvglMutex);
+                    return;
+                }
+                
+                dataCount_2 = new Widget_DataCount(0, 41, xpb_color_ChannelB, xpb_color_ChannelB_dark, base_container);
+                if (!dataCount_2) {
+                    Serial.println("ERROR: Failed to create Channel 2 count!");
+                    xSemaphoreGive(lvglMutex);
+                    return;
+                }
+                Serial.println("> Data Monitor and Count widgets created successfully");
+            } catch (...) {
+                Serial.println("ERROR: Exception during widget creation!");
+                if (dataMonitor_2) {
+                    delete dataMonitor_2;
+                    dataMonitor_2 = nullptr;
+                }
+                if (dataCount_2) {
+                    delete dataCount_2;
+                    dataCount_2 = nullptr;
+                }
+                xSemaphoreGive(lvglMutex);
+                return;
+            }
+            break;
         default:
             Serial.println("ERROR: Invalid UI mode!");
             break;
@@ -416,41 +456,44 @@ void UI_manager::switch_UI(UI_Mode mode)
 
 void UI_manager::switch_UI_next()
 {
-    //Switch order: DataMonitor -> DataChart_1 -> DataChart_2
-    switch (current_UI_mode) {
-        case UI_Mode_DataMonitor:
-            switch_UI(UI_Mode_DataChart_1);
-            break;
-        case UI_Mode_DataChart_1:
-            switch_UI(UI_Mode_DataChart_2);
-            break;
-        case UI_Mode_DataChart_2:
-            switch_UI(UI_Mode_DataCount_1);
-            break;
-        case UI_Mode_DataCount_1:
-            switch_UI(UI_Mode_DataMonitor);
-            break;
+    static const UI_Mode modes[] = {
+        UI_Mode_DataMonitor,
+        UI_Mode_DataChart_1,
+        UI_Mode_DataChart_2,
+        UI_Mode_DataCount_1,
+        UI_Mode_DataCount_2
+    };
+    constexpr int num_modes = sizeof(modes) / sizeof(modes[0]);
+
+    // Find current index
+    int idx = 0;
+    for (; idx < num_modes; ++idx) {
+        if (modes[idx] == current_UI_mode) break;
     }
+    // Move to next, wrap around
+    int next_idx = (idx + 1) % num_modes;
+    switch_UI(modes[next_idx]);
 }
 
 void UI_manager::switch_UI_prev()
 {
-    //Switch order: DataCount_1 -> DataChart_2 -> DataChart_1 -> DataMonitor
-    switch (current_UI_mode) {
-        case UI_Mode_DataCount_1:
-            switch_UI(UI_Mode_DataChart_2);
-            break;
-        case UI_Mode_DataChart_2:
-            switch_UI(UI_Mode_DataChart_1);
-            break;
-        case UI_Mode_DataChart_1:
-            switch_UI(UI_Mode_DataMonitor);
-            break;
-        case UI_Mode_DataMonitor:
-            switch_UI(UI_Mode_DataCount_1);
-            break;
+    static const UI_Mode modes[] = {
+        UI_Mode_DataMonitor,
+        UI_Mode_DataChart_1,
+        UI_Mode_DataChart_2,
+        UI_Mode_DataCount_1,
+        UI_Mode_DataCount_2
+    };
+    constexpr int num_modes = sizeof(modes) / sizeof(modes[0]);
 
+    // Find current index
+    int idx = 0;
+    for (; idx < num_modes; ++idx) {
+        if (modes[idx] == current_UI_mode) break;
     }
+    // Move to previous, wrap around
+    int prev_idx = (idx - 1 + num_modes) % num_modes;
+    switch_UI(modes[prev_idx]);
 }
 
 

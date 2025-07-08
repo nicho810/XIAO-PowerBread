@@ -71,19 +71,5 @@ class Widget_DataCount : public Widget_Base {
         
     };
 
-// // Data Count Menu Widget Class
-// class Widget_DataCountMenu : public Widget_Base {
-// private:
-//     lv_obj_t* menu_item;
-//     uint8_t current_highlight_channel;
-
-// public:
-//     Widget_DataCountMenu(uint16_t x, uint16_t y, uint8_t current_highlight_channel = 0);
-    
-//     void setHighlightChannel(uint8_t channel);
-//     void show();
-//     void hide();
-//     bool isVisible() const;
-// };
 
 #endif

@@ -7,9 +7,7 @@ void uiTask(void* pvParameters)
     const TickType_t xUpdateInterval = pdMS_TO_TICKS(10); // Increase to 200ms
 
     // Initialize UI
-    // ui_manager.initUI(UI_Mode_DataMonitor);
-    ui_manager.initUI(UI_Mode_DataCount_1);
-
+    ui_manager.initUI(UI_Mode_DataMonitor);
 
     while (1) {
         TickType_t xCurrentTime = xTaskGetTickCount();
@@ -38,6 +36,9 @@ void uiTask(void* pvParameters)
                             break;
                         case UI_Mode_DataCount_1:
                             ui_manager.updateUI(UI_Mode_DataCount_1, receivedData, NULL);
+                            break;
+                        case UI_Mode_DataCount_2:
+                            ui_manager.updateUI(UI_Mode_DataCount_2, receivedData, NULL);
                             break;
                     }
                 } catch (...) {
