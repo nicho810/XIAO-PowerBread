@@ -53,20 +53,30 @@ void key_event_cb(lv_event_t *e)
         switch (key)
         {
         case LV_KEY_UP:
+            #ifdef DEBUG_PRINT
             Serial.println("UP key pressed");
             Serial.flush();
+            #endif
+
             ui_manager.switch_UI_prev();
             break;
 
         case LV_KEY_DOWN:
+            #ifdef DEBUG_PRINT
             Serial.println("DOWN key pressed");
             Serial.flush();
+            #endif
+
             ui_manager.switch_UI_next();
             break;
 
         case LV_KEY_ENTER:
+            #ifdef DEBUG_PRINT
             Serial.println("ENTER key pressed");
             Serial.flush();
+            #endif
+
+            //TODO: add enter key event handler
             break;
         }
     }
@@ -85,22 +95,30 @@ void setup_container_events(lv_obj_t *container)
     if (g)
     {
         lv_group_add_obj(g, container);
-        Serial.println("Container added to group"); // Debug print
+        #ifdef DEBUG_PRINT
+        Serial.println("[OK] Container added to group"); // Debug print
         Serial.flush();
+        #endif
     } else {
-        Serial.println("No default group found!"); // Debug print
+        #ifdef DEBUG_PRINT
+        Serial.println("[ERROR] No default group found!"); // Debug print
         Serial.flush();
+        #endif
     }
     
     // Add key event handler
     lv_obj_add_event_cb(container, key_event_cb, LV_EVENT_KEY, NULL);
-    Serial.println("Key event callback added to container"); // Debug print
+    #ifdef DEBUG_PRINT
+    Serial.println("[OK] Key event callback added to container"); // Debug print
     Serial.flush();
+    #endif
     
     // Focus the container
     lv_group_focus_obj(container);
-    Serial.println("Container focused"); // Debug print
+    #ifdef DEBUG_PRINT
+    Serial.println("[OK] Container focused"); // Debug print
     Serial.flush();
+    #endif
 }
 
 

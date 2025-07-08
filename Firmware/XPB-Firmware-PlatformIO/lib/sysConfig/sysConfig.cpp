@@ -64,22 +64,24 @@ bool SysConfig::initialize(bool forceWrite) {
     }
     
     if (forceWrite) {
-        Serial.println("Force writing default config to EEPROM");
+        Serial.println("[OK] Force writing default config to EEPROM");
         return resetToDefaults();
     }
     
     uint8_t currentVersion = readFromEEPROM(ConfigAddresses::CFG_VERSION);
-    Serial.print("Current version: ");
+    #ifdef DEBUG_PRINT
+    Serial.print("[OK] Current version: ");
     Serial.println(currentVersion);
+    #endif
     
     if (currentVersion == CONFIG_VERSION_UNINITIALIZED) {
-        Serial.println("EEPROM not initialized, writing default config");
+        Serial.println("[OK] EEPROM not initialized, writing default config");
         return resetToDefaults();
     } else if (currentVersion < CONFIG_VERSION_CURRENT) {
-        Serial.println("Detected older config version, updating to new versions");
+        Serial.println("[OK] Detected older config version, updating to new versions");
         return resetToDefaults();
     } else {
-        Serial.println("Loading config from EEPROM");
+        Serial.println("[OK] Loading config from EEPROM");
         return loadFromEEPROM();
     }
 }

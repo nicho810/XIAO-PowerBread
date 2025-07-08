@@ -101,14 +101,14 @@ void setup(void)
     // Serial Init
     Serial.begin(115200);
     delay(1000);
-    Serial.println("==========[Boot Info]===========");
+    Serial.println("[Boot]");
 
     //Wire Init
     Wire.begin();
 
     //sysConfig Init
     sysConfig.initialize(false);
-    Serial.println("SysConfig initialized");
+    Serial.println("[OK] SysConfig initialized");
     Serial.println(sysConfig.toString());
 
     // Current Sensor Init
@@ -123,54 +123,54 @@ void setup(void)
     // Create the sensor data queue for serial
     sensorDataQueue_serial = xQueueCreate(2, sizeof(SensorDataMessage));
     if (sensorDataQueue_serial == NULL) {
-        Serial.println("ERROR: Failed to create sensor data queue_serial!");
+        Serial.println("[ERROR] Failed to create sensor data queue_serial!");
         while(1) delay(100);
     }
-    Serial.println("> Sensor data queue_serial created successfully");
+    Serial.println("[OK] Sensor data queue_serial created successfully");
 
     // Create the sensor data queue for UI
     sensorDataQueue_ui = xQueueCreate(2, sizeof(SensorDataMessage));
     if (sensorDataQueue_ui == NULL) {
-        Serial.println("ERROR: Failed to create sensor data queue_ui!");
+        Serial.println("[ERROR] Failed to create sensor data queue_ui!");
         while(1) delay(100);
     }
-    Serial.println("> Sensor data queue_ui created successfully");
+    Serial.println("[OK] Sensor data queue_ui created successfully");
 
     // Create the button event queue
     buttonEventQueue = xQueueCreate(1, sizeof(ButtonEventMessage));
     if (buttonEventQueue == NULL) {
-        Serial.println("ERROR: Failed to create button event queue!");
+        Serial.println("[ERROR] Failed to create button event queue!");
         while(1) delay(100);
     }
-    Serial.println("> Button event queue created successfully");
+    Serial.println("[OK] Button event queue created successfully");
 
     // Create the lvglMutex (keep this for LVGL operations)
     lvglMutex = xSemaphoreCreateMutex();
     if (lvglMutex == NULL) {
-        Serial.println("ERROR: Failed to create lvgl mutex!");
+        Serial.println("[ERROR] Failed to create lvgl mutex!");
         while(1) delay(100);
     }
-    Serial.println("> Lvgl mutex created successfully");
+    Serial.println("[OK] Lvgl mutex created successfully");
     
     // Create input task
     taskHandle = xTaskCreateStatic(inputTask, "Input_Task", 
         STACK_SIZE_INPUT, NULL, TASK_PRIORITY_INPUT, 
         xStack_Input, &xTaskBuffer_Input);
     if (taskHandle == nullptr) {
-        Serial.println("ERROR: Failed to create input task!");
+        Serial.println("[ERROR] Failed to create input task!");
         while(1) delay(100);
     }
-    Serial.println("> Input task created successfully");
+    Serial.println("[OK] Input task created successfully");
 
     // Create sensor task first as it's highest priority
     taskHandle = xTaskCreateStatic(sensorTask, "Sensor_Update", 
         STACK_SIZE_SENSOR, NULL, TASK_PRIORITY_SENSOR, 
         xStack_Sensor, &xTaskBuffer_Sensor);
     if (taskHandle == nullptr) {
-        Serial.println("ERROR: Failed to create sensor task!");
+        Serial.println("[ERROR] Failed to create sensor task!");
         while(1) delay(100);
     }
-    Serial.println("> Sensor task created successfully");
+    Serial.println("[OK] Sensor task created successfully");
 
 
     // Create UI task
@@ -178,20 +178,20 @@ void setup(void)
         STACK_SIZE_UI, NULL, TASK_PRIORITY_UI, 
         xStack_UI, &xTaskBuffer_UI);
     if (taskHandle == nullptr) {
-        Serial.println("ERROR: Failed to create UI task!");
+        Serial.println("[ERROR] Failed to create UI task!");
         while(1) delay(100);
     }
-    Serial.println("> UI task created successfully");
+    Serial.println("[OK] UI task created successfully");
 
     // Create serial task
     taskHandle = xTaskCreateStatic(serialTask, "Serial_Print", 
         STACK_SIZE_SERIAL, NULL, TASK_PRIORITY_SERIAL, 
         xStack_Serial, &xTaskBuffer_Serial);
     if (taskHandle == nullptr) {
-        Serial.println("ERROR: Failed to create serial task!");
+        Serial.println("[ERROR] Failed to create serial task!");
         while(1) delay(100);
     }
-    Serial.println("> Serial task created successfully");
+    Serial.println("[OK] Serial task created successfully");
 
     // Start the scheduler
     // vTaskStartScheduler(); //Note: no need to call this, it will cause a crash, keep this note here as reminder.
@@ -205,7 +205,7 @@ void loop()
 extern "C" void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 {
     // it use for checking task stack overflow when debugging
-    Serial.print("Stack Overflow in task: ");
+    Serial.print("[ERROR] Stack Overflow in task: ");
     Serial.println(pcTaskName);
     while (1)
         ;

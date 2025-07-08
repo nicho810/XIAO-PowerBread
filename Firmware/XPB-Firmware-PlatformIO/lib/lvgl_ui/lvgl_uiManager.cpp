@@ -52,7 +52,7 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
     
     // Take LVGL mutex for thread safety
     if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(1000)) != pdTRUE) {
-        Serial.println("ERROR: Failed to take LVGL mutex for UI init!");
+        Serial.println("[ERROR] Failed to take LVGL mutex for UI init!");
         return;
     }
 
@@ -62,7 +62,7 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
     // Create base container
     lv_obj_t* base_container = lv_obj_create(container);
     if (!base_container || !lv_obj_is_valid(base_container)) {
-        Serial.println("ERROR: Failed to create base container!");
+        Serial.println("[ERROR] Failed to create base container!");
         xSemaphoreGive(lvglMutex);
         return;
     }
@@ -84,7 +84,7 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
             break;
             
         case UI_Mode_DataMonitor:
-            Serial.println("> Initializing Data Monitor UI");
+            Serial.println("[OK] Initializing Data Monitor UI");
             // Create new instances and store them as member variables
             if (dataMonitor_1) {
                 delete dataMonitor_1;
@@ -99,23 +99,23 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
             try {
                 dataMonitor_1 = new Widget_DataMonitor(0, 41, "Channel 1", xpb_color_ChannelA, base_container);
                 if (!dataMonitor_1) {
-                    Serial.println("ERROR: Failed to create Channel A monitor!");
+                    Serial.println("[ERROR] Failed to create Channel A monitor!");
                     xSemaphoreGive(lvglMutex);
                     return;
                 }
                 
                 dataMonitor_2 = new Widget_DataMonitor(0, -41, "Channel 2", xpb_color_ChannelB, base_container);
                 if (!dataMonitor_2) {
-                    Serial.println("ERROR: Failed to create Channel B monitor!");
+                    Serial.println("[ERROR] Failed to create Channel B monitor!");
                     delete dataMonitor_1;
                     dataMonitor_1 = nullptr;
                     xSemaphoreGive(lvglMutex);
                     return;
                 }
                 
-                Serial.println("> Data Monitor widgets created successfully");
+                Serial.println("[OK] Data Monitor widgets created successfully");
             } catch (...) {
-                Serial.println("ERROR: Exception during widget creation!");
+                Serial.println("[ERROR] Exception during widget creation!");
                 if (dataMonitor_1) {
                     delete dataMonitor_1;
                     dataMonitor_1 = nullptr;
@@ -130,7 +130,7 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
             break;
             
         case UI_Mode_DataChart_1:
-            Serial.println("> Initializing Data Chart UI #1");
+            Serial.println("[OK] Initializing Data Chart UI #1");
             // Create new instances and store them as member variables
             if (dataMonitor_1) {
                 delete dataMonitor_1;
@@ -144,20 +144,20 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
             try {
                 dataMonitor_1 = new Widget_DataMonitor(0, -41, "Channel 1", xpb_color_ChannelA, base_container);
                 if (!dataMonitor_1) {
-                    Serial.println("ERROR: Failed to create Channel A monitor!");
+                    Serial.println("[ERROR] Failed to create Channel A monitor!");
                     xSemaphoreGive(lvglMutex);
                     return;
                 }
                 
                 dataChart_1 = new Widget_DataChart(0, 41, xpb_color_ChannelA, xpb_color_ChannelA_dark);
                 if (!dataChart_1) {
-                    Serial.println("ERROR: Failed to create Channel 1 chart!");
+                    Serial.println("[ERROR] Failed to create Channel 1 chart!");
                     xSemaphoreGive(lvglMutex);
                     return;
                 }
-                Serial.println("> Data Monitor and Chart widgets created successfully");
+                Serial.println("[OK] Data Monitor and Chart widgets created successfully");
             } catch (...) {
-                Serial.println("ERROR: Exception during widget creation!");
+                Serial.println("[ERROR] Exception during widget creation!");
                 if (dataMonitor_1) {
                     delete dataMonitor_1;
                     dataMonitor_1 = nullptr;
@@ -172,7 +172,7 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
             break;
 
         case UI_Mode_DataChart_2:
-            Serial.println("> Initializing Data Chart UI #2");
+            Serial.println("[OK] Initializing Data Chart UI #2");
             // Create new instances and store them as member variables
             if (dataMonitor_2) {
                 delete dataMonitor_2;
@@ -186,20 +186,20 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
             try {
                 dataMonitor_2 = new Widget_DataMonitor(0, -41, "Channel 2", xpb_color_ChannelB, base_container);
                 if (!dataMonitor_2) {
-                    Serial.println("ERROR: Failed to create Channel B monitor!");
+                    Serial.println("[ERROR] Failed to create Channel B monitor!");
                     xSemaphoreGive(lvglMutex);
                     return;
                 }
                 
                 dataChart_2 = new Widget_DataChart(0, 41, xpb_color_ChannelB, xpb_color_ChannelB_dark);
                 if (!dataChart_2) {
-                    Serial.println("ERROR: Failed to create Channel 2 chart!");
+                    Serial.println("[ERROR] Failed to create Channel 2 chart!");
                     xSemaphoreGive(lvglMutex);
                     return;
                 }
-                Serial.println("> Data Monitor and Chart widgets created successfully");
+                Serial.println("[OK] Data Monitor and Chart widgets created successfully");
             } catch (...) {
-                Serial.println("ERROR: Exception during widget creation!");
+                Serial.println("[ERROR] Exception during widget creation!");
                 if (dataMonitor_2) {
                     delete dataMonitor_2;
                     dataMonitor_2 = nullptr;
@@ -213,7 +213,7 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
             }
             break;
         case UI_Mode_DataCount_1:
-            Serial.println("> Initializing Data Count UI #1");
+            Serial.println("[OK] Initializing Data Count UI #1");
             // Create new instances and store them as member variables
             if (dataMonitor_1) {
                 delete dataMonitor_1;
@@ -227,20 +227,20 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
             try {
                 dataMonitor_1 = new Widget_DataMonitor(0, -41, "Channel 1", xpb_color_ChannelA, base_container);
                 if (!dataMonitor_1) {
-                    Serial.println("ERROR: Failed to create Channel A monitor!");
+                    Serial.println("[ERROR] Failed to create Channel A monitor!");
                     xSemaphoreGive(lvglMutex);
                     return;
                 }
                 
                 dataCount_1 = new Widget_DataCount(0, 41, xpb_color_ChannelA, xpb_color_ChannelA_dark, base_container);
                 if (!dataCount_1) {
-                    Serial.println("ERROR: Failed to create Channel 1 count!");
+                    Serial.println("[ERROR] Failed to create Channel 1 count!");
                     xSemaphoreGive(lvglMutex);
                     return;
                 }
-                Serial.println("> Data Monitor and Count widgets created successfully");
+                Serial.println("[OK] Data Monitor and Count widgets created successfully");
             } catch (...) {
-                Serial.println("ERROR: Exception during widget creation!");
+                Serial.println("[ERROR] Exception during widget creation!");
                 if (dataMonitor_1) {
                     delete dataMonitor_1;
                     dataMonitor_1 = nullptr;
@@ -254,7 +254,7 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
             }
             break;
         case UI_Mode_DataCount_2:
-            Serial.println("> Initializing Data Count UI #2");
+            Serial.println("[OK] Initializing Data Count UI #2");
             // Create new instances and store them as member variables
             if (dataMonitor_2) {
                 delete dataMonitor_2;
@@ -268,20 +268,20 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
             try {
                 dataMonitor_2 = new Widget_DataMonitor(0, -41, "Channel 2", xpb_color_ChannelB, base_container);
                 if (!dataMonitor_2) {
-                    Serial.println("ERROR: Failed to create Channel B monitor!");
+                    Serial.println("[ERROR] Failed to create Channel B monitor!");
                     xSemaphoreGive(lvglMutex);
                     return;
                 }
                 
                 dataCount_2 = new Widget_DataCount(0, 41, xpb_color_ChannelB, xpb_color_ChannelB_dark, base_container);
                 if (!dataCount_2) {
-                    Serial.println("ERROR: Failed to create Channel 2 count!");
+                    Serial.println("[ERROR] Failed to create Channel 2 count!");
                     xSemaphoreGive(lvglMutex);
                     return;
                 }
-                Serial.println("> Data Monitor and Count widgets created successfully");
+                Serial.println("[OK] Data Monitor and Count widgets created successfully");
             } catch (...) {
-                Serial.println("ERROR: Exception during widget creation!");
+                Serial.println("[ERROR] Exception during widget creation!");
                 if (dataMonitor_2) {
                     delete dataMonitor_2;
                     dataMonitor_2 = nullptr;
@@ -295,7 +295,7 @@ void UI_manager::initUI(UI_Mode mode, lv_obj_t* container)
             }
             break;
         default:
-            Serial.println("ERROR: Invalid UI mode!");
+            Serial.println("[ERROR] Invalid UI mode!");
             break;
     }
     
@@ -324,7 +324,7 @@ void UI_manager::updateUI(UI_Mode mode, SensorDataMessage sensorDataMessage, lv_
     // Check available heap memory
     size_t freeHeap = ESP.getFreeHeap();
     if (freeHeap < 10000) { // Less than 10KB free
-        Serial.printf("WARNING: Low heap memory: %d bytes\n", freeHeap);
+        Serial.printf("[WARNING] Low heap memory: %d bytes\n", freeHeap);
     }
     
     // Take LVGL mutex for thread safety
@@ -392,7 +392,7 @@ void UI_manager::updateUI(UI_Mode mode, SensorDataMessage sensorDataMessage, lv_
                 }
             }
             else {
-                Serial.println("ERROR: Data Monitor or Chart not found!");
+                Serial.println("[ERROR] Data Monitor or Chart not found!");
             }
             break;
         case UI_Mode_DataChart_2:
@@ -413,7 +413,7 @@ void UI_manager::updateUI(UI_Mode mode, SensorDataMessage sensorDataMessage, lv_
                 }
             }
             else {
-                Serial.println("ERROR: Data Monitor or Chart not found!");
+                Serial.println("[ERROR] Data Monitor or Chart not found!");
             }
             break;
             
@@ -435,7 +435,7 @@ void UI_manager::updateUI(UI_Mode mode, SensorDataMessage sensorDataMessage, lv_
                 }
             }
             else {
-                Serial.println("ERROR: Data Monitor or Count not found!");
+                Serial.println("[ERROR] Data Monitor or Count not found!");
             }
             break;
             
@@ -449,7 +449,7 @@ void UI_manager::updateUI(UI_Mode mode, SensorDataMessage sensorDataMessage, lv_
 void UI_manager::switch_UI(UI_Mode mode)
 {
     if (mode != current_UI_mode) {
-        Serial.printf("> Switching UI from mode %d to mode %d\n", current_UI_mode, mode);
+        Serial.printf("[OK] Switching UI from mode %d to mode %d\n", current_UI_mode, mode);
         current_UI_mode = mode;
     }
 }

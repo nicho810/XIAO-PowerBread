@@ -101,7 +101,7 @@
 
 #define currentSensor_1_address 0x41
 #define currentSensor_1_shuntR_0 0.01f //10 mOhm
-#define currentSensor_1_MaxCurrent_0 1.0f //8A
+#define currentSensor_1_MaxCurrent_0 8.0f //8A
 
 
 /* Pin definition for each board */

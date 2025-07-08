@@ -9,19 +9,19 @@
 cSensor_1ch_ina226::cSensor_1ch_ina226(uint8_t address, float shuntResistorOhm, float maxCurrent, uint16_t average)
     : CurrentSensor(address, {shuntResistorOhm}, {maxCurrent}, average), ina226_(address) {
     if (shuntResistorOhm <= 0) {
-        Serial.println("Shunt resistor value must be positive");
+        Serial.println("[ERROR] Shunt resistor value must be positive");
     }
 }
 
 bool cSensor_1ch_ina226::initialize() {
     if (!ina226_.begin()) {
-        Serial.print("Failed to initialize ina226 at address 0x");
+        Serial.print("[ERROR] Failed to initialize ina226 at address 0x");
         Serial.print(static_cast<int>(address_), HEX);
         Serial.println();
         return false;
     }
     // Set averaging parameters (ina226 library does not support direct setting of averaging count, here only print)
-    Serial.print("> cSensor_1ch initialized at address 0x");
+    Serial.print("[OK] cSensor_1ch initialized at address 0x");
     Serial.print(static_cast<int>(address_), HEX);
     Serial.print(" with average: ");
     Serial.println(average_);
@@ -41,28 +41,28 @@ bool cSensor_1ch_ina226::readData(std::vector<currentSensorData>& data) {
 
 float cSensor_1ch_ina226::getBusVoltage_mV(uint8_t channel) {
     if (channel != 0) {
-        Serial.println("cSensor_1ch has only one channel (index 0)");
+        Serial.println("[ERROR] cSensor_1ch has only one channel (index 0)");
     }
     return ina226_.getBusVoltage_mV();
 }
 
 float cSensor_1ch_ina226::getShuntVoltage_mV(uint8_t channel) {
     if (channel != 0) {
-        Serial.println("cSensor_1ch has only one channel (index 0)");
+        Serial.println("[ERROR] cSensor_1ch has only one channel (index 0)");
     }
     return ina226_.getShuntVoltage_mV();
 }
 
 float cSensor_1ch_ina226::getCurrent_mA(uint8_t channel) {
     if (channel != 0) {
-        Serial.println("cSensor_1ch has only one channel (index 0)");
+        Serial.println("[ERROR] cSensor_1ch has only one channel (index 0)");
     }
     return ina226_.getCurrent_mA();
 }
 
 float cSensor_1ch_ina226::getPower_mW(uint8_t channel) {
     if (channel != 0) {
-        Serial.println("cSensor_1ch has only one channel (index 0)");
+        Serial.println("[ERROR] cSensor_1ch has only one channel (index 0)");
     }
     return ina226_.getPower_mW();
 }
@@ -71,17 +71,17 @@ float cSensor_1ch_ina226::getPower_mW(uint8_t channel) {
 cSensor_2ch_ina226::cSensor_2ch_ina226(uint8_t address1, uint8_t address2, const std::vector<float>& shuntResistorOhms, const std::vector<float>& maxCurrent, uint16_t average)
     : CurrentSensor(address1, shuntResistorOhms, maxCurrent, average) {
     if (shuntResistorOhms.size() != 2) {
-        Serial.println("cSensor_2ch requires exactly 2 shunt resistor values");
+        Serial.println("[ERROR] cSensor_2ch requires exactly 2 shunt resistor values");
         return;
     }
     for (float r : shuntResistorOhms) {
         if (r <= 0) {
-            Serial.println("Shunt resistor values must be positive");
+            Serial.println("[ERROR] Shunt resistor values must be positive");
             return;
         }
     }
     if (maxCurrent.size() != 2) {
-        Serial.println("cSensor_2ch requires exactly 2 max current values");
+        Serial.println("[ERROR] cSensor_2ch requires exactly 2 max current values");
         return;
     }
     // Use the two provided addresses
@@ -93,7 +93,7 @@ cSensor_2ch_ina226::cSensor_2ch_ina226(uint8_t address1, uint8_t address2, const
 bool cSensor_2ch_ina226::initialize() {
     for (size_t i = 0; i < ina226s_.size(); ++i) {
         if (!ina226s_[i].begin()) {
-            Serial.print("Failed to initialize ina226 at address 0x");
+            Serial.print("[ERROR] Failed to initialize ina226 at address 0x");
             Serial.print(static_cast<int>(addresses_[i]), HEX);
             Serial.println();
             return false;
@@ -108,7 +108,7 @@ bool cSensor_2ch_ina226::initialize() {
     ina226s_[0].setMaxCurrentShunt(maxCurrent_[0], shuntResistorOhms_[0], true);
     ina226s_[1].setMaxCurrentShunt(maxCurrent_[1], shuntResistorOhms_[1], true);
 
-    Serial.print("> cSensor #1 initialized: Address 0x");
+    Serial.print("[OK] cSensor #1 initialized: Address 0x");
     Serial.print(static_cast<int>(addresses_[0]), HEX);
     Serial.print(", Shunt Resistor ");
     Serial.print(ina226s_[0].getShunt(), 3);
@@ -123,7 +123,7 @@ bool cSensor_2ch_ina226::initialize() {
     Serial.print(" mA");
     Serial.println();
 
-    Serial.print("> cSensor #2 initialized: Address 0x");
+    Serial.print("[OK] cSensor #2 initialized: Address 0x");
     Serial.print(static_cast<int>(addresses_[1]), HEX);
     Serial.print(", Shunt Resistor ");    
     Serial.print(ina226s_[1].getShunt(), 3);
@@ -134,7 +134,7 @@ bool cSensor_2ch_ina226::initialize() {
     Serial.print(average_);
     //LSB
     Serial.print(", LSB ");
-    Serial.print(ina226s_[0].getCurrentLSB(), 3);
+    Serial.print(ina226s_[1].getCurrentLSB(), 3);
     Serial.print(" mA");
     Serial.println();
 
@@ -157,28 +157,28 @@ bool cSensor_2ch_ina226::readData(std::vector<currentSensorData>& data) {
 
 float cSensor_2ch_ina226::getBusVoltage_mV(uint8_t channel) {
     if (channel >= ina226s_.size()) {
-        Serial.println("Invalid channel index for cSensor_2ch");
+        Serial.println("[ERROR] Invalid channel index for cSensor_2ch");
     }
     return ina226s_[channel].getBusVoltage_mV();
 }
 
 float cSensor_2ch_ina226::getShuntVoltage_mV(uint8_t channel) {
     if (channel >= ina226s_.size()) {
-        Serial.println("Invalid channel index for cSensor_2ch");
+        Serial.println("[ERROR] Invalid channel index for cSensor_2ch");
     }
     return ina226s_[channel].getShuntVoltage_mV();
 }
 
 float cSensor_2ch_ina226::getCurrent_mA(uint8_t channel) {
     if (channel >= ina226s_.size()) {
-        Serial.println("Invalid channel index for cSensor_2ch");
+        Serial.println("[ERROR] Invalid channel index for cSensor_2ch");
     }
     return ina226s_[channel].getCurrent_mA();
 }
 
 float cSensor_2ch_ina226::getPower_mW(uint8_t channel) {
     if (channel >= ina226s_.size()) {
-        Serial.println("Invalid channel index for cSensor_2ch");
+        Serial.println("[ERROR] Invalid channel index for cSensor_2ch");
     }
     return ina226s_[channel].getPower_mW();
 }

@@ -20,7 +20,7 @@ void lvgl_init(lv_obj_t *ui_container)
 {
     // LCD Init
     if (!tft.begin()) {  // Add error checking for LCD initialization
-        Serial.println("> LCD initialization failed!");
+        Serial.println("[ERROR] LCD initialization failed!");
         while(1) delay(100);
     }
     tft.setColorDepth(16);         // RGB565
@@ -29,14 +29,14 @@ void lvgl_init(lv_obj_t *ui_container)
 
     // Initialize LVGL
     lv_init();
-    Serial.println("> LVGL core initialized");
+    Serial.println("[OK] LVGL core initialized");
 
      // Initialize display buffer with smaller size
     static lv_disp_draw_buf_t draw_buf;
     static lv_color_t buf1[screen_width * 10];
     static lv_color_t buf2[screen_width * 10];
     lv_disp_draw_buf_init(&draw_buf, buf1, buf2, screen_width * 10);
-    Serial.println("> Display buffer initialized");
+    Serial.println("[OK] Display buffer initialized");
     Serial.flush();
 
     // Initialize display driver
@@ -53,10 +53,10 @@ void lvgl_init(lv_obj_t *ui_container)
     // Register the driver
     lv_disp_t * disp = lv_disp_drv_register(&disp_drv);
     if (!disp) {
-        Serial.println("ERROR: Failed to register display driver!");
+        Serial.println("[ERROR] Failed to register display driver!");
         while(1) delay(100);
     }
-    Serial.println("> Display driver registered");
+    Serial.println("[OK] Display driver registered");
     Serial.flush();
 
     //register keyboard input device
@@ -70,22 +70,22 @@ void lvgl_init(lv_obj_t *ui_container)
         lv_group_t *g = lv_group_create();
         lv_group_set_default(g);
         lv_indev_set_group(kb_indev, g);
-        Serial.println("> Input device registered successfully");
+        Serial.println("[OK] Input device registered successfully");
     } else {
-        Serial.println("> Failed to register input device!");
+        Serial.println("[ERROR] Failed to register input device!");
     }
 
     // Initialize basic screen
     lv_obj_t * scr = lv_scr_act();
     if (!scr) {
-        Serial.println("> ERROR: Failed to get active screen!");
+        Serial.println("[ERROR] Failed to get active screen!");
         while(1) delay(100);
     }
 
     lv_obj_clean(lv_scr_act());
     ui_container = lv_obj_create(lv_scr_act());
     if (!ui_container || !lv_obj_is_valid(ui_container)) {
-        Serial.println("ERROR: Failed to create ui container!");
+        Serial.println("[ERROR] Failed to create ui container!");
         while(1) delay(100);
     }
 
@@ -101,14 +101,14 @@ void lvgl_init(lv_obj_t *ui_container)
 
     // Force a refresh to ensure container is created
     lv_refr_now(lv_disp_get_default());
-    Serial.println("> UI container created successfully");
+    Serial.println("[OK] UI container created successfully");
     Serial.flush();
 
 
     // Create a test label
     lv_obj_t * label = lv_label_create(ui_container);
     if (!label) {
-        Serial.println("> ERROR: Failed to create test label!");
+        Serial.println("[ERROR] Failed to create test label!");
         while(1) delay(100);
     }
 
