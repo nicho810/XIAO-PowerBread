@@ -30,28 +30,39 @@ pio run -e seeed_xiao_esp32c3 -t mergebin  # ESP32 合并二进制
 ### 数据流
 
 ```
-INA3221 (I2C) → sensorUpdateTask (5ms) → latestSensorData (全局共享)
-  ├→ sensorUpdateTask (取 lvglMutex) → update_* → LVGL widgets
+INA3221 (I2C) → sensorUpdateTask (5ms) → latestSensorData (sensorDataMutex 保护)
+  ├→ TaskNotify(EVT_SENSOR_READY) → lvglTask → copy-out → update_* → LVGL widgets
   ├→ lvglTask (5ms) → lv_timer_handler → LovyanGFX → ST7735S LCD
   └→ serialPrintTask → Serial (可选调试)
 
-Dial (ADC) → dialReadTask (100ms) → last_key → keyboard_read() → LVGL input → key_event_cb
+Dial (ADC) → dialReadTask (100ms) → last_key (keyboardMutex) → keyboard_read() → LVGL input
+  └→ key_event_cb → TaskNotify(EVT_MODE_CHANGE/EVT_HIGHLIGHT_CHANGE) → sensorUpdateTask → lvglTask
 ```
 
 ### FreeRTOS 任务
 
 | 任务 | 优先级 | 职责 |
 |------|--------|------|
-| lvglTask | 4 | LVGL 渲染循环，display flush |
-| sensorUpdateTask | 3 | INA3221 采样，滚动均值计算，选择性 UI 刷新 |
-| dialReadTask | 2 | 旋钮输入，模式切换，长按检测 |
+| lvglTask | 4 | UI 唯一控制者：事件驱动 widget 更新 + config mode UI + 模式切换 + lv_timer_handler |
+| sensorUpdateTask | 3 | 纯数据生产者：INA3221 采样 + EMA 计算，零 LVGL 依赖 |
+| dialReadTask | 2 | 旋钮输入，ADC→LVGL 键码，长按检测 |
 | serialPrintTask | 1 | 串口调试输出 (human / Arduino Plotter) |
 
 ### 同步原语
 
-- `lvglMutex` — 保护所有 LVGL 操作
-- `xSemaphore` — 保护 latestSensorData + 键盘状态
+锁层级: lvglMutex(L1) → sensorDataMutex(L2) → keyboardMutex(L3) → configStateMutex(L4)
+
+- `lvglMutex` — 保护所有 LVGL 操作 (仅 lvglTask 持有，无竞争)
+- `sensorDataMutex` — 保护 latestSensorData + avgS/M/H/peak
+- `keyboardMutex` — 保护 last_key / last_key_pressed
 - `configStateMutex` — 保护 ConfigMode 状态机
+
+### 任务间通信 (TaskNotify)
+
+- `EVT_MODE_CHANGE` — key_event_cb → sensorUpdateTask → lvglTask (模式切换)
+- `EVT_HIGHLIGHT_CHANGE` — key_event_cb → sensorUpdateTask → lvglTask (通道切换)
+- `EVT_FORCE_UPDATE` — setup() / key_event_cb → sensorUpdateTask → lvglTask (强制刷新)
+- `EVT_SENSOR_READY` — sensorUpdateTask → lvglTask (数据就绪)
 
 ### 多板支持
 

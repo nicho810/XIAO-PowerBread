@@ -2,8 +2,8 @@
  * XIAO PowerBread - 面包板电源供应器，实时电压/电流/功率监控
  *
  * [INPUT]: boardConfig.h, xpb_display, INA3221Sensor, dialSwitch, sysConfig, lvgl_ui, rtos_Tasks
- * [OUTPUT]: 系统入口 setup()，硬件初始化序列编排，FreeRTOS 四任务创建
- * [POS]: 整个固件的入口点——交响乐的指挥，协调所有模块的初始化顺序和任务启动
+ * [OUTPUT]: setup(), sensorDataMutex, keyboardMutex, 四任务创建, latestSensorData, avgS/M/H/peak
+ * [POS]: 系统入口点，硬件初始化 + 信号量创建 + FreeRTOS 任务编排，TaskNotify 驱动首次更新
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  *
  * https://github.com/nicho810/XIAO-PowerBread
@@ -37,7 +37,7 @@ lv_obj_t *ui_container = NULL;
 // Dial Switch
 #include "dialSwitch.h"
 DialFunction dial;
-volatile int dialStatus = 0; // 0: reset, 1: up, 2: down, 3: press, 4: long press
+volatile int dialStatus = 0;
 volatile int lastDialStatus = 0;
 
 // System Config
@@ -50,15 +50,10 @@ ConfigMode configMode;
 
 // Global variables
 volatile function_mode current_functionMode = dataMonitor;
-volatile bool functionMode_ChangeRequested = true;
-volatile bool highLightChannel_ChangeRequested = false;
 uint8_t highLightChannel = 0;
-uint8_t forceUpdate_flag = 0;
 
-// LCD Rotation variables
-volatile bool rotationChangeRequested = false;
-volatile int newRotation = 0;
-volatile int tft_Rotation = 0; // default rotation.
+// LCD Rotation
+volatile int tft_Rotation = 0;
 
 // Current sensor
 #include "INA3221Sensor.h"
@@ -97,8 +92,10 @@ extern SemaphoreHandle_t configStateMutex;
 
 // Semaphores (lvglMutex 由 xpb_display 模块拥有)
 extern SemaphoreHandle_t lvglMutex;
-SemaphoreHandle_t xSemaphore = NULL;
-StaticSemaphore_t xMutexBuffer;
+SemaphoreHandle_t sensorDataMutex = NULL;     // 保护 latestSensorData + avgS/M/H/peak
+StaticSemaphore_t sensorDataMutexBuffer;
+SemaphoreHandle_t keyboardMutex = NULL;       // 保护 last_key / last_key_pressed
+StaticSemaphore_t keyboardMutexBuffer;
 
 // 应用配置数据到运行时变量
 static void apply_config(void)
@@ -143,8 +140,9 @@ void setup(void)
     configStateMutex = xSemaphoreCreateMutex();
 
     // semaphore init
-    xSemaphore = xSemaphoreCreateMutexStatic(&xMutexBuffer);
-    if (xSemaphore == NULL)
+    sensorDataMutex = xSemaphoreCreateMutexStatic(&sensorDataMutexBuffer);
+    keyboardMutex = xSemaphoreCreateMutexStatic(&keyboardMutexBuffer);
+    if (sensorDataMutex == NULL || keyboardMutex == NULL)
     {
         Serial.println("Error creating semaphore");
         while (1)
@@ -164,12 +162,17 @@ void setup(void)
     Serial.println(sysConfig.output_all_config_data_in_String()); 
 
     // Check if user want to enter the config mode, 2 = The dial is turned down by user when boot up -> Enter the config mode
-    if (dial.readDialStatus() == 2)
+    bool entering_config = (dial.readDialStatus() == 2);
+    if (entering_config)
     {
         configMode.enterConfigMode();
         tmp_cfg_data = sysConfig.cfg_data; // copy cfg_data to tmp_cfg_data for later use(making changes to the config data)
         Serial.println("> Entering config mode.");
     }
+
+    // 在任务创建前完成 I2C 配置 — 避免与 sensorUpdateTask 的 I2C 读产生总线竞争
+    apply_config();
+
     // Create tasks (Create here because we still need it to update the UI even in config mode)
     xSensorTaskHandle = xTaskCreateStatic(sensorUpdateTask, "Sensor_Update", STACK_SIZE_SENSOR, NULL, 3, xStack_Sensor, &xTaskBuffer_Sensor);
     xLvglTaskHandle = xTaskCreateStatic(lvglTask, "UI_Update", STACK_SIZE_UI, NULL, 4, xStack_UI, &xTaskBuffer_UI);
@@ -183,7 +186,7 @@ void setup(void)
         if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
         {
             ui_container = xpb_display_create_config_ui(tft_Rotation);
-            forceUpdate_flag = 1;
+            xTaskNotify(xSensorTaskHandle, EVT_FORCE_UPDATE, eSetBits);
             lv_refr_now(lv_disp_get_default());
             xSemaphoreGive(lvglMutex);
         }
@@ -201,33 +204,18 @@ void setup(void)
         Serial.println(sysConfig.output_all_config_data_in_String());
         Serial.flush();
 
-        apply_config();
+        apply_config(); // 重新应用用户修改后的配置 (任务已运行，但 config 模式罕见)
         configMode.exitConfigMode();
         Serial.println("> Exiting config mode.");
         Serial.flush();
     }
-    else
-    {
-        apply_config();
-    }
 
-    // Init the default UI
-    if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
-    {
-        ui_container = xpb_display_create_ui(current_functionMode, tft_Rotation, highLightChannel);
-
-        // Initialize with invalid values to force first update
-        latestSensorData.channel0.busCurrent = -999.0f;
-        latestSensorData.channel1.busCurrent = -999.0f;
-        latestSensorData.channel0.busVoltage = -999.0f;
-        latestSensorData.channel1.busVoltage = -999.0f;
-
-        forceUpdate_flag = true;
-        functionMode_ChangeRequested = true;
-
-        lv_refr_now(lv_disp_get_default());
-        xSemaphoreGive(lvglMutex);
-    }
+    // 委托 lvglTask 创建首帧 UI (它是 UI 唯一控制者)
+    Serial.printf("[SETUP] sending EVT_MODE_CHANGE to lvgl=%p, EVT_FORCE_UPDATE to sensor=%p\n",
+                  xLvglTaskHandle, xSensorTaskHandle);
+    BaseType_t r1 = xTaskNotify(xLvglTaskHandle, EVT_MODE_CHANGE, eSetBits);
+    BaseType_t r2 = xTaskNotify(xSensorTaskHandle, EVT_FORCE_UPDATE, eSetBits);
+    Serial.printf("[SETUP] notify results: r1=%d r2=%d\n", r1, r2);
 
     // Start the scheduler
     // vTaskStartScheduler(); //Note: no need to call this, it will cause a crash, keep this note here as reminder.

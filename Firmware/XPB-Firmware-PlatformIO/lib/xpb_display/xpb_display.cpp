@@ -1,7 +1,7 @@
 /**
- * [INPUT]: LovyanGFX (LGFX_096_XPB), LVGL 8.3.4, lvgl_ui.h (UI 初始化函数)
- * [OUTPUT]: xpb_display_init(), xpb_display_create_ui(), xpb_display_create_config_ui()
- * [POS]: 显示子系统实现，LCD 硬件 + LVGL 驱动 + 输入设备注册均封装于此，tft 对外完全隐藏
+ * [INPUT]: LovyanGFX (LGFX_096_XPB), LVGL 8.3.4, lvgl_ui.h, keyboardMutex (extern from main)
+ * [OUTPUT]: xpb_display_init(), xpb_display_create_ui(), xpb_display_create_config_ui(), lvglMutex
+ * [POS]: 显示子系统实现，LCD + LVGL + 输入设备封装，keyboard_read 通过 keyboardMutex 保护
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -17,6 +17,9 @@
 extern bool last_key_pressed;
 extern uint32_t last_key;
 
+/* 外部信号量 — 由 main.cpp 创建 */
+extern SemaphoreHandle_t keyboardMutex;
+
 /* ================================================================
  *  内部状态 — 对外完全隐藏
  * ================================================================ */
@@ -31,6 +34,14 @@ static void xpb_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_
     uint32_t h = (area->y2 - area->y1 + 1);
     uint32_t len = w * h;
 
+    /* DEBUG: 确认 flush 被调用 */
+    static uint32_t flush_count = 0;
+    flush_count++;
+    if (flush_count <= 5) {
+        Serial.printf("[FLUSH] #%lu area(%ld,%ld)-(%ld,%ld) %lu px\n",
+                      flush_count, area->x1, area->y1, area->x2, area->y2, len);
+    }
+
     tft.startWrite();
     tft.setAddrWindow(area->x1, area->y1, w, h);
     tft.writePixels((uint16_t *)&color_p->full, len, true);
@@ -43,7 +54,7 @@ static void xpb_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_
  * ================================================================ */
 static void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
 {
-    if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(10)) == pdTRUE)
+    if (xSemaphoreTake(keyboardMutex, pdMS_TO_TICKS(10)) == pdTRUE)
     {
         if (last_key_pressed)
         {
@@ -57,7 +68,7 @@ static void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
         }
 
         last_key_pressed = false;
-        xSemaphoreGive(xSemaphore);
+        xSemaphoreGive(keyboardMutex);
     }
     else
     {
@@ -65,11 +76,6 @@ static void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
         data->key = 0;
     }
 }
-
-/* ================================================================
- *  外部信号量 — 由 main.cpp 创建，此处仅引用
- * ================================================================ */
-extern SemaphoreHandle_t xSemaphore;
 
 /* lvglMutex 属于显示子系统，在此定义 */
 SemaphoreHandle_t lvglMutex = NULL;

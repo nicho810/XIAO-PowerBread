@@ -4,9 +4,18 @@
 ## 成员清单
 
 function_mode.h/cpp: function_mode 枚举定义 (dataMonitor / dataMonitorChart / dataMonitorCount)
-lvgl_ui.h/cpp: 4种 UI 场景初始化函数，LVGL 键盘事件回调 key_event_cb，模式切换 + 旋转处理
+lvgl_ui.h/cpp: 4种 UI 场景初始化函数，key_event_cb 通过 TaskNotify 发送 EVT_* 事件 (零锁依赖，消灭 ABBA 死锁)
 lvgl_ui_widget.h/cpp: Widget 工厂 — DataMonitor (78x78 V/I/P)，DataChart (折线图 70点)，DataCount (均值标签)，configMode_item (配置行)
-lvgl_ui_updateFunc.h/cpp: 局部刷新函数 — update_monitor_data / update_chart_data / update_count_data / update_chart_range / update_configMode
+lvgl_ui_updateFunc.h/cpp: 局部刷新函数 — update_monitor_data / update_chart_data / update_count_data / update_chart_range / update_configMode / update_configMode_cfgData
+
+## key_event_cb 事件路由
+
+```
+key_event_cb (LVGL 回调上下文，不持有任何信号量)
+  ├─ LV_KEY_ENTER → 切换 function_mode → TaskNotify(EVT_MODE_CHANGE) → sensorUpdateTask
+  ├─ LV_KEY_UP/DOWN → 切换 highLightChannel → TaskNotify(EVT_HIGHLIGHT_CHANGE) → sensorUpdateTask
+  └─ LV_KEY_ESC → configMode 导航
+```
 
 ## UI 初始化函数
 

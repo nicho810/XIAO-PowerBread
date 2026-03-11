@@ -1,223 +1,80 @@
+/**
+ * [INPUT]: INA3221Sensor (I2C 采集), sensorUpdateTask.h (EVT_* 事件位)
+ * [OUTPUT]: latestSensorData + avgS/avgM/avgH/peak (通过 sensorDataMutex 保护)
+ * [POS]: 纯数据生产者 (优先级3)，5ms 周期 I2C 采集 + EMA 计算，通过 TaskNotify 驱动 lvglTask
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
 #include "sensorUpdateTask.h"
-#include "sysConfig.h"
-#include "xpb_display.h"
 
-extern ConfigMode configMode;
+extern TaskHandle_t xLvglTaskHandle;
 
-// Sensor Update Task
+/* ================================================================
+ *  事件位 — 转发给 lvglTask (与 sensorUpdateTask.h 中 EVT_* 复用)
+ * ================================================================ */
+#define EVT_SENSOR_READY  (1 << 3)
+
 void sensorUpdateTask(void *pvParameters)
 {
     (void)pvParameters;
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(5);
-    const float UPDATE_THRESHOLD = 0.005f; // 5mV/mA threshold
+    const float UPDATE_THRESHOLD = 0.005f;
 
     while (1)
     {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
-        if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(5)) == pdTRUE)
+        /* --- 1. 接收事件 (非阻塞) --- */
+        uint32_t events = 0;
+        xTaskNotifyWait(0, 0xFFFFFFFF, &events, 0);
+
+        /* --- 2. I2C 采集 (无锁) --- */
+        DualChannelData newSensorData = inaSensor.readCurrentSensors();
+
+        /* --- 3. EMA 计算 (无锁，本任务独占写 avg/peak) --- */
+        if (current_functionMode == dataMonitorCount)
         {
-            if (configMode.configState.isActive)
+            for (int ch = 0; ch < 2; ch++)
             {
-                // Take LVGL mutex with shorter timeout for config mode
-                if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(2)) == pdTRUE)
-                {
-                    lv_obj_t *item_area = lv_obj_get_child(ui_container, 1);
-                    if (configMode.configState.cursorStatus >= 0)
-                    {
-                        // Skip update if cursor hasn't changed
-                        static int8_t last_cursor = -1;
-                        static int8_t last_status = -1;
-
-                        if (last_cursor != configMode.configState.cursor ||
-                            last_status != configMode.configState.cursorStatus)
-                        {
-
-                            update_configMode(item_area,
-                                              configMode.configState.cursor,
-                                              configMode.configState.cursorLast,
-                                              configMode.configState.cursorMax,
-                                              configMode.configState.cursorStatus);
-
-                            last_cursor = configMode.configState.cursor;
-                            last_status = configMode.configState.cursorStatus;
-                        }
-
-                        // update the value of the item if cursorStatus is 1(selected)
-                        if (configMode.configState.cursorStatus == 1)
-                        {
-                            update_configMode_cfgData(item_area, configMode.configState.cursor);
-                        }
-                    }
-                    else if (configMode.configState.cursorStatus == -1)
-                    {
-                        configMode.configState.isActive = false; // set to false to exit config mode
-                    }
-                    xSemaphoreGive(lvglMutex);
-                }
+                float val = (ch == 0) ? newSensorData.channel0.busCurrent
+                                      : newSensorData.channel1.busCurrent;
+                avgS[ch] = (0.3f * val) + (0.7f * avgS[ch]);
+                avgM[ch] = (0.002f * val) + (0.998f * avgM[ch]);
+                avgH[ch] = (0.000033f * val) + (0.999967f * avgH[ch]);
+                if (val > peak[ch]) peak[ch] = val;
             }
-            else if (!configMode.configState.isActive) // Only process sensor updates when not in config mode
-            {
-                DualChannelData newSensorData = inaSensor.readCurrentSensors();
-
-                // if the function mode is changed, reinit the ui
-                if (functionMode_ChangeRequested)
-                {
-                    // Take LVGL mutex before UI operations
-                    if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
-                    {
-                        // Delete old container first
-                        if (ui_container != NULL)
-                        {
-                            lv_obj_del(ui_container);
-                            ui_container = NULL;
-                        }
-
-                        // Create new UI
-                        ui_container = xpb_display_create_ui(current_functionMode, tft_Rotation, highLightChannel);
-
-                        // Force immediate sensor read and update for dataMonitor mode
-                        if (current_functionMode == dataMonitor)
-                        {
-                            latestSensorData = inaSensor.readCurrentSensors();
-                            if (lv_obj_t *container0 = lv_obj_get_child(ui_container, 0))
-                            {
-                                if (lv_obj_t *container1 = lv_obj_get_child(ui_container, 1))
-                                {
-                                    update_monitor_data(container0, 0, latestSensorData);
-                                    update_monitor_data(container1, 1, latestSensorData);
-                                }
-                            }
-                        }
-
-                        // Reset latest sensor data to force next update
-                        latestSensorData.channel0.busCurrent = -999.0f;
-                        latestSensorData.channel1.busCurrent = -999.0f;
-                        latestSensorData.channel0.busVoltage = -999.0f;
-                        latestSensorData.channel1.busVoltage = -999.0f;
-
-                        forceUpdate_flag = true;
-                        xSemaphoreGive(lvglMutex);
-                    }
-                    functionMode_ChangeRequested = false;
-                }
-
-                // Calculate averages for dataMonitorCount mode
-                if (current_functionMode == dataMonitorCount)
-                {
-                    for (int ch = 0; ch < 2; ch++)
-                    {
-                        float currentVal = (ch == 0) ? newSensorData.channel0.busCurrent
-                                                     : newSensorData.channel1.busCurrent;
-
-                        // 1-second moving average
-                        float alphaS = 0.3f; // Faster response time
-                        avgS[ch] = (alphaS * currentVal) + ((1.0f - alphaS) * avgS[ch]);
-
-                        // 1-minute moving average
-                        float alphaM = 0.002f;
-                        avgM[ch] = (alphaM * currentVal) + ((1.0f - alphaM) * avgM[ch]);
-
-                        // 1-hour moving average
-                        float alphaH = 0.000033f;
-                        avgH[ch] = (alphaH * currentVal) + ((1.0f - alphaH) * avgH[ch]);
-
-                        // Update peak values
-                        if (currentVal > peak[ch])
-                        {
-                            peak[ch] = currentVal;
-                        }
-                    }
-
-                }
-
-                // Check if display update is needed
-                bool shouldUpdate = forceUpdate_flag;
-                if (!shouldUpdate)
-                {
-                    // Force update if latestSensorData contains invalid values
-                    if (latestSensorData.channel0.busCurrent < -900.0f ||
-                        latestSensorData.channel1.busCurrent < -900.0f)
-                    {
-                        shouldUpdate = true;
-                    }
-                    // Always update for Chart and Count modes
-                    else if (current_functionMode == dataMonitorChart ||
-                             current_functionMode == dataMonitorCount)
-                    {
-                        shouldUpdate = true;
-                    }
-                    else
-                    {
-                        // For other modes, only update on significant changes
-                        shouldUpdate = (abs(newSensorData.channel0.busCurrent - latestSensorData.channel0.busCurrent) > UPDATE_THRESHOLD) ||
-                                       (abs(newSensorData.channel1.busCurrent - latestSensorData.channel1.busCurrent) > UPDATE_THRESHOLD) ||
-                                       (abs(newSensorData.channel0.busVoltage - latestSensorData.channel0.busVoltage) > UPDATE_THRESHOLD) ||
-                                       (abs(newSensorData.channel1.busVoltage - latestSensorData.channel1.busVoltage) > UPDATE_THRESHOLD);
-                    }
-                }
-
-                if (shouldUpdate || highLightChannel_ChangeRequested)
-                {
-                    latestSensorData = newSensorData;
-
-                    if (xSemaphoreTake(lvglMutex, pdMS_TO_TICKS(5)) == pdTRUE)
-                    {
-                        lv_obj_t *container0 = lv_obj_get_child(ui_container, 0);
-
-                        if (container0)
-                        {
-                            switch (current_functionMode)
-                            {
-                            case dataMonitor:
-                                if (lv_obj_t *container1 = lv_obj_get_child(ui_container, 1))
-                                {
-                                    update_monitor_data(container0, 0, latestSensorData);
-                                    update_monitor_data(container1, 1, latestSensorData);
-                                }
-                                break;
-
-                            case dataMonitorChart:
-                                if (lv_obj_t *container1 = lv_obj_get_child(ui_container, 1))
-                                {
-                                    update_monitor_data(container0, highLightChannel, latestSensorData);
-                                    float currentValue = (highLightChannel == 0) ? latestSensorData.channel0.busCurrent : latestSensorData.channel1.busCurrent;
-                                    update_chart_data(container1, currentValue);
-                                }
-                                break;
-
-                            case dataMonitorCount:
-                                if (highLightChannel_ChangeRequested)
-                                {
-                                    avgS[highLightChannel] = 0;
-                                    avgM[highLightChannel] = 0;
-                                    avgH[highLightChannel] = 0;
-                                    peak[highLightChannel] = 0;
-                                }
-                                update_monitor_data(container0, highLightChannel, latestSensorData);
-                                lv_obj_t *container1 = lv_obj_get_child(ui_container, 1);
-                                update_count_data(container1, highLightChannel, avgS[highLightChannel]);
-                                container1 = lv_obj_get_child(ui_container, 2);
-                                update_count_data(container1, highLightChannel, avgM[highLightChannel]);
-                                container1 = lv_obj_get_child(ui_container, 3);
-                                update_count_data(container1, highLightChannel, avgH[highLightChannel]);
-                                container1 = lv_obj_get_child(ui_container, 4);
-                                update_count_data(container1, highLightChannel, peak[highLightChannel]);
-                                break;
-                            }
-                        }
-                        xSemaphoreGive(lvglMutex);
-                    }
-
-                    forceUpdate_flag = false;
-                    highLightChannel_ChangeRequested = false;
-                }
-            }
-
-            xSemaphoreGive(xSemaphore);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(1));
+        /* --- 4. 变化检测 + 发布数据 (短锁) --- */
+        bool dataChanged = (events & EVT_FORCE_UPDATE) ||
+                           (current_functionMode == dataMonitorChart) ||
+                           (current_functionMode == dataMonitorCount);
+
+        if (!dataChanged)
+        {
+            dataChanged = (abs(newSensorData.channel0.busCurrent - latestSensorData.channel0.busCurrent) > UPDATE_THRESHOLD) ||
+                          (abs(newSensorData.channel1.busCurrent - latestSensorData.channel1.busCurrent) > UPDATE_THRESHOLD) ||
+                          (abs(newSensorData.channel0.busVoltage - latestSensorData.channel0.busVoltage) > UPDATE_THRESHOLD) ||
+                          (abs(newSensorData.channel1.busVoltage - latestSensorData.channel1.busVoltage) > UPDATE_THRESHOLD);
+        }
+
+        if (dataChanged || (events & (EVT_MODE_CHANGE | EVT_HIGHLIGHT_CHANGE)))
+        {
+            if (xSemaphoreTake(sensorDataMutex, pdMS_TO_TICKS(2)) == pdTRUE)
+            {
+                latestSensorData = newSensorData;
+                xSemaphoreGive(sensorDataMutex);
+            }
+        }
+
+        /* --- 5. 转发事件给 lvglTask --- */
+        uint32_t fwdBits = events & (EVT_MODE_CHANGE | EVT_HIGHLIGHT_CHANGE | EVT_FORCE_UPDATE);
+        if (dataChanged) fwdBits |= EVT_SENSOR_READY;
+
+        if (fwdBits && xLvglTaskHandle)
+        {
+            xTaskNotify(xLvglTaskHandle, fwdBits, eSetBits);
+        }
     }
 }

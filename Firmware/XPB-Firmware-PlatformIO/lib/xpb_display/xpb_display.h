@@ -1,7 +1,7 @@
 /**
  * [INPUT]: lvgl.h, function_mode.h
  * [OUTPUT]: xpb_display_init(), xpb_display_create_ui(), xpb_display_create_config_ui(), XPB_SCREEN_*
- * [POS]: 显示子系统抽象层，封装 LCD 硬件 + LVGL 框架 + 输入设备，对外隐藏 LovyanGFX 细节
+ * [POS]: 显示子系统抽象层，封装 LCD + LVGL + 输入设备，keyboard_read 使用 keyboardMutex
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -21,7 +21,7 @@
  * ================================================================ */
 
 // 初始化 LCD 硬件 + LVGL 框架 + 输入设备
-// 内部创建 lvglMutex，调用前 xSemaphore 必须已就绪
+// 内部创建 lvglMutex，调用前 keyboardMutex 必须已就绪
 bool xpb_display_init(int rotation);
 
 // 统一 UI 创建入口，调用者必须持有 lvglMutex

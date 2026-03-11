@@ -4,7 +4,7 @@
 extern ConfigMode configMode;
 extern SysConfig sysConfig;
 
-extern SemaphoreHandle_t xSemaphore;
+extern SemaphoreHandle_t sensorDataMutex;
 extern DualChannelData latestSensorData;
 
 void serialPrintTask(void *pvParameters)
@@ -32,10 +32,10 @@ void serialPrintTask(void *pvParameters)
         {
             if (!configMode.configState.isActive) // Only run this print when not in config mode
             {
-                if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(100)) == pdTRUE)
+                if (xSemaphoreTake(sensorDataMutex, pdMS_TO_TICKS(100)) == pdTRUE)
                 {
                     DualChannelData sensorData = latestSensorData;
-                    xSemaphoreGive(xSemaphore);
+                    xSemaphoreGive(sensorDataMutex);
 
                     if (Serial && serialEnabled)
                     {

@@ -23,7 +23,7 @@ lv_obj_t* xpb_display_create_config_ui(int rotation);                     // Con
 xpb_display ← LovyanGFX (LGFX_096_XPB), LVGL, boardConfig, lvgl_ui
 xpb_display → lvglMutex (extern 暴露给 rtos_Tasks)
 xpb_display ← last_key/last_key_pressed (extern from dialReadTask)
-xpb_display ← xSemaphore (extern from main.cpp)
+xpb_display ← keyboardMutex (extern from main.cpp，keyboard_read 回调保护)
 ```
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

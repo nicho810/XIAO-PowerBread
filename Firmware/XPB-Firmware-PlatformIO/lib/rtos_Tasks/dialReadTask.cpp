@@ -1,5 +1,5 @@
 #include "dialReadTask.h"
-extern SemaphoreHandle_t xSemaphore;
+extern SemaphoreHandle_t keyboardMutex;
 
 // Keyboard state variables (remove static keyword for shared variables)
 bool last_key_pressed = false;
@@ -17,7 +17,7 @@ const TickType_t debounceDelay = pdMS_TO_TICKS(100); // 100ms debounce delay
 
 void update_keyboard_state(uint8_t status)
 {
-    if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(10)) == pdTRUE)
+    if (xSemaphoreTake(keyboardMutex, pdMS_TO_TICKS(10)) == pdTRUE)
     {
         last_key_pressed = true;
         switch (status)
@@ -39,7 +39,7 @@ void update_keyboard_state(uint8_t status)
             last_key = 0;
             break;
         }
-        xSemaphoreGive(xSemaphore);
+        xSemaphoreGive(keyboardMutex);
     }
 }
 
@@ -114,10 +114,10 @@ void dialReadTask(void *pvParameters)
 
                 case 0:  // Released
                     // Reset key state after a delay
-                    if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(10)) == pdTRUE) {
+                    if (xSemaphoreTake(keyboardMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
                         last_key_pressed = false;
                         last_key = 0;
-                        xSemaphoreGive(xSemaphore);
+                        xSemaphoreGive(keyboardMutex);
                     }
                     break;
             }
