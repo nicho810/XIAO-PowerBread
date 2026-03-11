@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: xpb_color_palette.h
+ * [OUTPUT]: 7 个颜色常量的具体值定义
+ * [POS]: 颜色值实例化，与 .h 声明配对
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
 #include "xpb_color_palette.h"
 
 lv_color_t xpb_color_Background = lv_color_hex(0x000000);

@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: dialSwitch.h, boardConfig.h (平台宏)
+ * [OUTPUT]: ADC 初始化, 平台特定阈值判定实现
+ * [POS]: DialFunction 类的实现，每平台 ADC 特性不同故阈值硬编码于 #ifdef 分支
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
 #include "dialSwitch.h"
 
 

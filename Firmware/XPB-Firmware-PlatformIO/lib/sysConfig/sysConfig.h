@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: Arduino.h, EEPROM.h, boardConfig.h, sysConfig_user.h (默认值)
+ * [OUTPUT]: sysConfig_data (11项参数), SysConfig 类 (EEPROM 读写), ConfigMode 类 (状态机), configStateMutex
+ * [POS]: 持久化配置核心，EEPROM 128字节存储，版本迁移，ConfigMode 线程安全状态机
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
 #ifndef sysConfig_h
 #define sysConfig_h
 

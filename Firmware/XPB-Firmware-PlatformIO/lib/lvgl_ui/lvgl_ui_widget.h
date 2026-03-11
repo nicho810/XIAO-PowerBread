@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: lvgl.h, xpb_color_palette.h
+ * [OUTPUT]: Widget 工厂函数 — DataMonitor (78x78 V/I/P), DataChart (折线图), DataCount (均值), configMode_item
+ * [POS]: 可复用 LVGL 组件工厂，被 lvgl_ui.cpp 消费来构建场景图
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
 #ifndef LVGL_WIDGET_H
 #define LVGL_WIDGET_H
 

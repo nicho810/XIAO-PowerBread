@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: LovyanGFX.hpp, boardConfig.h (SPI/LCD 引脚)
+ * [OUTPUT]: LGFX 类 (继承 lgfx::LGFX_Device)，ST7735S 80x160 显示驱动
+ * [POS]: 底层显示硬件配置，80MHz SPI，平台自适应总线 (ESP32=SPI2_HOST, RP2040=SPI0)
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
 #pragma once
 
 #define LGFX_USE_V1

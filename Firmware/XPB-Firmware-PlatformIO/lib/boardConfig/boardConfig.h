@@ -1,7 +1,16 @@
+/**
+ * [INPUT]: 无外部依赖，仅 FreeRTOS 头文件 (平台特定路径)
+ * [OUTPUT]: 五板引脚宏 (LCD SPI / INA3221 I2C / Dial ADC) + FreeRTOS 头文件路由
+ * [POS]: 硬件抽象层根基，所有模块的编译时平台分歧汇聚于此
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
 #ifndef boardConfig_h
 #define boardConfig_h
 
-/* Pin definition for each board */
+/* ================================================================
+ * 引脚定义 — 每板一组
+ * ================================================================ */
 #if defined(SEEED_XIAO_ESP32C3) || defined(SEEED_XIAO_ESP32S3)
 #define pin_dial D2 //D2
 #define pin_lcd_sclk D8 //D8

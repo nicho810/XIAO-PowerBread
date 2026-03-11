@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: lvgl.h, xpb_color_palette.h, INA3221Sensor.h (DualChannelData)
+ * [OUTPUT]: 局部刷新函数 — update_monitor_data / update_chart_data / update_count_data / update_configMode
+ * [POS]: UI 数据绑定层，将传感器数据 → LVGL widget 属性的映射，选择性刷新避免闪烁
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
 #ifndef LVGL_UI_UPDATEFUNC_H
 #define LVGL_UI_UPDATEFUNC_H
 

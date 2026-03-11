@@ -1,34 +1,12 @@
-/*
- * XIAO PowerBread - A Breadboard Power Supply with Real-Time Monitoring
+/**
+ * XIAO PowerBread - 面包板电源供应器，实时电压/电流/功率监控
  *
- * This open-source project provides a reliable and efficient power solution
- * for breadboard prototyping, featuring built-in sensors, real-time monitoring.
+ * [INPUT]: boardConfig.h, LovyanGFX, LVGL 8.3.4, INA3221Sensor, dialSwitch, sysConfig, lvgl_ui, rtos_Tasks
+ * [OUTPUT]: 系统入口 setup()，硬件初始化，LVGL 显示驱动注册，FreeRTOS 四任务创建
+ * [POS]: 整个固件的入口点，协调所有模块的初始化顺序和任务启动
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  *
- * Key Features:
- * - Real-Time Monitoring
- * - High-Current Output (up to 1.5A of 3.3V power)
- * - Built-in LCD Display
- * - Plug-and-Play Design
- * - Open-Source and Seeed XIAO Powered
- * - Dual-Channel Voltage and Current Sensing
- * - Compact Design with 3.3V and 5V outputs
- * - Multiple UI functions
- *
- * For more information, visit:
  * https://github.com/nicho810/XIAO-PowerBread
- *
- * This project uses the following libraries:
- * - Arduino-Pico Core: https://github.com/earlephilhower/arduino-pico
- * - Arduino-ESP32: https://github.com/espressif/arduino-esp32
- * - INA3221_RT Library: https://github.com/RobTillaart/INA3221_RT/tree/master
- * - LVGL: https://github.com/lvgl/lvgl
- * - LovyanGFX: https://github.com/lovyan03/LovyanGFX
- *
- * About the LCD Driver Library:
- * A modified version of Adafruit_ST7735&Adafruit_GFX library for v1.x
- * LovyanGFX is used starting from v2.x to make UI response faster.
- * We are grateful to the developers and contributors of these libraries.
- *
  * Licensed under the MIT License
  */
 

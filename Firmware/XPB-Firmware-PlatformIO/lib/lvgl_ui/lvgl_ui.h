@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: Arduino.h, boardConfig.h, lvgl.h, xpb_color_palette.h, lvgl_ui_widget.h, function_mode.h
+ * [OUTPUT]: 4种 UI 初始化函数 (dataMonitor/dataMonitorChart/dataMonitorCount/configMode), key_event_cb
+ * [POS]: UI 场景图构建入口，模式切换 + 旋转处理，LVGL 键盘事件路由
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
 #ifndef LVGL_UI_H
 #define LVGL_UI_H
 
