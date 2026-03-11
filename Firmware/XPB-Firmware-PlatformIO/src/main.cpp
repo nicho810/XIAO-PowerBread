@@ -1,9 +1,9 @@
 /**
  * XIAO PowerBread - 面包板电源供应器，实时电压/电流/功率监控
  *
- * [INPUT]: boardConfig.h, LovyanGFX, LVGL 8.3.4, INA3221Sensor, dialSwitch, sysConfig, lvgl_ui, rtos_Tasks
- * [OUTPUT]: 系统入口 setup()，硬件初始化，LVGL 显示驱动注册，FreeRTOS 四任务创建
- * [POS]: 整个固件的入口点，协调所有模块的初始化顺序和任务启动
+ * [INPUT]: boardConfig.h, xpb_display, INA3221Sensor, dialSwitch, sysConfig, lvgl_ui, rtos_Tasks
+ * [OUTPUT]: 系统入口 setup()，硬件初始化序列编排，FreeRTOS 四任务创建
+ * [POS]: 整个固件的入口点——交响乐的指挥，协调所有模块的初始化顺序和任务启动
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  *
  * https://github.com/nicho810/XIAO-PowerBread
@@ -23,71 +23,13 @@
 #include "serialTask.h"       // serial task
 #include "sensorUpdateTask.h" // sensor update task
 #include "lvglTask.h"         // LVGL task
-// LCD
-#include <LovyanGFX.h>
-#include <LGFX_096_XPB.hpp>
+
+// Display subsystem
+#include "xpb_display.h"
 #include <lvgl.h>
-static LGFX tft;                 // LGFXのインスタンスを作成。
-static LGFX_Sprite sprite(&tft); // スプライトを使う場合はLGFX_Spriteのインスタンスを作成。
-#define screen_width 80
-#define screen_height 160
 
-// LVGL UI & Input Device Declaration
-lv_obj_t *ui_container = NULL;   // Global container for the chart UI
-static lv_indev_drv_t indev_drv; // Input device driver
-
-// LVGL Input Device Keyboard read function
-static void keyboard_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
-{
-    // Take semaphore with a short timeout
-    if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(10)) == pdTRUE)
-    {
-        if (last_key_pressed)
-        {
-            data->state = LV_INDEV_STATE_PRESSED;
-            data->key = last_key;
-            // Serial.print("Key pressed: ");
-            // Serial.print(last_key);
-            // Serial.print(", State: PRESSED");
-            // Serial.println();
-        }
-        else
-        {
-            data->state = LV_INDEV_STATE_RELEASED;
-            data->key = last_key;
-        }
-
-        // Reset the key press state after it's been read
-        last_key_pressed = false;
-
-        xSemaphoreGive(xSemaphore);
-    }
-    else
-    {
-        // If we couldn't get the semaphore, maintain previous state
-        data->state = LV_INDEV_STATE_RELEASED;
-        data->key = 0;
-    }
-}
-
-// LVGL Display flushing function
-void xpb_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
-{
-    uint32_t w = (area->x2 - area->x1 + 1);
-    uint32_t h = (area->y2 - area->y1 + 1);
-    uint32_t len = w * h;
-
-    tft.startWrite();
-    tft.setAddrWindow(area->x1, area->y1, w, h);
-
-    // Replace individual pushColor with bulk writePixels
-    tft.writePixels((uint16_t *)&color_p->full, len, true);
-
-    tft.endWrite();
-    lv_disp_flush_ready(disp);
-}
-
-// UIs
+// LVGL UI
+lv_obj_t *ui_container = NULL;
 #include "lvgl_ui.h"
 #include "lvgl_ui_updateFunc.h"
 #include "xpb_color_palette.h"
@@ -153,10 +95,20 @@ TaskHandle_t xSensorTaskHandle = NULL;
 // Add this near the top of the file with other declarations
 extern SemaphoreHandle_t configStateMutex;
 
-// Other semaphores
-SemaphoreHandle_t lvglMutex = NULL;
+// Semaphores (lvglMutex 由 xpb_display 模块拥有)
+extern SemaphoreHandle_t lvglMutex;
 SemaphoreHandle_t xSemaphore = NULL;
 StaticSemaphore_t xMutexBuffer;
+
+// 应用配置数据到运行时变量
+static void apply_config(void)
+{
+    float shuntResistorCHA = sysConfig.cfg_data.shuntResistorCHA / 1000.0f;
+    float shuntResistorCHB = sysConfig.cfg_data.shuntResistorCHB / 1000.0f;
+    highLightChannel = sysConfig.cfg_data.default_channel;
+    current_functionMode = (function_mode)sysConfig.cfg_data.default_mode;
+    inaSensor.setParameter(shuntResistorCHA, shuntResistorCHB);
+}
 
 void setup(void)
 {
@@ -181,54 +133,11 @@ void setup(void)
         }
     }
 
-    // LCD Init
-    if (!tft.begin()) {  // Add error checking for LCD initialization
-        Serial.println("LCD initialization failed!");
+    // Display subsystem init (LCD + LVGL + input + lvglMutex)
+    if (!xpb_display_init(tft_Rotation)) {
+        Serial.println("Display initialization failed!");
         while(1) delay(100);
     }
-    tft.setColorDepth(16);         // RGB565
-    tft.setRotation(tft_Rotation); // Set initial hardware rotation = 0
-    tft.fillScreen(0x0000);        // Black screen
-
-    // LVGL LCD Init
-    lv_init();
-    // LVGL declaration
-    static lv_disp_draw_buf_t draw_buf;
-    const int buf1_size = screen_width * 80; // Screen buffer
-    static lv_color_t buf1[buf1_size];
-    static lv_color_t buf2[buf1_size];                       // Add second buffer
-    lv_disp_draw_buf_init(&draw_buf, buf1, buf2, buf1_size); // Initialize the display buffer with dual buffering, decrease the buffer if want to save memory.
-    static lv_disp_drv_t disp_drv;
-    lv_disp_drv_init(&disp_drv);
-    disp_drv.hor_res = screen_width;
-    disp_drv.ver_res = screen_height;
-    disp_drv.flush_cb = xpb_disp_flush; // attach the flush callback function
-    disp_drv.draw_buf = &draw_buf;
-    disp_drv.full_refresh = 0; // 0=Enable partial updates for better performance
-    disp_drv.direct_mode = 0;  // Direct mode is not supported, set to 0
-    disp_drv.antialiasing = 1; // Enable antialiasing for better quality but slower performance (just a bit?)
-    lv_disp_drv_register(&disp_drv);
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(lv_scr_act(), LV_OPA_COVER, LV_PART_MAIN);
-    lv_disp_t *disp = lv_disp_get_default();
-    disp->driver->monitor_cb = NULL; // LVGL optimization settings -> Disable monitor callback
-
-    // LVGL Input Device Declaration
-    lv_indev_drv_init(&indev_drv);
-    indev_drv.type = LV_INDEV_TYPE_KEYPAD;
-    indev_drv.read_cb = keyboard_read;
-    lv_indev_t *kb_indev = lv_indev_drv_register(&indev_drv);
-
-    // Set it as default input device (optional)
-    if (kb_indev)
-    {
-        lv_group_t *g = lv_group_create();
-        lv_group_set_default(g);
-        lv_indev_set_group(kb_indev, g);
-    }
-
-    // Create LVGL mutex
-    lvglMutex = xSemaphoreCreateMutex();
 
     // Create config mode state mutex
     configStateMutex = xSemaphoreCreateMutex();
@@ -273,11 +182,9 @@ void setup(void)
         // init the config mode UI
         if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
         {
-            lv_obj_clean(lv_scr_act());
-            ui_container = configMode_initUI(tft_Rotation); // init the config mode UI
-            forceUpdate_flag = 1;                           // set flag to force update to flush the UI
-            lv_disp_t *disp = lv_disp_get_default();
-            lv_refr_now(disp);
+            ui_container = xpb_display_create_config_ui(tft_Rotation);
+            forceUpdate_flag = 1;
+            lv_refr_now(lv_disp_get_default());
             xSemaphoreGive(lvglMutex);
         }
 
@@ -294,50 +201,20 @@ void setup(void)
         Serial.println(sysConfig.output_all_config_data_in_String());
         Serial.flush();
 
-        // apply the config data to the variables
-        float shuntResistorCHA = sysConfig.cfg_data.shuntResistorCHA / 1000.0f;
-        float shuntResistorCHB = sysConfig.cfg_data.shuntResistorCHB / 1000.0f;
-        highLightChannel = sysConfig.cfg_data.default_channel;                 // 0=channel A, 1=channel B, it used when only show one channel data
-        current_functionMode = (function_mode)sysConfig.cfg_data.default_mode; // 0=dataMonitor, 1=dataMonitorChart, 2=dataMonitorCount, 3=dataChart
-        // current_functionMode = (function_mode)1;
-
-        inaSensor.setParameter(shuntResistorCHA, shuntResistorCHB); // apply the config data to the INA3221
-
+        apply_config();
         configMode.exitConfigMode();
         Serial.println("> Exiting config mode.");
-        Serial.flush(); // Ensure the message is sent
+        Serial.flush();
     }
-    else // if not in config mode, apply the config data to the variables, and init the INA3221
+    else
     {
-        // apply the config data to the variables
-        float shuntResistorCHA = sysConfig.cfg_data.shuntResistorCHA / 1000.0f;
-        float shuntResistorCHB = sysConfig.cfg_data.shuntResistorCHB / 1000.0f;
-        highLightChannel = sysConfig.cfg_data.default_channel;                 // 0=channel A, 1=channel B, it used when only show one channel data
-        current_functionMode = (function_mode)sysConfig.cfg_data.default_mode; // 0=dataMonitor, 1=dataMonitorChart, 2=dataMonitorCount, 3=dataChart
-        // current_functionMode = (function_mode)1;
-
-        inaSensor.setParameter(shuntResistorCHA, shuntResistorCHB); // apply the config data to the INA3221
+        apply_config();
     }
 
     // Init the default UI
     if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
     {
-        lv_obj_clean(lv_scr_act());
-        switch (current_functionMode)
-        {
-        case dataMonitor:
-            ui_container = dataMonitor_initUI(tft_Rotation);
-            break;
-        case dataMonitorChart:
-            ui_container = dataMonitorChart_initUI(tft_Rotation, highLightChannel);
-            break;
-        case dataMonitorCount:
-            ui_container = dataMonitorCount_initUI(tft_Rotation, highLightChannel);
-            break;
-        default:
-            ui_container = dataMonitor_initUI(tft_Rotation);
-            break;
-        }
+        ui_container = xpb_display_create_ui(current_functionMode, tft_Rotation, highLightChannel);
 
         // Initialize with invalid values to force first update
         latestSensorData.channel0.busCurrent = -999.0f;
@@ -345,11 +222,10 @@ void setup(void)
         latestSensorData.channel0.busVoltage = -999.0f;
         latestSensorData.channel1.busVoltage = -999.0f;
 
-        forceUpdate_flag = true;             // Make sure this is set to true
-        functionMode_ChangeRequested = true; // Add this line
+        forceUpdate_flag = true;
+        functionMode_ChangeRequested = true;
 
-        lv_disp_t *disp = lv_disp_get_default();
-        lv_refr_now(disp);
+        lv_refr_now(lv_disp_get_default());
         xSemaphoreGive(lvglMutex);
     }
 

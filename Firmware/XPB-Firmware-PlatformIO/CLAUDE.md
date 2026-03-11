@@ -3,13 +3,14 @@
 
 ## 成员清单
 
-src/main.cpp: 系统入口，硬件初始化 (LCD/INA3221/Dial)，LVGL 显示驱动注册，FreeRTOS 四任务创建，Config Mode 启动逻辑
+src/main.cpp: 系统入口，硬件初始化序列编排 (INA3221/Dial/Display)，FreeRTOS 四任务创建，Config Mode 启动逻辑
 src/fonts/: LVGL 自定义字体 (Inter Bold 8px / ExtraBold 18px，1bit 和 2bit 变体)
 
 lib/boardConfig/: 硬件抽象层，五板引脚定义 + FreeRTOS 头文件路由
 lib/INA3221Sensor/: INA3221 传感器驱动，双通道数据采集 + isDirty 变化检测
 lib/dialSwitch/: 旋钮编码器驱动，ADC 阈值判定 → 离散事件 (up/down/press)
 lib/sysConfig/: EEPROM 持久化配置 (128字节)，版本迁移，ConfigMode 状态机
+lib/xpb_display/: 显示子系统抽象层 — LCD + LVGL + 输入设备封装，统一 UI 创建入口，隐藏 LovyanGFX
 lib/lvgl_ui/: UI 层，三种显示模式 + 配置模式，Widget 工厂 + 局部刷新
 lib/rtos_Tasks/: 四个 FreeRTOS 任务实现 (lvgl/sensor/dial/serial)
 lib/LGFX_096_XPB/: LovyanGFX 硬件配置，ST7735S 80x160 SPI 驱动

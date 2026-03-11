@@ -1,5 +1,6 @@
 #include "sensorUpdateTask.h"
 #include "sysConfig.h"
+#include "xpb_display.h"
 
 extern ConfigMode configMode;
 
@@ -10,21 +11,6 @@ void sensorUpdateTask(void *pvParameters)
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(5);
     const float UPDATE_THRESHOLD = 0.005f; // 5mV/mA threshold
-
-    // Static buffers for averaging
-    static const int SHORT_SAMPLES = 100; // 1 second
-    static const int MED_SAMPLES = 1000;  // 10 seconds
-    static const int LONG_SAMPLES = 6000; // 60 seconds
-    static float shortBuffer[2][SHORT_SAMPLES] = {{0}};
-    static float medBuffer[2][MED_SAMPLES] = {{0}};
-    static float longBuffer[2][LONG_SAMPLES] = {{0}};
-    static int shortIndex = 0;
-    static int medIndex = 0;
-    static int longIndex = 0;
-
-    // Add these static variables at the start of sensorUpdateTask
-    static bool buffersInitialized = false;
-    static int sampleCount[2] = {0, 0};
 
     while (1)
     {
@@ -89,11 +75,11 @@ void sensorUpdateTask(void *pvParameters)
                         }
 
                         // Create new UI
-                        switch (current_functionMode)
+                        ui_container = xpb_display_create_ui(current_functionMode, tft_Rotation, highLightChannel);
+
+                        // Force immediate sensor read and update for dataMonitor mode
+                        if (current_functionMode == dataMonitor)
                         {
-                        case dataMonitor:
-                            ui_container = dataMonitor_initUI(tft_Rotation);
-                            // Force immediate sensor read and update for dataMonitor mode
                             latestSensorData = inaSensor.readCurrentSensors();
                             if (lv_obj_t *container0 = lv_obj_get_child(ui_container, 0))
                             {
@@ -103,16 +89,6 @@ void sensorUpdateTask(void *pvParameters)
                                     update_monitor_data(container1, 1, latestSensorData);
                                 }
                             }
-                            break;
-                        case dataMonitorChart:
-                            ui_container = dataMonitorChart_initUI(tft_Rotation, highLightChannel);
-                            break;
-                        case dataMonitorCount:
-                            ui_container = dataMonitorCount_initUI(tft_Rotation, highLightChannel);
-                            break;
-                        default:
-                            ui_container = dataMonitor_initUI(tft_Rotation);
-                            break;
                         }
 
                         // Reset latest sensor data to force next update
@@ -154,10 +130,6 @@ void sensorUpdateTask(void *pvParameters)
                         }
                     }
 
-                    // Update buffer indices
-                    shortIndex = (shortIndex + 1) % SHORT_SAMPLES;
-                    medIndex = (medIndex + 1) % MED_SAMPLES;
-                    longIndex = (longIndex + 1) % LONG_SAMPLES;
                 }
 
                 // Check if display update is needed

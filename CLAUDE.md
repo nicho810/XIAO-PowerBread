@@ -4,7 +4,7 @@ PlatformIO + LVGL 8.3.4 + LovyanGFX 1.2.0 + INA3221_RT 0.4.0 + FreeRTOS
 <directory>
 Firmware/XPB-Firmware-PlatformIO/ - 主固件工程 (PlatformIO 构建)
   src/              - 入口点 main.cpp + 自定义字体
-  lib/              - 8 个功能模块 (boardConfig, INA3221Sensor, dialSwitch, sysConfig, lvgl_ui, rtos_Tasks, LGFX_096_XPB, xpb_color_palette)
+  lib/              - 9 个功能模块 (boardConfig, INA3221Sensor, dialSwitch, sysConfig, xpb_display, lvgl_ui, rtos_Tasks, LGFX_096_XPB, xpb_color_palette)
   lv_conf/          - LVGL 配置头文件
 Firmware/[Archived] XPB-Firmware-Arduino.zip - v1.x 旧固件归档 (不再维护)
 </directory>

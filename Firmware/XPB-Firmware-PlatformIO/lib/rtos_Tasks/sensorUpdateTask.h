@@ -1,5 +1,5 @@
 /**
- * [INPUT]: Arduino.h, boardConfig.h, lvgl.h, INA3221Sensor.h, lvgl_ui.h, lvgl_ui_updateFunc.h, function_mode.h
+ * [INPUT]: Arduino.h, boardConfig.h, lvgl.h, INA3221Sensor.h, lvgl_ui.h, lvgl_ui_updateFunc.h, function_mode.h, xpb_display.h
  * [OUTPUT]: sensorUpdateTask() 任务函数, latestSensorData (extern), avgS/avgM/avgH/peak (extern)
  * [POS]: 传感器采样+均值计算+选择性UI刷新 (优先级3)，系统数据流的枢纽
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
