@@ -6,11 +6,13 @@ Firmware/XPB-Firmware-PlatformIO/ - 主固件工程 (PlatformIO 构建)
   src/              - 入口点 main.cpp + 自定义字体
   lib/              - 9 个功能模块 (boardConfig, INA3221Sensor, dialSwitch, sysConfig, xpb_display, lvgl_ui, rtos_Tasks, LGFX_096_XPB, xpb_color_palette)
   lv_conf/          - LVGL 配置头文件
+  docs/             - 协议规格文档 (XPB Binary Protocol v1.1，含三阶段握手)
+  debug/            - RP2040 硬件协议模拟器 (USB-CDC 输出 XPB Binary Protocol v1.1，RGB LED 状态指示)
 Firmware/[Archived] XPB-Firmware-Arduino.zip - v1.x 旧固件归档 (不再维护)
 </directory>
 
 <config>
-platformio.ini - 五板构建环境 (RP2040/RP2350/ESP32-C3/S3/C6)，依赖声明，编译标志
+platformio.ini - 六环境构建 (RP2040/RP2350/ESP32-C3/S3/C6 + simulator)，依赖声明，编译标志
 lv_conf/lv_conf.h - LVGL 运行时配置：16bit RGB565，64KB 内存池，5ms 刷新
 merge-bin.py - ESP32 固件合并脚本
 </config>

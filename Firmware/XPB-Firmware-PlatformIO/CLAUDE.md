@@ -16,6 +16,9 @@ lib/rtos_Tasks/: 四个 FreeRTOS 任务 (lvgl/sensor/dial/serial)，TaskNotify �
 lib/LGFX_096_XPB/: LovyanGFX 硬件配置，ST7735S 80x160 SPI 驱动
 lib/xpb_color_palette/: LVGL 颜色常量，UI 主题单一真相源
 
+docs/XPB_BINARY_PROTOCOL_V1.md: XPB 二进制串口协议 v1.1 规格文档，帧结构 + CRC + 三阶段握手 (START/CONFIG_ACK/STOP) + 会话生命周期 + 状态机
+debug/main.cpp: RP2040 硬件协议模拟器，Arduino setup/loop 范式，三状态状态机 (IDLE→WAIT_ACK→STREAMING)，USB-CDC Serial 输出 XPB Binary Protocol v1.1 帧流，RGB LED 状态指示 (红/蓝/绿)，零外部库依赖
+
 lv_conf/lv_conf.h: LVGL 配置 — 16bit RGB565, 64KB 内存, 5ms tick
 platformio.ini: 五板构建环境定义 + 依赖声明
 merge-bin.py: ESP32 固件合并工具
