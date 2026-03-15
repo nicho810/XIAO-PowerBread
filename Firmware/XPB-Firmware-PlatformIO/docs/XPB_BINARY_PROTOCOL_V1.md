@@ -144,9 +144,11 @@ PC                              Device
     │  WAIT_ACK  │──── timeout ────>│  retry ≤ 3     │
     │            │<────────────────  │  then → IDLE   │
     └────────────┘                   └────────────────┘
-         │
+         │  ^
+         │  │ recv START (re-handshake)
+         │  │
          │ recv CONFIG_ACK
-         v
+         v  │
     ┌────────────┐
     │ STREAMING  │──── recv STOP ────> IDLE
     └────────────┘
@@ -161,11 +163,20 @@ Three states: `IDLE → WAIT_ACK → STREAMING`.
 | Device sends CONFIG, waits for CONFIG_ACK | 500 ms | Resend CONFIG, up to 3 attempts |
 | 3 CONFIG retries exhausted | — | Return to IDLE, await next START |
 | Device in IDLE receives non-START frame | — | Silently ignore |
+| Device in STREAMING receives START | — | Re-handshake: send CONFIG, transition to WAIT_ACK |
 
 ### 3.3 Reconnection
 
-After a STOP or timeout, the PC may start a new session at any time
-by sending another START frame. No cooldown is required.
+The PC may send a START frame at any time without sending STOP first.
+Device behavior depends on current state:
+
+- **IDLE**: normal handshake begins.
+- **STREAMING**: device aborts the current session, sends a new CONFIG
+  frame, and transitions to WAIT_ACK (re-handshake).
+- **WAIT_ACK**: START is ignored. The device will return to IDLE after
+  retry timeout (~1.5 s), then accept the next START.
+
+No cooldown is required between sessions.
 
 ---
 
@@ -292,3 +303,4 @@ on_byte_received(byte):
 |---------|------------|------------------|
 | 1.0     | 2026-03-13 | Initial release  |
 | 1.1     | 2026-03-13 | Add three-phase handshake (START/CONFIG_ACK/STOP), session lifecycle, device state machine |
+| 1.2     | 2026-03-15 | Document STREAMING re-handshake: START accepted in any state for reconnection |
