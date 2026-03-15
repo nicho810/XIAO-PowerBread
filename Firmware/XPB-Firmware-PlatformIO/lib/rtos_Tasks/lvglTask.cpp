@@ -37,22 +37,11 @@ void lvglTask(void *parameter)
     static function_mode ui_built_for_mode = dataMonitor;
 
     /* DEBUG: 一次性诊断标志 */
-    static bool dbg_started = false;
-    static bool dbg_ui_created = false;
-    static uint32_t dbg_loop_count = 0;
-
     while (1)
     {
         /* --- 接收事件 (非阻塞) --- */
         uint32_t events = 0;
         xTaskNotifyWait(0, 0xFFFFFFFF, &events, 0);
-
-        /* DEBUG */
-        if (!dbg_started) { Serial.println("[LVGL] task started"); dbg_started = true; }
-        dbg_loop_count++;
-        if (dbg_loop_count <= 20 || events != 0) {
-            Serial.printf("[LVGL] #%lu evt=0x%lx ui=%p\n", dbg_loop_count, events, ui_container);
-        }
 
         if (xSemaphoreTake(lvglMutex, portMAX_DELAY) == pdTRUE)
         {
@@ -104,10 +93,6 @@ void lvglTask(void *parameter)
                     }
                     ui_built_for_mode = current_functionMode; // 快照：此刻 UI 对应的 mode
                     ui_container = xpb_display_create_ui(ui_built_for_mode, tft_Rotation, highLightChannel);
-                    if (!dbg_ui_created) {
-                        Serial.printf("[LVGL] UI created: %p mode=%d\n", ui_container, ui_built_for_mode);
-                        dbg_ui_created = true;
-                    }
                     events |= EVT_SENSOR_READY; // 模式切换后立即刷新数据
                 }
 
