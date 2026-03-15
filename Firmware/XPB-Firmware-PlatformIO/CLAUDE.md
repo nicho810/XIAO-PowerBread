@@ -12,6 +12,7 @@ lib/dialSwitch/: 旋钮编码器驱动，ADC 阈值判定 → 离散事件 (up/d
 lib/sysConfig/: EEPROM 持久化配置 (128字节)，版本迁移，ConfigMode 状态机
 lib/xpb_display/: 显示子系统抽象层 — LCD + LVGL + 输入设备封装，统一 UI 创建入口，隐藏 LovyanGFX
 lib/lvgl_ui/: UI 层，三种显示模式 + 配置模式，Widget 工厂 + 局部刷新
+lib/xpb_protocol/: XPB Binary Protocol v1.2 引擎，CRC/帧构建/解析/三态会话状态机，零 I/O 依赖
 lib/rtos_Tasks/: 四个 FreeRTOS 任务 (lvgl/sensor/dial/serial)，TaskNotify 事件驱动
 lib/LGFX_096_XPB/: LovyanGFX 硬件配置，ST7735S 80x160 SPI 驱动
 lib/xpb_color_palette/: LVGL 颜色常量，UI 主题单一真相源

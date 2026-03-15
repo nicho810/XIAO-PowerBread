@@ -1,7 +1,7 @@
 /**
- * [INPUT]: Arduino.h, boardConfig.h, INA3221Sensor.h (DualChannelData), sensorDataMutex (extern)
+ * [INPUT]: Arduino.h, boardConfig.h, INA3221Sensor.h (DualChannelData), sysConfig.h (SysConfig/ConfigMode), xpb_protocol.h (XpbFrameParser/XpbSession), sensorDataMutex (extern)
  * [OUTPUT]: serialPrintTask() 任务函数
- * [POS]: 串口调试输出 (优先级1，最低)，human/plotter 双格式，通过 sensorDataMutex 读取传感器数据
+ * [POS]: 双模串口任务 (优先级1): IDLE 时文本调试 (human/plotter)，收到 START 自动切二进制协议流 (100Hz)
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 

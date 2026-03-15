@@ -4,7 +4,7 @@ PlatformIO + LVGL 8.3.4 + LovyanGFX 1.2.0 + INA3221_RT 0.4.0 + FreeRTOS
 <directory>
 Firmware/XPB-Firmware-PlatformIO/ - 主固件工程 (PlatformIO 构建)
   src/              - 入口点 main.cpp + 自定义字体
-  lib/              - 9 个功能模块 (boardConfig, INA3221Sensor, dialSwitch, sysConfig, xpb_display, lvgl_ui, rtos_Tasks, LGFX_096_XPB, xpb_color_palette)
+  lib/              - 10 个功能模块 (boardConfig, INA3221Sensor, dialSwitch, sysConfig, xpb_display, lvgl_ui, rtos_Tasks, LGFX_096_XPB, xpb_color_palette, xpb_protocol)
   lv_conf/          - LVGL 配置头文件
   docs/             - 协议规格文档 (XPB Binary Protocol v1.2，含三阶段握手 + STREAMING 重连)
   debug/            - RP2040 硬件协议模拟器 (USB-CDC 输出 XPB Binary Protocol v1.2，RGB LED 状态指示)
@@ -35,7 +35,7 @@ pio run -e seeed_xiao_esp32c3 -t mergebin  # ESP32 合并二进制
 INA3221 (I2C) → sensorUpdateTask (5ms) → latestSensorData (sensorDataMutex 保护)
   ├→ TaskNotify(EVT_SENSOR_READY) → lvglTask → copy-out → update_* → LVGL widgets
   ├→ lvglTask (5ms) → lv_timer_handler → LovyanGFX → ST7735S LCD
-  └→ serialPrintTask → Serial (可选调试)
+  └→ serialPrintTask → Serial (IDLE: 文本调试 / STREAMING: XPB Binary Protocol 100Hz)
 
 Dial (ADC) → dialReadTask (100ms) → last_key (keyboardMutex) → keyboard_read() → LVGL input
   └→ key_event_cb → TaskNotify(EVT_MODE_CHANGE/EVT_HIGHLIGHT_CHANGE) → sensorUpdateTask → lvglTask
@@ -48,7 +48,7 @@ Dial (ADC) → dialReadTask (100ms) → last_key (keyboardMutex) → keyboard_re
 | lvglTask | 4 | UI 唯一控制者：事件驱动 widget 更新 + config mode UI + 模式切换 + lv_timer_handler |
 | sensorUpdateTask | 3 | 纯数据生产者：INA3221 采样 + EMA 计算，零 LVGL 依赖 |
 | dialReadTask | 2 | 旋钮输入，ADC→LVGL 键码，长按检测 |
-| serialPrintTask | 1 | 串口调试输出 (human / Arduino Plotter) |
+| serialPrintTask | 1 | 双模串口: IDLE 时文本调试 (human/plotter)，PC 发 START 切二进制协议流 (100Hz) |
 
 ### 同步原语
 

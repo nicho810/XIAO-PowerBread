@@ -23,6 +23,9 @@ LGFX_096_XPB/: LovyanGFX ST7735S 硬件配置，80MHz SPI，平台自适应总�
 xpb_color_palette/: 7 个 LVGL 颜色常量，双通道色彩体系 (cyan/magenta)
 lvgl_ui/: UI 场景图构建 + Widget 工厂 + 局部刷新 + 输入事件路由，4种模式
 
+### 通信协议
+xpb_protocol/: XPB Binary Protocol v1.2 引擎，CRC/帧构建/解析/三态会话状态机，零 I/O 依赖，平台无关
+
 ### 任务调度
 rtos_Tasks/: 4 个 FreeRTOS 静态任务，优先级 4→1，TaskNotify 事件驱动 + 细粒度信号量协同
 
@@ -37,7 +40,8 @@ LGFX_096_XPB ← boardConfig, LovyanGFX
 xpb_color_palette ← LVGL
 lvgl_ui ← xpb_color_palette, INA3221Sensor, sysConfig, LVGL
 xpb_display ← LGFX_096_XPB, lvgl_ui, boardConfig, LVGL
-rtos_Tasks ← xpb_display, lvgl_ui, INA3221Sensor, dialSwitch, sysConfig
+xpb_protocol ← (无外部依赖，纯 C++ 标准库)
+rtos_Tasks ← xpb_display, lvgl_ui, INA3221Sensor, dialSwitch, sysConfig, xpb_protocol
 ```
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
