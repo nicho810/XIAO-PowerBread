@@ -166,16 +166,20 @@ void lvglTask(void *parameter)
         render:
             /* --- LVGL 渲染 --- */
             lv_timer_handler();
-
-            lv_disp_t *disp = lv_disp_get_default();
-            if (disp)
-            {
-                lv_refr_now(disp);
-            }
-
             xSemaphoreGive(lvglMutex);
         }
 
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        /* 周期延迟 — 超时保底 1 tick 防止 ESP32 IDLE task watchdog */
+        TickType_t elapsed = xTaskGetTickCount() - xLastWakeTime;
+        if (elapsed >= xFrequency)
+        {
+            /* 本轮渲染耗时 >= 周期，vTaskDelayUntil 不会阻塞 — 强制让出 */
+            vTaskDelay(1);
+            xLastWakeTime = xTaskGetTickCount();
+        }
+        else
+        {
+            vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        }
     }
 }
