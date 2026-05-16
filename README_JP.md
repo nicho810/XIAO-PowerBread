@@ -80,9 +80,7 @@ Firefox と Safari は現時点では Web Serial API に対応していません
 
 ### アクセス
 
-ブラウザで Web コンソールを直接開く: **<https://xiao-power-console-web.ioatlas.com>**
-
-Web コンソール本体は**オープンソースではありません** — このリポジトリで公開されているのはプロトコルのファームウェア側（XPB バイナリプロトコル v1.2）のみです。
+PowerBread の便利なコンパニオンツールです — ブラウザで開く: **<https://xiao-power-console-web.ioatlas.com>**
 
 ## ハードウェア仕様
 
@@ -227,7 +225,7 @@ Web コンソール本体は**オープンソースではありません** — �
 | ツール | リンク |
 |---|---|
 | ESP32 シリーズ用 MergeBin ツール | [DavidSchinazi、DunkelRatte に感謝](https://github.com/platformio/platform-espressif32/issues/1078#issuecomment-2219671743) |
-| XPB Web コンソール（ホスト版、非オープンソース） | <https://xiao-power-console-web.ioatlas.com> |
+| XPB Web コンソール | <https://xiao-power-console-web.ioatlas.com> |
 
 ## 貢献
 
