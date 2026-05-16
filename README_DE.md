@@ -80,9 +80,7 @@ Firefox und Safari unterstützen die Web-Serial-API derzeit nicht.
 
 ### Zugriff
 
-Öffnen Sie die Web-Konsole direkt im Browser: **<https://xiao-power-console-web.ioatlas.com>**
-
-Die Web-Konsole selbst ist **nicht Open Source** — nur die Firmware-Seite des Protokolls (XPB Binärprotokoll v1.2) ist in diesem Repository veröffentlicht.
+Ein praktisches Begleit-Tool für Ihr PowerBread — direkt im Browser öffnen: **<https://xiao-power-console-web.ioatlas.com>**
 
 ## Hardware-Spezifikationen
 
@@ -227,7 +225,7 @@ Die Web-Konsole selbst ist **nicht Open Source** — nur die Firmware-Seite des 
 | Werkzeug | Link |
 |---|---|
 | MergeBin-Tool für die ESP32-Serie | [Dank an DavidSchinazi, DunkelRatte](https://github.com/platformio/platform-espressif32/issues/1078#issuecomment-2219671743) |
-| XPB Web-Konsole (gehostet, nicht Open Source) | <https://xiao-power-console-web.ioatlas.com> |
+| XPB Web-Konsole | <https://xiao-power-console-web.ioatlas.com> |
 
 ## Mitwirken
 
