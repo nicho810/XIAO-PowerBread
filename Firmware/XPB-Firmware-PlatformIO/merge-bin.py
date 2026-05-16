@@ -28,10 +28,18 @@ def merge_bin_action(source, target, env):
             "merge_bin",
             "-o",
             merged_bin,
+            # ----------------------------------------------------------------
+            # flash_mode / flash_freq 必须用 keep:
+            # esptool >=4.8 会在 merge_bin 时改写 bootloader 头部的 flash
+            # params 并重算 SHA。如果传具体值，bootloader 实际编译值与改写值
+            # 不一致就会启动失败 (实测 ESP32-C6 board JSON 声明 qio,
+            # 但 bootloader 实际按 dio 编译，强写 qio 后启动卡死)。
+            # 4.5.x 因有 SHA 保护检测会忽略改写并打 warning, 行为等价于 keep。
+            # ----------------------------------------------------------------
             "--flash_mode",
-            board_config.get("build.flash_mode", "dio"),
+            "keep",
             "--flash_freq",
-            "${__get_board_f_flash(__env__)}",
+            "keep",
             "--flash_size",
             board_config.get("upload.flash_size", "4MB"),
             *flash_images,
