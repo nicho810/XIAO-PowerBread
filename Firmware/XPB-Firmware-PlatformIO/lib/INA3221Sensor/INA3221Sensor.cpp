@@ -1,7 +1,9 @@
-// This class is based on the INA3221 library by Rob Tillaart
-// Author: Rob Tillaart
-// Purpose: demo polling 3 channels
-// URL: https://github.com/RobTillaart/INA3221_RT
+/**
+ * [INPUT]: INA3221Sensor.h, Wire/Wire1 (平台选择)
+ * [OUTPUT]: I2C 初始化, 双通道采集实现, isDirty 脏标志计算
+ * [POS]: INA3221Sensor 类的实现，平台特定 I2C 总线路由在此处理
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
 
 #include "INA3221Sensor.h"
 

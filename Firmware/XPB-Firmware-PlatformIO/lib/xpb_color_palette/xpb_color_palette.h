@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: lvgl.h (lv_color_t 类型)
+ * [OUTPUT]: 7 个 extern lv_color_t 颜色常量 (Background/Text/ChannelA/ChannelB/GridLines + 暗色变体)
+ * [POS]: UI 主题颜色单一真相源，双通道色彩体系 (cyan/magenta)
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
 #ifndef XPB_COLOR_PALETTE_H
 #define XPB_COLOR_PALETTE_H
 

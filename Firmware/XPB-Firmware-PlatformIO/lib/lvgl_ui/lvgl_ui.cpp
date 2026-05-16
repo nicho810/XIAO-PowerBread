@@ -1,4 +1,5 @@
 #include "lvgl_ui.h"
+#include "sensorUpdateTask.h"
 #include "sysConfig.h"
 
 extern ConfigMode configMode;
@@ -12,10 +13,9 @@ void cleanupAndWait()
     vTaskDelay(pdMS_TO_TICKS(10)); // Small delay to ensure cleanup is complete
 }
 
-// Add this at the top of the file with other global variables
-volatile bool menu_is_visible = false;
+// Forward declaration
+static void key_event_cb(lv_event_t *e);
 
-// Add at the top with other global variables
 static uint32_t last_key_time = 0;
 const uint32_t KEY_DEBOUNCE_MS = 50;  // Minimum time between key events
 
@@ -51,133 +51,116 @@ static void key_event_cb(lv_event_t *e)
 
         uint32_t key = lv_event_get_key(e);
 
-        if (xSemaphoreTake(xSemaphore, pdMS_TO_TICKS(50)) == pdTRUE)  // Increased timeout
+        /* -------------------------------------------------------
+         *  Phase 1: xSemaphore 已移除
+         *  config mode 通过 configStateMutex 保护 (getConfigState/updateConfigState 内部)
+         *  normal mode 写 volatile flags (单写者 key_event_cb，安全)
+         *  此处不再持有任何数据锁 → ABBA 死锁环路彻底消灭
+         * ------------------------------------------------------- */
+        ConfigModeState currentState;
+        if (configMode.getConfigState(&currentState))
         {
-            ConfigModeState currentState;
-            if (configMode.getConfigState(&currentState))  // Safely get current state
+            if (currentState.isActive)
             {
-                if (currentState.isActive)
+                int8_t newCursor = currentState.cursor;
+                bool stateChanged = false;
+
+                switch (key)
                 {
-                    int8_t newCursor = currentState.cursor;  // Work with local copy
-                    bool stateChanged = false;
-
-                    switch (key)
-                    {
-                    case LV_KEY_UP:
-                        if (currentState.cursorStatus == 0) { //if the cursorStatus is 0, it means not selected, so we can move the cursor
-                            if (newCursor > 0 && newCursor < currentState.cursorMax) {  // Extra bounds validation
-                                newCursor--;
-                                stateChanged = true;
-                            }
-                        } else if (currentState.cursorStatus == 1) { 
-                            //if the cursorStatus is 1, it means selected, so we increase the value of the item instead of moving the cursor
-                            // Serial.println("Increase the value of the item. ++");
-                            // Serial.flush();
-                            sysConfig.incrementConfigValue(newCursor, tmp_cfg_data);
-
+                case LV_KEY_UP:
+                    if (currentState.cursorStatus == 0) {
+                        if (newCursor > 0 && newCursor < currentState.cursorMax) {
+                            newCursor--;
+                            stateChanged = true;
                         }
-                        break;
-
-                    case LV_KEY_DOWN:
-                        if (currentState.cursorStatus == 0) { //if the cursorStatus is 0, it means not selected, so we can move the cursor
-                            if (newCursor >= 0 && newCursor < (currentState.cursorMax - 1)) {  // Extra bounds validation
-                                newCursor++;
-                                stateChanged = true;
-                            }
-                        }
-                        else if (currentState.cursorStatus == 1) { 
-                            //if the cursorStatus is 1, it means selected, so we decrease the value of the item instead of moving the cursor
-                            // Serial.println("Decrease the value of the item. --");
-                            // Serial.flush();
-                            sysConfig.decrementConfigValue(newCursor, tmp_cfg_data);
-                        }
-                        break;
-
-                    case LV_KEY_ENTER:
-                        currentState.cursorStatus = 1; //1 is max, it means select the item, and it can edit the value
-                        stateChanged = true;
-                        break;
-
-                    case LV_KEY_ESC:
-                        currentState.cursorStatus--;
-                        if (currentState.cursorStatus < -1) { //-1 is min, it means exit the config mode, 0 is normal(not selected)
-                            currentState.cursorStatus = -1;
-                        }
-                        stateChanged = true;
-                        break;
+                    } else if (currentState.cursorStatus == 1) {
+                        sysConfig.incrementConfigValue(newCursor, tmp_cfg_data);
                     }
+                    break;
 
-                    if (stateChanged && 
-                        newCursor >= 0 && 
-                        newCursor < currentState.cursorMax) {  // Final bounds check
-                        currentState.cursorLast = currentState.cursor;
-                        currentState.cursor = newCursor;
-                        if (!configMode.updateConfigState(&currentState)) {  // Check if update succeeded
-                            Serial.println("Failed to update config state");
+                case LV_KEY_DOWN:
+                    if (currentState.cursorStatus == 0) {
+                        if (newCursor >= 0 && newCursor < (currentState.cursorMax - 1)) {
+                            newCursor++;
+                            stateChanged = true;
                         }
                     }
+                    else if (currentState.cursorStatus == 1) {
+                        sysConfig.decrementConfigValue(newCursor, tmp_cfg_data);
+                    }
+                    break;
 
-                    // Debug output
-                    // Serial.printf("Config mode: cursor=%d, last=%d, max=%d, status=%d\n", 
-                    //     currentState.cursor, 
-                    //     currentState.cursorLast,
-                    //     currentState.cursorMax,
-                    //     currentState.cursorStatus);
-                    // Serial.flush();
+                case LV_KEY_ENTER:
+                    currentState.cursorStatus = 1;
+                    stateChanged = true;
+                    break;
+
+                case LV_KEY_ESC:
+                    currentState.cursorStatus--;
+                    if (currentState.cursorStatus < -1) {
+                        currentState.cursorStatus = -1;
+                    }
+                    stateChanged = true;
+                    break;
                 }
-                else // not in config mode
-                {
-                    switch (key)
-                    {
-                    case LV_KEY_UP: // Dial turned up (status 1)
-                        // Serial.println("UP key pressed");
-                        if (current_functionMode > dataMonitor)
-                        {
-                            current_functionMode = static_cast<function_mode>(current_functionMode - 1);
-                        }
-                        else
-                        {
-                            current_functionMode = dataMonitorCount;
-                        }
-                        functionMode_ChangeRequested = true;
-                        break;
 
-                    case LV_KEY_DOWN: // Dial turned down (status 2)
-                        // Serial.println("DOWN key pressed");
-                        if (current_functionMode < dataMonitorCount)
-                        {
-                            current_functionMode = static_cast<function_mode>(current_functionMode + 1);
-                        }
-                        else
-                        {
-                            current_functionMode = dataMonitor;
-                        }
-                        functionMode_ChangeRequested = true;
-                        break;
-
-                    case LV_KEY_ENTER: // Short press (status 3)
-                        // Serial.println("ENTER key pressed");
-                        highLightChannel = (highLightChannel + 1) % 2;
-                        highLightChannel_ChangeRequested = true;
-
-                        if (current_functionMode == dataMonitorChart ||
-                            current_functionMode == dataMonitorCount)
-                        {
-                            functionMode_ChangeRequested = true;
-                        }
-                        break;
-
-                    case LV_KEY_ESC: // Long press (status 4)
-                        // Serial.println("ESC pressed(long press dial)");
-                        // Add any long press handling here
-                        break;
-                    }
+                if (stateChanged &&
+                    newCursor >= 0 &&
+                    newCursor < currentState.cursorMax) {
+                    currentState.cursorLast = currentState.cursor;
+                    currentState.cursor = newCursor;
+                    configMode.updateConfigState(&currentState);
                 }
             }
-            xSemaphoreGive(xSemaphore);
-        }
-        else {
-            // Serial.println("Failed to take semaphore in key_event_cb");
+            else // not in config mode — 通过 TaskNotify 通知 sensorUpdateTask
+            {
+                uint32_t notifyBits = 0;
+
+                switch (key)
+                {
+                case LV_KEY_UP:
+                    if (current_functionMode > dataMonitor)
+                    {
+                        current_functionMode = static_cast<function_mode>(current_functionMode - 1);
+                    }
+                    else
+                    {
+                        current_functionMode = dataMonitorCount;
+                    }
+                    notifyBits |= EVT_MODE_CHANGE;
+                    break;
+
+                case LV_KEY_DOWN:
+                    if (current_functionMode < dataMonitorCount)
+                    {
+                        current_functionMode = static_cast<function_mode>(current_functionMode + 1);
+                    }
+                    else
+                    {
+                        current_functionMode = dataMonitor;
+                    }
+                    notifyBits |= EVT_MODE_CHANGE;
+                    break;
+
+                case LV_KEY_ENTER:
+                    highLightChannel = (highLightChannel + 1) % 2;
+                    notifyBits |= EVT_HIGHLIGHT_CHANGE;
+
+                    if (current_functionMode == dataMonitorChart ||
+                        current_functionMode == dataMonitorCount)
+                    {
+                        notifyBits |= EVT_MODE_CHANGE;
+                    }
+                    break;
+
+                case LV_KEY_ESC:
+                    break;
+                }
+
+                if (notifyBits && xSensorTaskHandle) {
+                    xTaskNotify(xSensorTaskHandle, notifyBits, eSetBits);
+                }
+            }
         }
     }
 }
