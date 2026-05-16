@@ -18,7 +18,7 @@
 - **LVGL 8.3 + LovyanGFX** — Flüssigeres Rendering auf dem integrierten ST7735-LCD.
 
 > [!IMPORTANT]
-> **Die v3.0-Firmware unterstützt derzeit nur XIAO ESP32-S3 und XIAO ESP32-C3.**
+> **Die v3.0-Firmware unterstützt XIAO ESP32-S3, ESP32-C3 und ESP32-C6.**
 > Die Portierungen für RP2040 / RP2350 weisen noch einen FreeRTOS-Scheduling-Bug auf, dessen Ursache noch nicht gefunden wurde. Wenn Sie ein XIAO RP2040 oder RP2350 verwenden, bleiben Sie bitte bei der **v2.0.1**-Firmware, bis der v3.x-Port abgeschlossen ist. Siehe die Tabelle [Firmware-Versionen](#firmware-versionen) weiter unten.
 
 ## Hauptmerkmale
@@ -112,9 +112,9 @@ Ein praktisches Begleit-Tool für Ihr PowerBread — direkt im Browser öffnen: 
 | [XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html) | ✅ | ✅ | ✅ | **v3.0** |
 | [XIAO RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html) | ❌ (WIP) | ✅ | ✅ | **v2.0.1** |
 | [XIAO RP2350](https://www.seeedstudio.com/Seeed-XIAO-RP2350-p-5944.html) | ❌ (WIP) | ✅ | ✅ | **v2.0.1** |
-| [XIAO ESP32-C6](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C6-p-5884.html) | ❌ (WIP) | — | ✅ | **v1.1.4** |
+| [XIAO ESP32-C6](https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C6-p-5884.html) | ✅ | — | ✅ | **v3.0** |
 
-> Die v3.x-Unterstützung für RP2040, RP2350 und ESP32-C6 ist in Arbeit. Die RP-Serie weist derzeit ein FreeRTOS-Scheduling-Problem auf, dessen Ursache noch nicht gefunden wurde; bleiben Sie bitte bei v2.0.1, bis der v3.x-Port abgeschlossen ist.
+> Die v3.x-Unterstützung für RP2040 und RP2350 ist weiterhin in Arbeit. Die RP-Serie weist derzeit ein FreeRTOS-Scheduling-Problem auf, dessen Ursache noch nicht gefunden wurde; bleiben Sie bitte bei v2.0.1, bis der v3.x-Port abgeschlossen ist.
 
 ### Hardware erhalten
 
@@ -143,9 +143,9 @@ Ein praktisches Begleit-Tool für Ihr PowerBread — direkt im Browser öffnen: 
 
 ### Software
 
-- **Aus dem Quellcode bauen** – öffnen Sie `Firmware/XPB-Firmware-PlatformIO/` in PlatformIO und wählen Sie die zu Ihrem Board passende Umgebung aus (`seeed_xiao_esp32s3`, `seeed_xiao_esp32c3` usw.).
+- **Aus dem Quellcode bauen** – öffnen Sie `Firmware/XPB-Firmware-PlatformIO/` in PlatformIO und wählen Sie die zu Ihrem Board passende Umgebung aus (`seeed_xiao_esp32s3`, `seeed_xiao_esp32c3`, `seeed_xiao_esp32c6` usw.).
 - **Vorgefertigte Firmware flashen**:
-  - **XIAO ESP32-S3 / ESP32-C3 (v3.x)**
+  - **XIAO ESP32-S3 / ESP32-C3 / ESP32-C6 (v3.x)**
     - Web-Flash-Tool: <https://powerbread-flasher.ioatlas.com>
     - Anleitung: [Firmware-Flash für die XIAO ESP32-Serie](Docs/flash-firmware-for-esp32-series.md)
   - **XIAO RP2040 / RP2350 (bis auf Weiteres v2.0.1)**
@@ -157,7 +157,7 @@ Ein praktisches Begleit-Tool für Ihr PowerBread — direkt im Browser öffnen: 
 
 ### Web-Konsole verwenden
 
-1. Stellen Sie sicher, dass auf Ihrem Board die v3.x-Firmware läuft (XIAO ESP32-S3 oder ESP32-C3).
+1. Stellen Sie sicher, dass auf Ihrem Board die v3.x-Firmware läuft (XIAO ESP32-S3, ESP32-C3 oder ESP32-C6).
 2. Öffnen Sie die Web-Konsole unter <https://xiao-power-console-web.ioatlas.com> in Chrome / Edge / Opera.
 3. Klicken Sie auf **Connect**, wählen Sie den seriellen Port Ihres XIAO und gewähren Sie die Berechtigung.
 4. Die Firmware wechselt vom Text-Debug-Modus in den binären Streaming-Modus, sobald der Handshake abgeschlossen ist – die Diagramme werden sofort gefüllt.
@@ -170,7 +170,7 @@ Ein praktisches Begleit-Tool für Ihr PowerBread — direkt im Browser öffnen: 
 - [x] Einstellungen im EEPROM speichern.
 - [x] Webbasierte UI für die Datenüberwachung (v3.0).
 - [x] USB-Serial-Streaming-Protokoll mit Handshake und Wiederverbindung (v3.0).
-- [ ] v3.x-Port für XIAO RP2040 / RP2350 / ESP32-C6.
+- [ ] v3.x-Port für XIAO RP2040 / RP2350.
 - [ ] PWM-Ausgang auf IO0 und IO1.
 - [ ] ADC-Eingang von IO0 und IO1.
 
@@ -187,7 +187,7 @@ Ein praktisches Begleit-Tool für Ihr PowerBread — direkt im Browser öffnen: 
 | 1.1.4 | Ja | Unterstützung für RP2350, ESP32-C3, ESP32-S3, ESP32-C6 hinzugefügt. | [RP2040, RP2350, ESP32C3, ESP32S3, ESP32C6](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v1.1.4) |
 | 2.0.0 | Ja | Refactoring + Wechsel zu LVGL / LovyanGFX. | [RP2040](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v2.0.0) |
 | 2.0.1 | Ja 👍 (RP2040 / RP2350) | Unterstützung für RP2350, ESP32-C3, ESP32-S3 hinzugefügt. | [RP2040, RP2350, ESP32C3, ESP32S3](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v2.0.1) |
-| **3.0.0** | **Ja 👍 (ESP32-S3 / C3)** | **Web-Konsole, XPB Binärprotokoll v1.2, FreeRTOS-Refactoring. Nur ESP32-S3 / C3.** | [ESP32S3, ESP32C3](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v3.0.0) |
+| **3.0.0** | **Ja 👍 (ESP32-S3 / C3 / C6)** | **Web-Konsole, XPB Binärprotokoll v1.2, FreeRTOS-Refactoring. ESP32-S3 / C3 / C6.** | [ESP32S3, ESP32C3, ESP32C6](https://github.com/nicho810/XIAO-PowerBread/releases/tag/v3.0.0) |
 
 ### Dokumentation
 - [Erklärung der Systemkonfiguration](Docs/sysConfig.md)
