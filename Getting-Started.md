@@ -8,7 +8,7 @@
 - Dual channel Real-Time Monitoring: Built-in sensors provide instant feedback on voltage, current, and power.
 - Built-in LCD Display: Clear, real-time visualization of power metrics with multiple UI functions including data monitoring, line charts, and statistics modes.
 
-![overview](./Docs/Images/pic_overview.png)
+![overview](./Docs/Images/pic_overview.webp)
 
 ## Specifications
 
@@ -20,7 +20,7 @@
 - **Voltage Sensing resolution**: 0.001V
 - **Over Current Protection**: 2.0A
 
-![XIAO PowerBread](./Docs/Images/pic_hardwareSpec.png)
+![XIAO PowerBread](./Docs/Images/pic_hardwareSpec.webp)
 
 ## Getting Started
 
@@ -78,23 +78,23 @@ XIAO-PowerBread/Firmware/XIAO-PowerBread-Firmware
 ### Operation
 
 #### 1. Universial output switch
-![Universial output switch](./Docs/Images/pic_outputSwitch.png)
+![Universial output switch](./Docs/Images/pic_outputSwitch.webp)
 
 > Slide the power output switch to the down position to enable the 5V and 3.3V power output. This switch is only for power output,the LCD and sensor will keep working.
 
 #### 2. Switch Mode
-![pic_functions](./Docs/Images/pic_functions.png)
+![pic_functions](./Docs/Images/pic_functions.webp)
 
 > Short press the dial to switch the mode
 
 #### 3. Switch Channel
 
-![switchCH](./Docs/Images/pic_switchCH.png)
+![switchCH](./Docs/Images/pic_switchCH.webp)
 
 > When in Line-Chart and Statistics mode, long press the dial to switch the channel
 
 #### 4. Rotate the dial
-![uiRotate](./Docs/Images/pic_uiRotation.png)
+![uiRotate](./Docs/Images/pic_uiRotation.webp)
 
 > Rotate the dial to adjust the UI for different viewing angles in any mode
 
