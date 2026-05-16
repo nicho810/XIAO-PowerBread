@@ -10,16 +10,16 @@ Steps:
 2. Download the firmware that fit your board, for example, if you have XIAO ESP32-C3, download the `esp32c3_xpb_vx.x.x.bin`
 3. Open the web page: https://powerbread-flasher.ioatlas.com/
 4. Select the port for XIAO ESP32 series
-![flash tool](Images/webFlashTools/2.jpg)
+![flash tool](Images/webFlashTools/2.webp)
 5. Make sure the port is connected, it should looks like this:
-![flash tool](Images/webFlashTools/3.jpg)
+![flash tool](Images/webFlashTools/3.webp)
 
 > if it is failed to connect the port, please try to hold down the **BOOT button** on the XIAO ESP32 series board, holding it and press the **RESET button**, then release both buttons, then refresh the web page and try again with step 4.
 
 6. Click the "Choose File" button to select the firmware you downloaded, it should looks like this:
-![flash tool](Images/webFlashTools/4.jpg)
+![flash tool](Images/webFlashTools/4.webp)
 7. Click "Program" button, and wait for the success message in the console, it should looks like this:
-![flash tool](Images/webFlashTools/5.jpg)
+![flash tool](Images/webFlashTools/5.webp)
 8. Reset the board by pressing the **RESET button** on the XIAO ESP32 series board, and the firmware should run successfully.
 
 
