@@ -78,9 +78,11 @@ Web コンソールは **Web Serial API** に依存しており、Chromium 系�
 
 Firefox と Safari は現時点では Web Serial API に対応していません。
 
-### ソースコード
+### アクセス
 
-Web コンソールは別リポジトリで開発されています — ソース、ビルド手順、ホスト URL は [XIAO-PowerConsole-Web](https://github.com/nicho810/XIAO-PowerConsole-Web) を参照してください。
+ブラウザで Web コンソールを直接開く: **<https://xiao-power-console-web.ioatlas.com>**
+
+Web コンソール本体は**オープンソースではありません** — このリポジトリで公開されているのはプロトコルのファームウェア側（XPB バイナリプロトコル v1.2）のみです。
 
 ## ハードウェア仕様
 
@@ -158,7 +160,7 @@ Web コンソールは別リポジトリで開発されています — ソー�
 ### Web コンソールの使い方
 
 1. ボードが v3.x ファームウェア（XIAO ESP32-S3 または ESP32-C3）で動作していることを確認。
-2. Chrome / Edge / Opera で Web コンソールを開く。
+2. Chrome / Edge / Opera で Web コンソール <https://xiao-power-console-web.ioatlas.com> を開く。
 3. **Connect** をクリックし、XIAO に対応するシリアルポートを選択して許可を付与。
 4. ハンドシェイク完了と同時に、ファームウェアがテキストデバッグモードからバイナリストリーミングに切り替わり、チャートがすぐに埋まり始めます。
 
@@ -225,7 +227,7 @@ Web コンソールは別リポジトリで開発されています — ソー�
 | ツール | リンク |
 |---|---|
 | ESP32 シリーズ用 MergeBin ツール | [DavidSchinazi、DunkelRatte に感謝](https://github.com/platformio/platform-espressif32/issues/1078#issuecomment-2219671743) |
-| Web コンソール | [XIAO-PowerConsole-Web](https://github.com/nicho810/XIAO-PowerConsole-Web) |
+| XPB Web コンソール（ホスト版、非オープンソース） | <https://xiao-power-console-web.ioatlas.com> |
 
 ## 貢献
 

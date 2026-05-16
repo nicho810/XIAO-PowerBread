@@ -78,9 +78,11 @@ Die Web-Konsole setzt auf die **Web-Serial-API**, die in Chromium-basierten Brow
 
 Firefox und Safari unterstützen die Web-Serial-API derzeit nicht.
 
-### Quellcode
+### Zugriff
 
-Die Web-Konsole wird in einem separaten Repository entwickelt – siehe [XIAO-PowerConsole-Web](https://github.com/nicho810/XIAO-PowerConsole-Web) für den Quellcode, Build-Anleitungen und die gehostete URL.
+Öffnen Sie die Web-Konsole direkt im Browser: **<https://xiao-power-console-web.ioatlas.com>**
+
+Die Web-Konsole selbst ist **nicht Open Source** — nur die Firmware-Seite des Protokolls (XPB Binärprotokoll v1.2) ist in diesem Repository veröffentlicht.
 
 ## Hardware-Spezifikationen
 
@@ -158,7 +160,7 @@ Die Web-Konsole wird in einem separaten Repository entwickelt – siehe [XIAO-Po
 ### Web-Konsole verwenden
 
 1. Stellen Sie sicher, dass auf Ihrem Board die v3.x-Firmware läuft (XIAO ESP32-S3 oder ESP32-C3).
-2. Öffnen Sie die Web-Konsole in Chrome / Edge / Opera.
+2. Öffnen Sie die Web-Konsole unter <https://xiao-power-console-web.ioatlas.com> in Chrome / Edge / Opera.
 3. Klicken Sie auf **Connect**, wählen Sie den seriellen Port Ihres XIAO und gewähren Sie die Berechtigung.
 4. Die Firmware wechselt vom Text-Debug-Modus in den binären Streaming-Modus, sobald der Handshake abgeschlossen ist – die Diagramme werden sofort gefüllt.
 
@@ -225,7 +227,7 @@ Die Web-Konsole wird in einem separaten Repository entwickelt – siehe [XIAO-Po
 | Werkzeug | Link |
 |---|---|
 | MergeBin-Tool für die ESP32-Serie | [Dank an DavidSchinazi, DunkelRatte](https://github.com/platformio/platform-espressif32/issues/1078#issuecomment-2219671743) |
-| Web-Konsole | [XIAO-PowerConsole-Web](https://github.com/nicho810/XIAO-PowerConsole-Web) |
+| XPB Web-Konsole (gehostet, nicht Open Source) | <https://xiao-power-console-web.ioatlas.com> |
 
 ## Mitwirken
 
